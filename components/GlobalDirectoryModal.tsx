@@ -10,12 +10,12 @@ import {
   Alert,
   useWindowDimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Radii } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { GlassCard } from './GlassCard';
 import { SculptedIcon } from './SculptedIcon';
-import { ConfirmModal } from './ConfirmModal';
 import type { DirectoryParticipant, CategoryType } from '../types';
 import {
   getGlobalDirectory,
@@ -66,7 +66,7 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
 
   const loadDirectory = async () => {
     const data = await getGlobalDirectory();
-    setDirectory(data);
+    setDirectory([...data]);
   };
 
   useEffect(() => {
@@ -162,16 +162,19 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
 
   const handleConfirmDelete = async () => {
     if (!confirmDelete.id) return;
+    const targetId = confirmDelete.id;
     try {
       setIsDeleting(true);
-      await deleteDirectoryParticipant(confirmDelete.id);
-      await loadDirectory();
+      // Actualización optimista inmediata en la UI
+      setDirectory((prev) => prev.filter((d) => String(d.id) !== String(targetId)));
       setSelectedIds((prev) => {
         const next = new Set(prev);
-        next.delete(confirmDelete.id);
+        next.delete(targetId);
         return next;
       });
+      await deleteDirectoryParticipant(targetId);
       setConfirmDelete({ visible: false, id: '', name: '' });
+      await loadDirectory();
     } catch (err) {
       console.error('Error al eliminar participante del directorio:', err);
     } finally {
@@ -550,19 +553,86 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
             </View>
           </View>
 
-          {/* Modal de Confirmación para Eliminar Integrante */}
-          <ConfirmModal
-            visible={confirmDelete.visible}
-            title="Eliminar del Directorio"
-            message={`¿Estás seguro de que deseas eliminar a "${confirmDelete.name}" del directorio global de subfamilias?`}
-            confirmText="Eliminar"
-            cancelText="Cancelar"
-            variant="danger"
-            icon="trash"
-            loading={isDeleting}
-            onConfirm={handleConfirmDelete}
-            onCancel={() => setConfirmDelete({ visible: false, id: '', name: '' })}
-          />
+          {/* Modal de Confirmación para Eliminar Integrante (In-Modal Overlay) */}
+          {confirmDelete.visible && (
+            <View style={styles.confirmOverlay}>
+              <TouchableOpacity
+                style={StyleSheet.absoluteFill}
+                activeOpacity={1}
+                onPress={isDeleting ? undefined : () => setConfirmDelete({ visible: false, id: '', name: '' })}
+              />
+              <View style={[styles.confirmDialog, { maxWidth: isTablet ? 420 : 340 }]}>
+                <GlassCard
+                  borderRadius={Radii.xxl}
+                  variant="coral"
+                  glow={isDark}
+                  style={{ width: '100%' }}
+                >
+                  <View style={{ padding: 22, alignItems: 'center', gap: 14 }}>
+                    <View
+                      style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: 26,
+                        backgroundColor: colors.dangerLight,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <SculptedIcon name="trash" size={24} variant="plain" color={colors.danger} />
+                    </View>
+                    <View style={{ alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' }}>
+                        Eliminar del Directorio
+                      </Text>
+                      <Text style={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', lineHeight: 18 }}>
+                        ¿Estás seguro de que deseas eliminar a "{confirmDelete.name}" del directorio global de subfamilias?
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 10, width: '100%', marginTop: 6 }}>
+                      <TouchableOpacity
+                        style={{
+                          flex: 1,
+                          paddingVertical: 12,
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: colors.border,
+                          backgroundColor: colors.surfaceSubtle,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                        onPress={() => setConfirmDelete({ visible: false, id: '', name: '' })}
+                        disabled={isDeleting}
+                      >
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textPrimary }}>Cancelar</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={{
+                          flex: 1,
+                          paddingVertical: 12,
+                          borderRadius: 10,
+                          backgroundColor: colors.danger,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexDirection: 'row',
+                          gap: 6,
+                        }}
+                        onPress={handleConfirmDelete}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF' }}>Eliminar</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </GlassCard>
+              </View>
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -844,5 +914,29 @@ const styles = StyleSheet.create({
   importBtnText: {
     fontSize: 13,
     fontWeight: '500',
+  },
+  confirmOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.70)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+    zIndex: 9999,
+    elevation: 20,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+      } as any,
+    }),
+  },
+  confirmDialog: {
+    width: '100%',
+    zIndex: 10000,
+    elevation: 21,
   },
 });

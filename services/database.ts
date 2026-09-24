@@ -1057,7 +1057,8 @@ const ensureDirectoryLoaded = async (): Promise<DirectoryParticipant[]> => {
 };
 
 export const getGlobalDirectory = async (): Promise<DirectoryParticipant[]> => {
-  return await ensureDirectoryLoaded();
+  const list = await ensureDirectoryLoaded();
+  return [...list];
 };
 
 export const addDirectoryParticipant = async (
@@ -1068,7 +1069,7 @@ export const addDirectoryParticipant = async (
     ...contact,
     id: contact.id || generateId('dir'),
   };
-  globalDirectoryState = [newContact, ...globalDirectoryState.filter((c) => c.id !== newContact.id)];
+  globalDirectoryState = [newContact, ...globalDirectoryState.filter((c) => String(c.id) !== String(newContact.id))];
   await persistGlobalDirectory(globalDirectoryState);
   syncEngine.broadcastChange({ entityType: 'directory', action: 'create', data: newContact });
   return newContact;
@@ -1076,7 +1077,7 @@ export const addDirectoryParticipant = async (
 
 export const deleteDirectoryParticipant = async (id: string): Promise<void> => {
   await ensureDirectoryLoaded();
-  globalDirectoryState = globalDirectoryState.filter((c) => c.id !== id);
+  globalDirectoryState = globalDirectoryState.filter((c) => String(c.id) !== String(id));
   await persistGlobalDirectory(globalDirectoryState);
   syncEngine.broadcastChange({ entityType: 'directory', action: 'delete', data: { id } });
 };
