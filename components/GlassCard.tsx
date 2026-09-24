@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { Radii, NeumorphicShadows } from '../constants/theme';
+import { Radii, GlassShadows } from '../constants/theme';
 
 export interface GlassCardProps {
   children: React.ReactNode;
@@ -17,6 +17,8 @@ export interface GlassCardProps {
   variant?: 'default' | 'cyan' | 'lime' | 'coral' | 'amber' | 'purple' | 'subtle';
   intensity?: number;
   glow?: boolean;
+  /** Modo esmerilado denso y opalescente con alta opacidad (especial para Ticket POS) */
+  frosted?: boolean;
   onPress?: () => void;
   activeOpacity?: number;
   borderRadius?: number;
@@ -29,6 +31,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   contentStyle,
   variant = 'default',
   glow = false,
+  frosted = false,
   onPress,
   activeOpacity = 0.85,
   borderRadius = Radii.lg,
@@ -36,74 +39,167 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 }) => {
   const { isDark, colors } = useTheme();
 
-  // Subtle border accent if specific variant is requested
+  // Variables de color y capas
   let borderColor = colors.border;
+  let borderTopColor = isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.85)';
+  let borderBottomColor = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(226, 232, 240, 0.60)';
+  let borderSideColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(226, 232, 240, 0.60)';
+  let surfaceColor = colors.surface;
   let glowColor = colors.primary;
+  let specularShineColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.80)';
 
-  if (variant === 'cyan') {
-    borderColor = isDark ? 'rgba(0, 229, 255, 0.25)' : 'rgba(2, 132, 199, 0.25)';
-    glowColor = colors.neonCyan;
-  } else if (variant === 'lime') {
-    borderColor = isDark ? 'rgba(0, 230, 118, 0.25)' : 'rgba(22, 163, 74, 0.25)';
-    glowColor = colors.neonGreen;
-  } else if (variant === 'coral') {
-    borderColor = isDark ? 'rgba(255, 23, 68, 0.25)' : 'rgba(225, 29, 72, 0.25)';
-    glowColor = colors.neonCoral;
-  } else if (variant === 'amber') {
-    borderColor = isDark ? 'rgba(255, 171, 0, 0.25)' : 'rgba(217, 119, 6, 0.25)';
-    glowColor = colors.neonAmber;
-  } else if (variant === 'purple') {
-    borderColor = isDark ? 'rgba(213, 0, 249, 0.25)' : 'rgba(124, 58, 237, 0.25)';
-    glowColor = colors.neonPurple;
+  if (frosted) {
+    // MODO ESMERILADO DENSO (EXCLUSIVO PARA TICKET POS Y COMPONENTES OPALESCENTES)
+    borderTopColor = isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.95)';
+    borderBottomColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(226, 232, 240, 0.85)';
+    borderSideColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.85)';
+    surfaceColor = isDark ? 'rgba(19, 25, 36, 0.85)' : 'rgba(255, 255, 255, 0.88)';
+    specularShineColor = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.95)';
+
+    if (variant === 'cyan') {
+      surfaceColor = isDark ? 'rgba(10, 28, 44, 0.85)' : 'rgba(240, 249, 255, 0.90)';
+      borderTopColor = isDark ? 'rgba(0, 240, 255, 0.50)' : 'rgba(2, 132, 199, 0.45)';
+      borderBottomColor = isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(2, 132, 199, 0.20)';
+      borderSideColor = isDark ? 'rgba(0, 240, 255, 0.25)' : 'rgba(2, 132, 199, 0.28)';
+      borderColor = isDark ? 'rgba(0, 240, 255, 0.25)' : 'rgba(2, 132, 199, 0.28)';
+      glowColor = colors.neonCyan;
+      specularShineColor = isDark ? 'rgba(0, 240, 255, 0.40)' : 'rgba(2, 132, 199, 0.35)';
+    } else if (variant === 'lime') {
+      surfaceColor = isDark ? 'rgba(10, 32, 24, 0.85)' : 'rgba(240, 253, 244, 0.90)';
+      borderTopColor = isDark ? 'rgba(0, 229, 153, 0.50)' : 'rgba(16, 185, 129, 0.45)';
+      borderBottomColor = isDark ? 'rgba(0, 229, 153, 0.12)' : 'rgba(16, 185, 129, 0.20)';
+      borderSideColor = isDark ? 'rgba(0, 229, 153, 0.25)' : 'rgba(16, 185, 129, 0.28)';
+      borderColor = isDark ? 'rgba(0, 229, 153, 0.25)' : 'rgba(16, 185, 129, 0.28)';
+      glowColor = colors.neonGreen;
+      specularShineColor = isDark ? 'rgba(0, 229, 153, 0.40)' : 'rgba(16, 185, 129, 0.35)';
+    } else if (variant === 'coral') {
+      surfaceColor = isDark ? 'rgba(35, 16, 24, 0.85)' : 'rgba(255, 241, 242, 0.90)';
+      borderTopColor = isDark ? 'rgba(244, 63, 94, 0.50)' : 'rgba(244, 63, 94, 0.45)';
+      borderBottomColor = isDark ? 'rgba(244, 63, 94, 0.12)' : 'rgba(244, 63, 94, 0.20)';
+      borderSideColor = isDark ? 'rgba(244, 63, 94, 0.25)' : 'rgba(244, 63, 94, 0.28)';
+      borderColor = isDark ? 'rgba(244, 63, 94, 0.25)' : 'rgba(244, 63, 94, 0.28)';
+      glowColor = colors.neonCoral;
+      specularShineColor = isDark ? 'rgba(244, 63, 94, 0.40)' : 'rgba(244, 63, 94, 0.35)';
+    } else if (variant === 'amber') {
+      surfaceColor = isDark ? 'rgba(35, 26, 10, 0.85)' : 'rgba(254, 249, 235, 0.90)';
+      borderTopColor = isDark ? 'rgba(251, 191, 36, 0.50)' : 'rgba(245, 158, 11, 0.45)';
+      borderBottomColor = isDark ? 'rgba(251, 191, 36, 0.12)' : 'rgba(245, 158, 11, 0.20)';
+      borderSideColor = isDark ? 'rgba(251, 191, 36, 0.25)' : 'rgba(245, 158, 11, 0.28)';
+      borderColor = isDark ? 'rgba(251, 191, 36, 0.25)' : 'rgba(245, 158, 11, 0.28)';
+      glowColor = colors.neonAmber;
+      specularShineColor = isDark ? 'rgba(251, 191, 36, 0.40)' : 'rgba(245, 158, 11, 0.35)';
+    } else if (variant === 'purple') {
+      surfaceColor = isDark ? 'rgba(26, 15, 38, 0.85)' : 'rgba(250, 245, 255, 0.90)';
+      borderTopColor = isDark ? 'rgba(168, 85, 247, 0.50)' : 'rgba(139, 92, 246, 0.45)';
+      borderBottomColor = isDark ? 'rgba(168, 85, 247, 0.12)' : 'rgba(139, 92, 246, 0.20)';
+      borderSideColor = isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(139, 92, 246, 0.28)';
+      borderColor = isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(139, 92, 246, 0.28)';
+      glowColor = colors.neonPurple;
+      specularShineColor = isDark ? 'rgba(168, 85, 247, 0.40)' : 'rgba(139, 92, 246, 0.35)';
+    } else if (variant === 'subtle') {
+      surfaceColor = isDark ? 'rgba(13, 17, 23, 0.78)' : 'rgba(255, 255, 255, 0.86)';
+      borderColor = colors.border;
+      borderTopColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.95)';
+      borderBottomColor = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(226, 232, 240, 0.80)';
+      borderSideColor = colors.border;
+    }
+  } else {
+    // MODO ESTÁNDAR (FONDOS LIGEROS, LIMPIOS Y CRISTALINOS PARA TODAS LAS DEMÁS CARDS)
+    if (variant === 'cyan') {
+      surfaceColor = isDark ? 'rgba(0, 240, 255, 0.08)' : 'rgba(2, 132, 199, 0.06)';
+      borderColor = isDark ? 'rgba(0, 240, 255, 0.25)' : 'rgba(2, 132, 199, 0.25)';
+      glowColor = colors.neonCyan;
+    } else if (variant === 'lime') {
+      surfaceColor = isDark ? 'rgba(0, 229, 153, 0.08)' : 'rgba(16, 185, 129, 0.06)';
+      borderColor = isDark ? 'rgba(0, 229, 153, 0.25)' : 'rgba(16, 185, 129, 0.25)';
+      glowColor = colors.neonGreen;
+    } else if (variant === 'coral') {
+      surfaceColor = isDark ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.06)';
+      borderColor = isDark ? 'rgba(244, 63, 94, 0.25)' : 'rgba(244, 63, 94, 0.25)';
+      glowColor = colors.neonCoral;
+    } else if (variant === 'amber') {
+      surfaceColor = isDark ? 'rgba(251, 191, 36, 0.08)' : 'rgba(245, 158, 11, 0.06)';
+      borderColor = isDark ? 'rgba(251, 191, 36, 0.25)' : 'rgba(245, 158, 11, 0.25)';
+      glowColor = colors.neonAmber;
+    } else if (variant === 'purple') {
+      surfaceColor = isDark ? 'rgba(168, 85, 247, 0.08)' : 'rgba(139, 92, 246, 0.06)';
+      borderColor = isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(139, 92, 246, 0.25)';
+      glowColor = colors.neonPurple;
+    } else if (variant === 'subtle') {
+      surfaceColor = colors.surfaceSubtle;
+      borderColor = colors.border;
+    }
   }
 
-  const neumorphic = isDark ? NeumorphicShadows.dark : NeumorphicShadows.light;
+  const glassShadow = isDark ? GlassShadows.dark : GlassShadows.light;
 
   let cardContent: React.ReactNode;
 
   if (Platform.OS === 'web') {
     const webBoxShadow = glow
-      ? `0 0 16px ${glowColor}${isDark ? '40' : '20'}, ${neumorphic.web}`
-      : neumorphic.web;
+      ? `0 0 24px ${glowColor}${isDark ? '45' : '20'}, ${glassShadow.web}`
+      : glassShadow.web;
+
+    const blurValue = frosted ? 'blur(32px) saturate(190%)' : 'blur(20px) saturate(140%)';
 
     const webCardStyle: any = {
-      boxShadow: webBoxShadow,
-      borderRadius,
-      backgroundColor: colors.surface,
-      borderColor,
+      backdropFilter: blurValue,
+      WebkitBackdropFilter: blurValue,
+      backgroundColor: surfaceColor,
       borderWidth,
+      borderTopColor,
+      borderBottomColor,
+      borderLeftColor: borderSideColor,
+      borderRightColor: borderSideColor,
+      borderRadius,
+      boxShadow: webBoxShadow,
     };
 
     cardContent = (
       <View style={[styles.cardBase, webCardStyle, style]}>
+        {/* Línea de Brillo Especular Cenital */}
+        <View
+          pointerEvents="none"
+          style={[
+            styles.specularTopLine,
+            {
+              backgroundColor: specularShineColor,
+            },
+          ]}
+        />
         <View style={[styles.content, contentStyle]}>{children}</View>
       </View>
     );
   } else {
-    // Native (iPadOS / iOS / Android): Dual shadow stack for authentic Neumorphism
+    // Native (iPadOS / iOS / Android): Translucent glass surface with native shadow & specular edge
     cardContent = (
       <View
         style={[
-          styles.nativeShadowOuter,
-          neumorphic.topLight,
-          { borderRadius },
+          styles.nativeCard,
+          glassShadow.native,
+          {
+            borderRadius,
+            backgroundColor: surfaceColor,
+            borderWidth,
+            borderTopColor,
+            borderBottomColor,
+            borderLeftColor: borderSideColor,
+            borderRightColor: borderSideColor,
+          },
           style,
         ]}
       >
+        {/* Línea de Brillo Especular Cenital */}
         <View
+          pointerEvents="none"
           style={[
-            styles.nativeShadowInner,
-            neumorphic.bottomDark,
+            styles.specularTopLine,
             {
-              borderRadius,
-              backgroundColor: colors.surface,
-              borderColor,
-              borderWidth,
+              backgroundColor: specularShineColor,
             },
           ]}
-        >
-          <View style={[styles.content, contentStyle]}>{children}</View>
-        </View>
+        />
+        <View style={[styles.content, contentStyle]}>{children}</View>
       </View>
     );
   }
@@ -129,17 +225,23 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   cardBase: {
+    position: 'relative',
     overflow: 'hidden',
     alignSelf: 'stretch',
   },
-  nativeShadowOuter: {
-    overflow: 'visible',
-    alignSelf: 'stretch',
-  },
-  nativeShadowInner: {
-    flex: 1,
+  nativeCard: {
+    position: 'relative',
     alignSelf: 'stretch',
     overflow: 'hidden',
+  },
+  specularTopLine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    zIndex: 2,
+    opacity: 0.85,
   },
   content: {
     position: 'relative',

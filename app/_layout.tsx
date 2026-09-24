@@ -1,23 +1,25 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { useSyncEngine } from '../services/syncEngine';
 
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
-import { ActivityIndicator } from 'react-native';
+import { AmbientBackground } from '../components/AmbientBackground';
 
 function AppNavigation() {
   const { colors, isDark } = useTheme();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <AmbientBackground />
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
+          contentStyle: { backgroundColor: 'transparent' },
           animation: 'fade',
         }}
       >
@@ -30,8 +32,8 @@ function AppNavigation() {
 }
 
 export default function RootLayout() {
-  // Carga de fuentes modernas Inter
-  const [fontsLoaded] = useFonts({
+  // Carga de fuentes modernas Inter con control de error y fallback
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -42,18 +44,20 @@ export default function RootLayout() {
   // Motor de sincronización en segundo plano con monitoreo reactivo de red
   useSyncEngine();
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0B0F19', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: '#0D1117', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color="#00F0FF" />
       </View>
     );
   }
 
   return (
-    <ThemeProvider>
-      <AppNavigation />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppNavigation />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

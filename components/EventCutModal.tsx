@@ -106,12 +106,22 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.backdrop}>
+      <View
+        style={[
+          styles.backdrop,
+          {
+            backgroundColor: isDark ? 'rgba(20, 18, 16, 0.75)' : 'rgba(20, 18, 16, 0.40)',
+          },
+        ]}
+      >
         <View
           style={[
             styles.container,
             isTablet && styles.containerTablet,
-            { backgroundColor: colors.surface },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
           ]}
         >
           {/* Header del Modal */}
@@ -141,7 +151,7 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* 1. Barra Superior Minimalista de Estado y Balanza (Sin saturación) */}
+          {/* 1. Barra Superior Minimalista de Estado y Balanza */}
           <View
             style={[
               styles.topStatusBar,
@@ -154,22 +164,22 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                   totals.isFullySettled ? styles.statusBadgeSettled : styles.statusBadgePending,
                   { flexDirection: 'row', alignItems: 'center', gap: 4 },
                   totals.isFullySettled
-                    ? { backgroundColor: colors.successLight }
-                    : { backgroundColor: isDark ? 'rgba(254, 243, 199, 0.15)' : '#FEF3C7' },
+                    ? { backgroundColor: colors.successLight, borderColor: colors.successBorder, borderWidth: 1 }
+                    : { backgroundColor: colors.warningLight, borderColor: colors.warningBorder, borderWidth: 1 },
                 ]}
               >
                 <SculptedIcon
                   name={totals.isFullySettled ? 'check-circle' : 'clock'}
                   size={12}
                   variant="plain"
-                  color={totals.isFullySettled ? colors.successText : isDark ? '#FDE68A' : '#B45309'}
+                  color={totals.isFullySettled ? colors.successText : colors.warningText}
                 />
                 <Text
                   style={[
                     totals.isFullySettled ? styles.statusBadgeTextSettled : styles.statusBadgeTextPending,
                     totals.isFullySettled
                       ? { color: colors.successText }
-                      : { color: isDark ? '#FDE68A' : '#B45309' },
+                      : { color: colors.warningText },
                   ]}
                 >
                   {totals.isFullySettled ? '100% Liquidado' : 'Liquidación en Curso'}
@@ -203,7 +213,7 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
               <TouchableOpacity
                 style={[
                   styles.tabButton,
-                  { backgroundColor: colors.surfaceSubtle },
+                  { backgroundColor: colors.surfaceSubtle, borderWidth: 1, borderColor: colors.borderLight },
                   activeTab === 'individuals' && {
                     backgroundColor: colors.primaryLight,
                     borderWidth: 1,
@@ -217,7 +227,7 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                   style={[
                     styles.tabButtonText,
                     { color: colors.textSecondary },
-                    activeTab === 'individuals' && { color: colors.primary, fontWeight: '700' },
+                    activeTab === 'individuals' && { color: colors.primaryText, fontWeight: '700' },
                   ]}
                 >
                   Detalle por Integrante ({totals.participants.length})
@@ -227,7 +237,7 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
               <TouchableOpacity
                 style={[
                   styles.tabButton,
-                  { backgroundColor: colors.surfaceSubtle },
+                  { backgroundColor: colors.surfaceSubtle, borderWidth: 1, borderColor: colors.borderLight },
                   activeTab === 'families' && {
                     backgroundColor: colors.primaryLight,
                     borderWidth: 1,
@@ -241,7 +251,7 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                   style={[
                     styles.tabButtonText,
                     { color: colors.textSecondary },
-                    activeTab === 'families' && { color: colors.primary, fontWeight: '700' },
+                    activeTab === 'families' && { color: colors.primaryText, fontWeight: '700' },
                   ]}
                 >
                   Consolidado por Subfamilia ({totals.subFamilies.length})
@@ -254,8 +264,8 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
               style={[
                 styles.searchBar,
                 {
-                  backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                  borderColor: isDark ? '#111317' : colors.border,
+                  backgroundColor: colors.surfaceSubtle,
+                  borderColor: colors.border,
                 },
               ]}
             >
@@ -319,8 +329,8 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                               borderColor: isDark ? colors.border : colors.borderLight,
                             },
                             isSettled && {
-                              backgroundColor: isDark ? 'rgba(0, 245, 155, 0.08)' : '#FBFDFB',
-                              borderColor: isDark ? 'rgba(0, 245, 155, 0.3)' : '#DCFCE7',
+                              backgroundColor: colors.successLight,
+                              borderColor: colors.successBorder,
                             },
                             !p.isAttending && styles.rowAbsentBg,
                           ]}
@@ -335,7 +345,7 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                                     ? [
                                         styles.catBadgeNino,
                                         {
-                                          backgroundColor: isDark ? 'rgba(255, 126, 95, 0.15)' : '#FFEDD5',
+                                          backgroundColor: colors.purpleLight,
                                         },
                                       ]
                                     : [
@@ -349,7 +359,7 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                                     p.category === 'nino'
                                       ? [
                                           styles.catBadgeTextNino,
-                                          { color: isDark ? '#FFA07A' : '#C2410C' },
+                                          { color: colors.purple },
                                         ]
                                       : [
                                           styles.catBadgeTextAdulto,
@@ -397,15 +407,15 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                                 style={[
                                   styles.pillRefund,
                                   {
-                                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#EFF6FF',
-                                    borderColor: isDark ? '#3B82F6' : '#BFDBFE',
+                                    backgroundColor: colors.primaryLight,
+                                    borderColor: colors.primaryBorder,
                                   },
                                 ]}
                               >
                                 <Text
                                   style={[
                                     styles.pillRefundText,
-                                    { color: isDark ? '#93C5FD' : '#1D4ED8' },
+                                    { color: colors.primaryText },
                                   ]}
                                 >
                                   Reembolso {FormatCurrency(Math.abs(p.finalBalance))}
@@ -417,15 +427,15 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                                 style={[
                                   styles.pillOwed,
                                   {
-                                    backgroundColor: isDark ? 'rgba(254, 243, 199, 0.15)' : '#FEF3C7',
-                                    borderColor: isDark ? '#F59E0B' : '#FDE68A',
+                                    backgroundColor: colors.warningLight,
+                                    borderColor: colors.warningBorder,
                                   },
                                 ]}
                               >
                                 <Text
                                   style={[
                                     styles.pillOwedText,
-                                    { color: isDark ? '#FDE68A' : '#B45309' },
+                                    { color: colors.warningText },
                                   ]}
                                 >
                                   Paga {FormatCurrency(p.finalBalance)}
@@ -527,15 +537,15 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                                   style={[
                                     styles.pillRefund,
                                     {
-                                      backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#EFF6FF',
-                                      borderColor: isDark ? '#3B82F6' : '#BFDBFE',
+                                      backgroundColor: colors.primaryLight,
+                                      borderColor: colors.primaryBorder,
                                     },
                                   ]}
                                 >
                                   <Text
                                     style={[
                                       styles.pillRefundText,
-                                      { color: isDark ? '#93C5FD' : '#1D4ED8' },
+                                      { color: colors.primaryText },
                                     ]}
                                   >
                                     Reembolso {FormatCurrency(Math.abs(sf.finalBalance))}
@@ -547,15 +557,15 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                                   style={[
                                     styles.pillOwed,
                                     {
-                                      backgroundColor: isDark ? 'rgba(254, 243, 199, 0.15)' : '#FEF3C7',
-                                      borderColor: isDark ? '#F59E0B' : '#FDE68A',
+                                      backgroundColor: colors.warningLight,
+                                      borderColor: colors.warningBorder,
                                     },
                                   ]}
                                 >
                                   <Text
                                     style={[
                                       styles.pillOwedText,
-                                      { color: isDark ? '#FDE68A' : '#B45309' },
+                                      { color: colors.warningText },
                                     ]}
                                   >
                                     Paga {FormatCurrency(sf.finalBalance)}
@@ -601,9 +611,9 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
                                 style={[
                                   styles.familyMetricValBold,
                                   isRefund
-                                    ? { color: isDark ? '#93C5FD' : '#1D4ED8' }
+                                    ? { color: colors.primaryText }
                                     : isOwed
-                                    ? { color: isDark ? '#FDE68A' : '#B45309' }
+                                    ? { color: colors.warningText }
                                     : { color: colors.success },
                                 ]}
                               >
@@ -661,8 +671,8 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
               onPress={handlePrintOrExport}
               activeOpacity={0.8}
             >
-              <SculptedIcon name="print" size={16} variant="plain" color={isDark ? '#121212' : '#FFFFFF'} />
-              <Text style={[styles.actionPrimaryBtnText, { color: isDark ? '#121212' : '#FFFFFF' }]}>
+              <SculptedIcon name="print" size={16} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+              <Text style={[styles.actionPrimaryBtnText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>
                 Imprimir / Exportar PDF
               </Text>
             </TouchableOpacity>
@@ -676,10 +686,15 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      } as any,
+    }),
   },
   container: {
     width: '100%',
@@ -687,14 +702,15 @@ const styles = StyleSheet.create({
     maxHeight: '92%',
     borderRadius: 20,
     overflow: 'hidden',
+    borderWidth: 1,
     ...Platform.select({
       web: {
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
       } as any,
       default: {
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.35,
+        shadowOpacity: 0.25,
         shadowRadius: 12,
         elevation: 8,
       },
@@ -821,11 +837,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flex: 1,
     maxWidth: 320,
-    ...Platform.select({
-      web: {
-        boxShadow: 'inset 2px 2px 4px rgba(0, 0, 0, 0.45)',
-      } as any,
-    }),
   },
   searchIcon: {
     fontSize: 12,

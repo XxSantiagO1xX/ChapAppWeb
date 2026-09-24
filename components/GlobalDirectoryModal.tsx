@@ -177,7 +177,7 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
           ]}
         >
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.surface }]}>
             <View style={styles.headerTitleRow}>
               <View style={[styles.headerIcon, { backgroundColor: colors.purpleLight }]}>
                 <SculptedIcon name="users" size={20} variant="plain" color={colors.purple} />
@@ -193,7 +193,7 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
               style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
               onPress={onClose}
             >
-              <SculptedIcon name="close" size={16} variant="plain" color={colors.textSecondary} />
+              <SculptedIcon name="close" size={16} variant="plain" color={colors.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -228,18 +228,18 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                   borderColor: colors.purpleBorder,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 4,
+                  gap: 6,
                 },
               ]}
               onPress={() => setShowAddForm(!showAddForm)}
             >
               <SculptedIcon
                 name={showAddForm ? 'close' : 'plus'}
-                size={12}
+                size={13}
                 variant="plain"
                 color={colors.purple}
               />
-              <Text style={[styles.addBtnText, { color: colors.purple }]}>
+              <Text style={[styles.addBtnText, { color: colors.purple, fontWeight: '700' }]}>
                 {showAddForm ? 'Cancelar' : 'Nuevo Integrante'}
               </Text>
             </TouchableOpacity>
@@ -251,12 +251,12 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
               style={[
                 styles.formContainer,
                 {
-                  backgroundColor: colors.purpleLight,
+                  backgroundColor: isDark ? 'rgba(192, 132, 252, 0.10)' : 'rgba(124, 58, 237, 0.08)',
                   borderBottomColor: colors.purpleBorder,
                 },
               ]}
             >
-              <Text style={[styles.formHeading, { color: colors.purple }]}>
+              <Text style={[styles.formHeading, { color: colors.purple, fontWeight: '700' }]}>
                 Agregar Integrante Frecuente
               </Text>
               <View style={styles.formGrid}>
@@ -305,7 +305,7 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                           borderColor: colors.border,
                           flexDirection: 'row',
                           alignItems: 'center',
-                          gap: 4,
+                          gap: 6,
                         },
                         newCategory === cat.key && {
                           backgroundColor: colors.primaryLight,
@@ -319,16 +319,16 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                     >
                       <SculptedIcon
                         name={cat.icon}
-                        size={12}
+                        size={13}
                         variant="plain"
-                        color={newCategory === cat.key ? colors.primary : colors.textSecondary}
+                        color={newCategory === cat.key ? colors.primaryText : colors.textSecondary}
                       />
                       <Text
                         style={[
                           styles.catOptionText,
                           { color: colors.textSecondary },
                           newCategory === cat.key && {
-                            color: colors.primary,
+                            color: colors.primaryText,
                             fontWeight: '700',
                           },
                         ]}
@@ -347,17 +347,19 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                   ]}
                   onPress={handleAddNewContact}
                 >
-                  <Text style={styles.saveContactBtnText}>Guardar en Directorio</Text>
+                  <Text style={[styles.saveContactBtnText, { color: '#FFFFFF', fontWeight: '700' }]}>
+                    Guardar en Directorio
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
-          {/* Contenedor explícito con flex: 1 y minHeight: 400 para prevenir colapso en iOS/iPadOS */}
+          {/* Contenedor con flex: 1 */}
           <View style={styles.scrollWrapper}>
             <ScrollView
               style={styles.scroll}
-              contentContainerStyle={[styles.scrollContent, { flexGrow: 1, paddingBottom: 20 }]}
+              contentContainerStyle={[styles.scrollContent, { flexGrow: 1, paddingBottom: 24 }]}
               showsVerticalScrollIndicator={true}
             >
               {groupedDirectory.length === 0 ? (
@@ -379,13 +381,13 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                       contentStyle={styles.groupCardInner}
                     >
                       <View style={[styles.groupHeader, { borderBottomColor: colors.borderLight }]}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <SculptedIcon name="home" size={14} variant="plain" color={colors.textPrimary} />
-                          <Text style={[styles.groupTitle, { color: colors.textPrimary }]}>{groupName}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <SculptedIcon name="home" size={15} variant="plain" color={colors.textPrimary} />
+                          <Text style={[styles.groupTitle, { color: colors.textPrimary, fontWeight: '700' }]}>{groupName}</Text>
                         </View>
                         {mode === 'import' && (
                           <TouchableOpacity onPress={() => toggleSelectGroup(members)}>
-                            <Text style={[styles.selectGroupText, { color: colors.primary }]}>
+                            <Text style={[styles.selectGroupText, { color: colors.primaryText, fontWeight: '700' }]}>
                               {allGroupSelected ? 'Desmarcar Subfamilia' : 'Seleccionar Subfamilia'}
                             </Text>
                           </TouchableOpacity>
@@ -420,8 +422,8 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                                   style={[
                                     styles.checkbox,
                                     {
-                                      backgroundColor: colors.surface,
-                                      borderColor: colors.textMuted,
+                                      backgroundColor: colors.surfaceSubtle,
+                                      borderColor: colors.border,
                                     },
                                     isSelected && {
                                       backgroundColor: colors.primary,
@@ -434,11 +436,11 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                               )}
 
                               <View style={{ flex: 1 }}>
-                                <Text style={[styles.memberName, { color: colors.textPrimary }]}>{member.name}</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                                <Text style={[styles.memberName, { color: colors.textPrimary, fontWeight: '700' }]}>{member.name}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                                   <SculptedIcon
                                     name={member.category === 'nino' ? 'child' : 'user'}
-                                    size={11}
+                                    size={12}
                                     variant="plain"
                                     color={colors.textSecondary}
                                   />
@@ -453,7 +455,7 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                                 style={styles.deleteMemberBtn}
                                 onPress={() => handleDeleteContact(member.id, member.name)}
                               >
-                                <SculptedIcon name="trash" size={13} variant="plain" color={colors.coral} />
+                                <SculptedIcon name="trash" size={14} variant="plain" color={colors.dangerText} />
                               </TouchableOpacity>
                             </TouchableOpacity>
                           );
@@ -475,7 +477,7 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
           >
             {mode === 'import' && (
               <TouchableOpacity style={styles.selectAllBtn} onPress={handleSelectAll}>
-                <Text style={[styles.selectAllBtnText, { color: colors.primary }]}>
+                <Text style={[styles.selectAllBtnText, { color: colors.primaryText, fontWeight: '700' }]}>
                   {selectedIds.size === directory.length ? 'Desmarcar Todos' : 'Marcar Todos'}
                 </Text>
               </TouchableOpacity>
@@ -483,10 +485,10 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
 
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <TouchableOpacity
-                style={[styles.cancelBtn, { backgroundColor: colors.surfaceSubtle }]}
+                style={[styles.cancelBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1 }]}
                 onPress={onClose}
               >
-                <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>Cerrar</Text>
+                <Text style={[styles.cancelBtnText, { color: colors.textPrimary }]}>Cerrar</Text>
               </TouchableOpacity>
 
               {mode === 'import' && (
@@ -503,7 +505,7 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                   onPress={handleImport}
                   disabled={selectedIds.size === 0}
                 >
-                  <Text style={[styles.importBtnText, { color: isDark ? '#121212' : '#FFFFFF' }]}>
+                  <Text style={[styles.importBtnText, { color: '#FFFFFF', fontWeight: '700' }]}>
                     Importar Seleccionados ({selectedIds.size})
                   </Text>
                 </TouchableOpacity>
@@ -523,6 +525,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      } as any,
+    }),
   },
   container: {
     width: '100%',
@@ -530,9 +538,10 @@ const styles = StyleSheet.create({
     maxHeight: '92%',
     borderRadius: 20,
     overflow: 'hidden',
+    borderWidth: 1,
     ...Platform.select({
       web: {
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.37)',
       } as any,
       default: {
         shadowColor: '#000000',

@@ -13,6 +13,9 @@ export interface RealtimeChangePayload {
   action: SyncAction;
   timestamp?: number;
   originClientId?: string;
+  participantId?: string;
+  expenseId?: string;
+  subFamilyName?: string;
   data?: any;
 }
 

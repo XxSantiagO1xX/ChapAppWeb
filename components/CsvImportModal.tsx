@@ -72,12 +72,22 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.backdrop}>
+      <View
+        style={[
+          styles.backdrop,
+          {
+            backgroundColor: isDark ? 'rgba(20, 18, 16, 0.75)' : 'rgba(20, 18, 16, 0.40)',
+          },
+        ]}
+      >
         <View
           style={[
             styles.container,
             isTablet && styles.containerTablet,
-            { backgroundColor: colors.surface },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
           ]}
         >
           {/* Header */}
@@ -113,7 +123,7 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
               ]}
             >
               <View style={{ flex: 1 }}>
-                <Text style={[styles.infoTitle, { color: colors.primary }]}>Formato de Columnas Requerido:</Text>
+                <Text style={[styles.infoTitle, { color: colors.primaryText }]}>Formato de Columnas Requerido:</Text>
                 <Text style={[styles.infoDesc, { color: colors.textSecondary }]}>
                   <Text style={[styles.bold, { color: colors.textPrimary }]}>Nombre, Categoría, Monto, PagadoPor</Text> (el pagador se vincula automáticamente por nombre).
                 </Text>
@@ -125,7 +135,7 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                 ]}
                 onPress={handleLoadSample}
               >
-                <Text style={[styles.sampleBtnText, { color: colors.primary }]}>📋 Cargar Ejemplo</Text>
+                <Text style={[styles.sampleBtnText, { color: colors.primaryText }]}>📋 Cargar Ejemplo</Text>
               </TouchableOpacity>
             </View>
 
@@ -159,7 +169,7 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                   <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>
                     Vista Previa ({parseResult.expenses.length} gastos detectados)
                   </Text>
-                  <Text style={[styles.previewTotal, { color: colors.primary }]}>
+                  <Text style={[styles.previewTotal, { color: colors.primaryText }]}>
                     Total: {FormatCurrency(parseResult.totalAmount)}
                   </Text>
                 </View>
@@ -170,21 +180,21 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                     style={[
                       styles.warningsBox,
                       {
-                        backgroundColor: isDark ? 'rgba(254, 243, 199, 0.15)' : colors.warningLight,
-                        borderColor: isDark ? '#F59E0B' : colors.warningBorder,
+                        backgroundColor: colors.warningLight,
+                        borderColor: colors.warningBorder,
                       },
                     ]}
                   >
-                    <Text style={[styles.warningsTitle, { color: isDark ? '#FDE68A' : colors.warningText }]}>
+                    <Text style={[styles.warningsTitle, { color: colors.warningText }]}>
                       ⚠️ Observaciones:
                     </Text>
                     {parseResult.errors.slice(0, 4).map((err, idx) => (
-                      <Text key={idx} style={[styles.warningItem, { color: isDark ? '#FDE68A' : colors.warningText }]}>
+                      <Text key={idx} style={[styles.warningItem, { color: colors.warningText }]}>
                         • {err}
                       </Text>
                     ))}
                     {parseResult.errors.length > 4 && (
-                      <Text style={[styles.warningItem, { color: isDark ? '#FDE68A' : colors.warningText }]}>
+                      <Text style={[styles.warningItem, { color: colors.warningText }]}>
                         ... y {parseResult.errors.length - 4} observaciones más.
                       </Text>
                     )}
@@ -231,7 +241,14 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
             ]}
           >
             <TouchableOpacity
-              style={[styles.cancelBtn, { backgroundColor: colors.surfaceSubtle }]}
+              style={[
+                styles.cancelBtn,
+                {
+                  backgroundColor: colors.surfaceSubtle,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                },
+              ]}
               onPress={onClose}
             >
               <Text style={[styles.cancelBtnText, { color: colors.textSecondary }]}>Cancelar</Text>
@@ -252,7 +269,7 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
               onPress={handleConfirmImport}
               disabled={!parseResult || !parseResult.success}
             >
-              <Text style={[styles.confirmBtnText, { color: isDark ? '#121212' : '#FFFFFF' }]}>
+              <Text style={[styles.confirmBtnText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>
                 {parseResult && parseResult.expenses.length > 0
                   ? `Importar ${parseResult.expenses.length} Gastos`
                   : 'Importar Gastos'}
@@ -268,24 +285,30 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      } as any,
+    }),
   },
   container: {
     width: '100%',
     maxHeight: '90%',
     borderRadius: 20,
     overflow: 'hidden',
+    borderWidth: 1,
     ...Platform.select({
       web: {
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.45)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
       } as any,
       default: {
         shadowColor: '#000000',
         shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.35,
+        shadowOpacity: 0.25,
         shadowRadius: 12,
         elevation: 8,
       },

@@ -12,9 +12,11 @@ import {
   ActivityIndicator,
   Platform,
   RefreshControl,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { FormatCurrency, Radii } from '../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FormatCurrency, Radii, Fonts, NeumorphicShadows } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import type { EventConfig, DirectoryParticipant, Participant } from '../types';
 import {
@@ -30,18 +32,23 @@ import { calculateEventTotals } from '../utils/calculations';
 import { GlobalDirectoryModal } from '../components/GlobalDirectoryModal';
 import { GlassCard } from '../components/GlassCard';
 import { SculptedIcon } from '../components/SculptedIcon';
+import { ConfirmModal } from '../components/ConfirmModal';
+import { AmbientBackground } from '../components/AmbientBackground';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isTablet = width >= 768;
-  const { colors, isDark, toggleTheme, getNeonGlow } = useTheme();
+  const isSmallPhone = width < 420;
+  const { colors, isDark, toggleTheme } = useTheme();
 
   const [events, setEvents] = useState<EventConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filterTab, setFilterTab] = useState<'active' | 'archived' | 'all'>('active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Modal para Directorio Global
   const [isDirectoryModalOpen, setIsDirectoryModalOpen] = useState(false);
@@ -54,6 +61,23 @@ export default function HomeScreen() {
   const [selectedDirectoryContacts, setSelectedDirectoryContacts] = useState<DirectoryParticipant[]>([]);
   const [isPickDirectoryForNewEventOpen, setIsPickDirectoryForNewEventOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+
+  // Modal de confirmación estilizado
+  const [confirmConfig, setConfirmConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    variant?: 'danger' | 'warning' | 'success' | 'teal' | 'primary';
+    icon?: any;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const loadEvents = useCallback(async (showLoadingSpinner = true) => {
     if (showLoadingSpinner) setLoading(true);
@@ -110,6 +134,30 @@ export default function HomeScreen() {
   const activeCount = useMemo(() => events.filter((e) => !e.isArchived).length, [events]);
   const archivedCount = useMemo(() => events.filter((e) => e.isArchived).length, [events]);
 
+  // Resumen ejecutivo global calculado sobre eventos activos
+  const globalSummary = useMemo(() => {
+    const activeEvents = events.filter((e) => !e.isArchived);
+    let totalExpenses = 0;
+    let totalParticipants = 0;
+    const subFamilySet = new Set<string>();
+
+    activeEvents.forEach((evt) => {
+      const totals = calculateEventTotals(evt);
+      totalExpenses += totals.totalExpenses;
+      totalParticipants += evt.participants.length;
+      evt.participants.forEach((p) => {
+        if (p.subFamily) subFamilySet.add(p.subFamily);
+      });
+    });
+
+    return {
+      activeEventsCount: activeEvents.length,
+      totalExpenses,
+      totalParticipants,
+      subFamiliesCount: subFamilySet.size,
+    };
+  }, [events]);
+
   const handleCreateEvent = async () => {
     const yearNumber = parseInt(newYear, 10);
     if (!yearNumber || yearNumber < 2000 || yearNumber > 2100) {
@@ -161,29 +209,37 @@ export default function HomeScreen() {
   };
 
   const handleDelete = (event: EventConfig) => {
-    Alert.alert(
-      '🗑️ Eliminar Evento',
-      `¿Estás seguro de que deseas eliminar permanentemente "${event.title}"?\n\nEsta acción borrará en cascada todos sus participantes y gastos asociados en la base de datos de forma irreversible.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar Definitivamente',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteEvent(event.id);
-            await loadEvents();
-          },
-        },
-      ]
-    );
+    setConfirmConfig({
+      visible: true,
+      title: 'Eliminar Evento',
+      message: `¿Estás seguro de que deseas eliminar permanentemente "${event.title}"?\n\nEsta acción borrará en cascada todos sus participantes y gastos asociados en la base de datos de forma irreversible.`,
+      confirmText: 'Eliminar Definitivamente',
+      variant: 'danger',
+      icon: 'trash',
+      onConfirm: async () => {
+        setConfirmLoading(true);
+        try {
+          await deleteEvent(event.id);
+          await loadEvents();
+          setConfirmConfig((prev) => ({ ...prev, visible: false }));
+        } catch (err: any) {
+          console.error('Error al eliminar evento:', err);
+          setConfirmConfig((prev) => ({ ...prev, visible: false }));
+        } finally {
+          setConfirmLoading(false);
+        }
+      },
+    });
   };
 
   if (loading) {
     return (
       <View style={[styles.centeredLoading, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingTitle, { color: colors.textPrimary }]}>ChapApp</Text>
-        <Text style={[styles.loadingSubtitle, { color: colors.textSecondary }]}>
+        <Text style={[styles.loadingTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+          ChapApp
+        </Text>
+        <Text style={[styles.loadingSubtitle, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
           Cargando entorno contable...
         </Text>
       </View>
@@ -192,68 +248,125 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header Sci-Fi HUD / Neumorphic Limpio */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <View style={styles.headerLeft}>
+      <AmbientBackground />
+      {/* Header Principal con Isla Flotante de Cristal (Opción A) */}
+      <View
+        style={[
+          styles.header,
+          isTablet && styles.headerTablet,
+          {
+            marginTop:
+              Platform.OS === 'web'
+                ? isTablet ? 20 : 12
+                : Math.max(insets.top, 12) + (isTablet ? 8 : 4),
+            backgroundColor: isDark ? 'rgba(19, 25, 36, 0.76)' : 'rgba(255, 255, 255, 0.82)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.90)',
+            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.98)',
+            ...(Platform.OS === 'web'
+              ? ({
+                  backdropFilter: 'blur(24px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                  boxShadow: isDark
+                    ? '0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14)'
+                    : '0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
+                } as any)
+              : {
+                  shadowColor: isDark ? '#000000' : '#0F172A',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.35 : 0.08,
+                  shadowRadius: 12,
+                  elevation: 5,
+                }),
+          },
+        ]}
+      >
+        <View style={[styles.headerLeft, isSmallPhone && { gap: 8, flexShrink: 1 }]}>
           <SculptedIcon
             name="money"
-            size={22}
-            containerSize={46}
+            size={isTablet ? 22 : 18}
+            containerSize={isTablet ? 46 : 38}
             variant="sunken"
             glow={isDark}
             accentColor={colors.primary}
             color={colors.primary}
           />
-          <View>
-            <Text style={[styles.appTitle, { color: colors.textPrimary }]}>ChapApp</Text>
-            <Text style={[styles.appSubtitle, { color: colors.textSecondary }]}>
-              Control de Finanzas Grupales & Prorrateo
+          <View style={{ flexShrink: 1 }}>
+            <Text style={[styles.appTitle, isSmallPhone && { fontSize: 18 }, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+              ChapApp
             </Text>
+            {!isSmallPhone && (
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.appSubtitle, { color: colors.textSecondary, fontFamily: Fonts.medium }]}
+              >
+                {isTablet ? 'Control de Finanzas Grupales & Prorrateo' : 'Finanzas Grupales'}
+              </Text>
+            )}
           </View>
         </View>
 
-        <View style={styles.headerRightActions}>
-          {/* Botón de Cambio de Tema: EXCLUSIVAMENTE ICONO (☀️ o 🌙) con relieve esculpido */}
+        <View style={[styles.headerRightActions, isSmallPhone && { gap: 6 }]}>
+          {/* Botón de Cambio de Tema en Cristal */}
           <TouchableOpacity
             onPress={toggleTheme}
             activeOpacity={0.8}
             accessibilityLabel={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            style={[
+              styles.themeIconButton,
+              isSmallPhone && { width: 36, height: 36 },
+              {
+                backgroundColor: colors.surfaceSubtle,
+                borderColor: colors.border,
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      boxShadow: isDark
+                        ? '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+                        : '0 2px 8px rgba(31, 38, 135, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                    } as any)
+                  : {}),
+              },
+            ]}
           >
             <SculptedIcon
               name={isDark ? 'moon' : 'sun'}
-              size={18}
-              containerSize={40}
-              variant="sunken"
-              glow={isDark}
-              accentColor={colors.neonAmber}
+              size={isSmallPhone ? 16 : 18}
+              variant="plain"
               color={isDark ? colors.neonAmber : colors.primary}
             />
           </TouchableOpacity>
 
-          {/* Botón Directorio */}
+          {/* Botón Directorio Global de Cristal */}
           <TouchableOpacity
             style={[
               styles.directoryHeaderButton,
+              isSmallPhone && { paddingHorizontal: 10, paddingVertical: 8 },
               {
                 backgroundColor: colors.purpleLight,
                 borderColor: colors.purpleBorder,
-                ...(isDark ? getNeonGlow(colors.neonPurple, 'low') : {}),
               },
             ]}
             onPress={() => setIsDirectoryModalOpen(true)}
             activeOpacity={0.8}
           >
-            <SculptedIcon name="users" size={15} variant="plain" color={colors.purple} />
-            <Text style={[styles.directoryHeaderButtonText, { color: colors.purple }]}>Directorio</Text>
+            <SculptedIcon name="users" size={14} variant="plain" color={colors.purple} />
+            {isTablet && (
+              <Text style={[styles.directoryHeaderButtonText, { color: colors.purple, fontFamily: Fonts.semiBold }]}>
+                Directorio
+              </Text>
+            )}
           </TouchableOpacity>
 
-          {/* Botón Nuevo Evento */}
+          {/* Botón Crear Nuevo Evento */}
           <TouchableOpacity
             style={[
-              styles.primaryButton,
+              styles.primaryHeaderButton,
+              isSmallPhone && { paddingHorizontal: 10, paddingVertical: 8 },
               {
                 backgroundColor: colors.primary,
-                ...(isDark ? getNeonGlow(colors.neonCyan, 'high') : {}),
+                borderWidth: 0,
               },
             ]}
             onPress={() => {
@@ -262,11 +375,17 @@ export default function HomeScreen() {
               setSelectedDirectoryContacts([]);
               setIsModalOpen(true);
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
-            <Text style={[styles.primaryButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>
-              Nuevo Evento
+            <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#141210' : '#FFFFFF'} />
+            <Text
+              style={[
+                styles.primaryHeaderButtonText,
+                isSmallPhone && { fontSize: 12 },
+                { color: isDark ? '#141210' : '#FFFFFF', fontFamily: Fonts.bold },
+              ]}
+            >
+              {isTablet ? 'Nuevo Evento' : 'Nuevo'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -274,109 +393,330 @@ export default function HomeScreen() {
 
       {/* Layout Master-Detail / Grid */}
       <View style={[styles.mainLayout, isTablet && styles.mainLayoutTablet]}>
-        {/* Panel lateral / Filtros */}
-        <View
-          style={[
-            styles.sidebar,
-            isTablet && styles.sidebarTablet,
-            {
-              backgroundColor: colors.surface,
-              borderRightColor: colors.border,
-              borderBottomColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={[styles.sectionHeading, { color: colors.textMuted }]}>Vistas y Filtros</Text>
+        {/* Barra de Filtro Desplegable para Móvil (Oculto por defecto) */}
+        {!isTablet && (
+          <View style={styles.mobileFilterBar}>
+            <TouchableOpacity
+              style={[
+                styles.mobileFilterTriggerBtn,
+                {
+                  backgroundColor: isMobileFilterOpen || searchQuery ? colors.primaryLight : colors.surface,
+                  borderColor: isMobileFilterOpen || searchQuery ? colors.primaryBorder : colors.border,
+                },
+              ]}
+              onPress={() => setIsMobileFilterOpen((prev) => !prev)}
+              activeOpacity={0.8}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                <SculptedIcon
+                  name="search"
+                  size={14}
+                  variant="plain"
+                  color={isMobileFilterOpen || searchQuery ? colors.primaryText : colors.textMuted}
+                />
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[
+                    styles.mobileFilterTriggerText,
+                    {
+                      color: isMobileFilterOpen || searchQuery ? colors.primaryText : colors.textSecondary,
+                      fontFamily: Fonts.medium,
+                    },
+                  ]}
+                >
+                  {searchQuery
+                    ? `Búsqueda: "${searchQuery}"`
+                    : filterTab === 'active'
+                    ? `Eventos Activos (${activeCount})`
+                    : filterTab === 'archived'
+                    ? `Archivados (${archivedCount})`
+                    : `Todos los Años (${events.length})`}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={[styles.mobileFilterBadge, { backgroundColor: colors.primaryLight }]}>
+                  <Text style={[styles.mobileFilterBadgeText, { color: colors.primaryText, fontFamily: Fonts.bold }]}>
+                    {filterTab === 'active' ? activeCount : filterTab === 'archived' ? archivedCount : events.length}
+                  </Text>
+                </View>
+                <SculptedIcon
+                  name={isMobileFilterOpen ? 'chevron-down' : 'chevron-right'}
+                  size={13}
+                  variant="plain"
+                  color={isMobileFilterOpen ? colors.primaryText : colors.textMuted}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
 
+        {/* Panel lateral / Filtros de Cristal (Visible en Tablet o cuando el usuario lo despliega en Móvil) */}
+        {(isTablet || isMobileFilterOpen) && (
+          <View
+            style={[
+              styles.sidebar,
+              isTablet && styles.sidebarTablet,
+              !isTablet && styles.sidebarMobileExpanded,
+              {
+                backgroundColor: colors.surface,
+                borderRightColor: colors.border,
+                borderBottomColor: colors.border,
+              },
+            ]}
+          >
+            <View style={styles.sidebarHeaderRow}>
+              <Text style={[styles.sectionHeading, { color: colors.textMuted, fontFamily: Fonts.bold }]}>
+                Vistas y Filtros
+              </Text>
+              {!isTablet && (
+                <TouchableOpacity
+                  onPress={() => setIsMobileFilterOpen(false)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+          {/* Pestañas de Filtro en Cristal */}
           <View style={styles.tabsContainer}>
+            {/* Pestaña: Activos */}
             <TouchableOpacity
               style={[
                 styles.tabButton,
-                { backgroundColor: colors.surfaceSubtle },
-                filterTab === 'active' && {
-                  backgroundColor: colors.primaryLight,
-                  borderWidth: 1,
-                  borderColor: colors.primaryBorder,
-                },
+                filterTab === 'active'
+                  ? [
+                      styles.tabButtonActive,
+                      {
+                        backgroundColor: colors.primaryLight,
+                        borderColor: colors.primaryBorder,
+                      },
+                    ]
+                  : [
+                      styles.tabButtonInactive,
+                      {
+                        backgroundColor: colors.surfaceSubtle,
+                        borderColor: colors.border,
+                      },
+                    ],
               ]}
               onPress={() => setFilterTab('active')}
+              activeOpacity={0.8}
             >
-              <Text
-                style={[
-                  styles.tabButtonText,
-                  { color: colors.textSecondary },
-                  filterTab === 'active' && { color: colors.primary, fontWeight: '600' },
-                ]}
-              >
-                Activos ({activeCount})
-              </Text>
+              <View style={styles.tabContentRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View
+                    style={[
+                      styles.tabStatusDot,
+                      {
+                        backgroundColor: filterTab === 'active' ? colors.success : colors.textMuted,
+                      },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      {
+                        color: filterTab === 'active' ? colors.primaryText : colors.textSecondary,
+                        fontFamily: filterTab === 'active' ? Fonts.bold : Fonts.medium,
+                      },
+                    ]}
+                  >
+                    Activos
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.tabBadge,
+                    {
+                      backgroundColor: filterTab === 'active' ? colors.primaryLight : colors.surfaceSubtle,
+                      borderColor: filterTab === 'active' ? colors.primaryBorder : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tabBadgeText,
+                      {
+                        color: filterTab === 'active' ? colors.primaryText : colors.textMuted,
+                        fontFamily: Fonts.bold,
+                      },
+                    ]}
+                  >
+                    {activeCount}
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
+            {/* Pestaña: Historial Archivado */}
             <TouchableOpacity
               style={[
                 styles.tabButton,
-                { backgroundColor: colors.surfaceSubtle },
-                filterTab === 'archived' && {
-                  backgroundColor: colors.primaryLight,
-                  borderWidth: 1,
-                  borderColor: colors.primaryBorder,
-                },
+                filterTab === 'archived'
+                  ? [
+                      styles.tabButtonActive,
+                      {
+                        backgroundColor: colors.primaryLight,
+                        borderColor: colors.primaryBorder,
+                      },
+                    ]
+                  : [
+                      styles.tabButtonInactive,
+                      {
+                        backgroundColor: colors.surfaceSubtle,
+                        borderColor: colors.border,
+                      },
+                    ],
               ]}
               onPress={() => setFilterTab('archived')}
+              activeOpacity={0.8}
             >
-              <Text
-                style={[
-                  styles.tabButtonText,
-                  { color: colors.textSecondary },
-                  filterTab === 'archived' && { color: colors.primary, fontWeight: '600' },
-                ]}
-              >
-                Historial Archivado ({archivedCount})
-              </Text>
+              <View style={styles.tabContentRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <SculptedIcon
+                    name="archive"
+                    size={13}
+                    variant="plain"
+                    color={filterTab === 'archived' ? colors.primaryText : colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      {
+                        color: filterTab === 'archived' ? colors.primaryText : colors.textSecondary,
+                        fontFamily: filterTab === 'archived' ? Fonts.bold : Fonts.medium,
+                      },
+                    ]}
+                  >
+                    Historial Archivado
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.tabBadge,
+                    {
+                      backgroundColor: filterTab === 'archived' ? colors.primaryLight : colors.surfaceSubtle,
+                      borderColor: filterTab === 'archived' ? colors.primaryBorder : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tabBadgeText,
+                      {
+                        color: filterTab === 'archived' ? colors.primaryText : colors.textMuted,
+                        fontFamily: Fonts.bold,
+                      },
+                    ]}
+                  >
+                    {archivedCount}
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
 
+            {/* Pestaña: Todos los Años */}
             <TouchableOpacity
               style={[
                 styles.tabButton,
-                { backgroundColor: colors.surfaceSubtle },
-                filterTab === 'all' && {
-                  backgroundColor: colors.primaryLight,
-                  borderWidth: 1,
-                  borderColor: colors.primaryBorder,
-                },
+                filterTab === 'all'
+                  ? [
+                      styles.tabButtonActive,
+                      {
+                        backgroundColor: colors.primaryLight,
+                        borderColor: colors.primaryBorder,
+                      },
+                    ]
+                  : [
+                      styles.tabButtonInactive,
+                      {
+                        backgroundColor: colors.surfaceSubtle,
+                        borderColor: colors.border,
+                      },
+                    ],
               ]}
               onPress={() => setFilterTab('all')}
+              activeOpacity={0.8}
             >
-              <Text
-                style={[
-                  styles.tabButtonText,
-                  { color: colors.textSecondary },
-                  filterTab === 'all' && { color: colors.primary, fontWeight: '600' },
-                ]}
-              >
-                Todos los Años ({events.length})
-              </Text>
+              <View style={styles.tabContentRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <SculptedIcon
+                    name="calendar"
+                    size={13}
+                    variant="plain"
+                    color={filterTab === 'all' ? colors.primaryText : colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      {
+                        color: filterTab === 'all' ? colors.primaryText : colors.textSecondary,
+                        fontFamily: filterTab === 'all' ? Fonts.bold : Fonts.medium,
+                      },
+                    ]}
+                  >
+                    Todos los Años
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.tabBadge,
+                    {
+                      backgroundColor: filterTab === 'all' ? colors.primaryLight : colors.surfaceSubtle,
+                      borderColor: filterTab === 'all' ? colors.primaryBorder : 'transparent',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tabBadgeText,
+                      {
+                        color: filterTab === 'all' ? colors.primaryText : colors.textMuted,
+                        fontFamily: Fonts.bold,
+                      },
+                    ]}
+                  >
+                    {events.length}
+                  </Text>
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
 
-          {/* Buscador Neumórfico */}
+          {/* Buscador de Cristal con Cavidad Rehundida */}
           <View
             style={[
               styles.searchBox,
               {
-                backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                borderColor: isDark ? '#111317' : colors.border,
+                backgroundColor: colors.surfaceSubtle,
+                borderColor: colors.border,
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      boxShadow: isDark
+                        ? 'inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.04)'
+                        : 'inset 0 2px 4px rgba(31, 38, 135, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.6)',
+                    } as any)
+                  : {}),
               },
             ]}
           >
             <SculptedIcon name="search" size={14} variant="plain" color={colors.textMuted} />
             <TextInput
-              style={[styles.searchInput, { color: colors.textPrimary }]}
-              placeholder="Buscar por año o título..."
+              style={[styles.searchInput, { color: colors.textPrimary, fontFamily: Fonts.regular }]}
+              placeholder="Buscar año o título..."
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholderTextColor={colors.textMuted}
             />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Tarjeta informativa de Directorio Global */}
@@ -388,24 +728,119 @@ export default function HomeScreen() {
               contentStyle={styles.directoryCardPromoContent}
               onPress={() => setIsDirectoryModalOpen(true)}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <SculptedIcon name="users" size={14} variant="plain" color={colors.purple} />
-                <Text style={[styles.directoryCardPromoTitle, { color: colors.purple }]}>
-                  Directorio Frecuente
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+                <SculptedIcon
+                  name="users"
+                  size={14}
+                  containerSize={28}
+                  variant="sunken"
+                  accentColor={colors.purple}
+                  color={colors.purple}
+                />
+                <Text style={[styles.directoryCardPromoTitle, { color: colors.purple, fontFamily: Fonts.bold, flex: 1, flexWrap: 'wrap' }]}>
+                  Directorio Global de Subfamilias
                 </Text>
               </View>
-              <Text style={[styles.directoryCardPromoText, { color: colors.textSecondary }]}>
-                Reutiliza familias e invitados para creaciones rápidas de eventos anuales.
+              <Text style={[styles.directoryCardPromoText, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
+                Reutiliza familias e integrantes para crear eventos rápidamente.
               </Text>
-              <Text style={[styles.directoryCardPromoLink, { color: colors.purple }]}>
-                Gestionar familias →
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                <Text style={[styles.directoryCardPromoLink, { color: colors.purple, fontFamily: Fonts.semiBold }]}>
+                  Gestionar familias
+                </Text>
+                <SculptedIcon name="chevron-right" size={12} variant="plain" color={colors.purple} />
+              </View>
             </GlassCard>
           )}
         </View>
+      )}
 
-        {/* Lista de Eventos con GlassCard */}
+      {/* Área de Contenido Principal */}
         <View style={styles.contentArea}>
+          {/* Barra de Resumen Ejecutivo Global en Cristal */}
+          {events.length > 0 && (
+            <View
+              style={[
+                styles.executiveSummaryBar,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  ...(Platform.OS === 'web'
+                    ? ({
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        boxShadow: isDark
+                          ? '0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+                          : '0 8px 24px rgba(31, 38, 135, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                      } as any)
+                    : {
+                        shadowColor: isDark ? '#000000' : '#1F2687',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: isDark ? 0.35 : 0.08,
+                        shadowRadius: 8,
+                        elevation: 3,
+                      }),
+                },
+              ]}
+            >
+              <View style={styles.summaryItem}>
+                <View style={styles.summaryItemHeader}>
+                  <View style={[styles.pulseDot, { backgroundColor: colors.success }]} />
+                  <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                    Eventos Activos
+                  </Text>
+                </View>
+                <Text style={[styles.summaryValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                  {globalSummary.activeEventsCount} {globalSummary.activeEventsCount === 1 ? 'Evento' : 'Eventos'}
+                </Text>
+              </View>
+
+              <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+
+              <View style={styles.summaryItem}>
+                <View style={styles.summaryItemHeader}>
+                  <SculptedIcon name="receipt" size={12} variant="plain" color={colors.primary} />
+                  <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                    Gastos Acumulados
+                  </Text>
+                </View>
+                <Text style={[styles.summaryValue, { color: colors.primary, fontFamily: Fonts.bold }]}>
+                  {FormatCurrency(globalSummary.totalExpenses)}
+                </Text>
+              </View>
+
+              <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+
+              <View style={styles.summaryItem}>
+                <View style={styles.summaryItemHeader}>
+                  <SculptedIcon name="users" size={12} variant="plain" color={colors.purple} />
+                  <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                    Asistentes Totales
+                  </Text>
+                </View>
+                <Text style={[styles.summaryValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                  {globalSummary.totalParticipants} Asistentes
+                </Text>
+              </View>
+
+              <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+
+              <View style={styles.summaryItem}>
+                <View style={styles.summaryItemHeader}>
+                  <SculptedIcon name="family" size={12} variant="plain" color={colors.warning} />
+                  <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                    Subfamilias
+                  </Text>
+                </View>
+                <Text style={[styles.summaryValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                  {globalSummary.subFamiliesCount} Familias
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Grid de Tarjetas o Estado Vacío */}
           {filteredEvents.length === 0 ? (
             <View style={styles.emptyContainer}>
               <SculptedIcon
@@ -417,31 +852,46 @@ export default function HomeScreen() {
                 accentColor={colors.primary}
                 color={colors.primary}
               />
-              <Text style={[styles.emptyTitle, { color: colors.textPrimary, marginTop: 14 }]}>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary, fontFamily: Fonts.bold, marginTop: 14 }]}>
                 No hay eventos en esta sección
               </Text>
-              <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>
+              <Text style={[styles.emptyDescription, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
                 {searchQuery
                   ? 'No se encontraron eventos que coincidan con la búsqueda.'
-                  : 'Crea tu primer evento anual para comenzar a gestionar gastos.'}
+                  : 'Crea tu primer evento anual para comenzar a gestionar gastos y prorrateo.'}
               </Text>
               <TouchableOpacity
                 style={[
-                  styles.primaryButton,
+                  styles.primaryHeaderButton,
                   {
                     marginTop: 18,
                     backgroundColor: colors.primary,
-                    ...(isDark ? getNeonGlow(colors.neonCyan, 'medium') : {}),
+                    borderWidth: 0,
+                    ...(Platform.OS === 'web'
+                      ? ({
+                          boxShadow: isDark
+                            ? '-2px -2px 6px rgba(255, 255, 255, 0.02), 3px 4px 10px rgba(0, 0, 0, 0.45)'
+                            : '-3px -3px 7px #FFFFFF, 3px 4px 10px rgba(21, 128, 61, 0.35)',
+                        } as any)
+                      : {
+                          shadowColor: '#000000',
+                          shadowOffset: { width: 0, height: 3 },
+                          shadowOpacity: 0.3,
+                          shadowRadius: 6,
+                          elevation: 3,
+                        }),
                   },
                 ]}
                 onPress={() => {
                   setNewYear(new Date().getFullYear().toString());
                   setNewTitle(`Vacaciones ${new Date().getFullYear()}`);
+                  setSelectedDirectoryContacts([]);
                   setIsModalOpen(true);
                 }}
+                activeOpacity={0.85}
               >
-                <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
-                <Text style={[styles.primaryButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>
+                <SculptedIcon name="plus" size={15} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
+                <Text style={[styles.primaryHeaderButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF', fontFamily: Fonts.bold }]}>
                   Crear Nuevo Evento
                 </Text>
               </TouchableOpacity>
@@ -468,25 +918,48 @@ export default function HomeScreen() {
                 return (
                   <GlassCard
                     key={event.id}
-                    variant={event.isArchived ? 'subtle' : isDark ? 'cyan' : 'lime'}
-                    glow={!event.isArchived && isDark}
                     style={[styles.eventCard, isTablet && styles.eventCardTablet]}
                     contentStyle={styles.eventCardContent}
                   >
-                    {/* Header de la tarjeta */}
+                    {/* Header de la tarjeta con Relieve */}
                     <View style={styles.cardHeader}>
                       <View style={styles.cardHeaderLeft}>
-                        <View style={[styles.yearBadge, { backgroundColor: colors.surfaceSubtle }]}>
-                          <Text style={[styles.yearBadgeText, { color: colors.textPrimary }]}>{event.year}</Text>
+                        {/* Insignia de Año en Cristal */}
+                        <View
+                          style={[
+                            styles.yearBadge,
+                            {
+                              backgroundColor: colors.surfaceSubtle,
+                              borderColor: colors.border,
+                              ...(Platform.OS === 'web'
+                                ? ({
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    boxShadow: isDark
+                                      ? 'inset 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.04)'
+                                      : 'inset 0 1px 2px rgba(31, 38, 135, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.6)',
+                                  } as any)
+                                : {}),
+                            },
+                          ]}
+                        >
+                          <Text style={[styles.yearBadgeText, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                            {event.year}
+                          </Text>
                         </View>
+
+                        {/* Estado Activo / Archivado */}
                         {event.isArchived ? (
                           <View
                             style={[
                               styles.archivedBadge,
-                              { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                              {
+                                backgroundColor: isDark ? 'rgba(107, 114, 128, 0.15)' : 'rgba(107, 114, 128, 0.10)',
+                                borderColor: isDark ? 'rgba(107, 114, 128, 0.3)' : 'rgba(107, 114, 128, 0.25)',
+                              },
                             ]}
                           >
-                            <Text style={[styles.archivedBadgeText, { color: colors.textMuted }]}>
+                            <Text style={[styles.archivedBadgeText, { color: colors.textMuted, fontFamily: Fonts.semiBold }]}>
                               Archivado
                             </Text>
                           </View>
@@ -494,25 +967,31 @@ export default function HomeScreen() {
                           <View
                             style={[
                               styles.activeBadge,
-                              { backgroundColor: colors.successLight, borderColor: colors.successBorder },
+                              {
+                                backgroundColor: isDark ? 'rgba(0, 230, 118, 0.12)' : 'rgba(22, 163, 74, 0.12)',
+                                borderColor: isDark ? 'rgba(0, 230, 118, 0.35)' : 'rgba(22, 163, 74, 0.30)',
+                              },
                             ]}
                           >
-                            <Text style={[styles.activeBadgeText, { color: colors.successText }]}>
+                            <View style={[styles.activeDot, { backgroundColor: colors.success }]} />
+                            <Text style={[styles.activeBadgeText, { color: colors.successText, fontFamily: Fonts.semiBold }]}>
                               Activo
                             </Text>
                           </View>
                         )}
+
+                        {/* Badges de simulación */}
                         {isReembolsoSim && (
                           <View
                             style={[
                               styles.simBadgeReembolso,
                               {
-                                backgroundColor: isDark ? 'rgba(251, 191, 36, 0.15)' : '#FEF3C7',
-                                borderColor: isDark ? '#F59E0B' : '#FDE68A',
+                                backgroundColor: isDark ? 'rgba(255, 171, 0, 0.15)' : 'rgba(217, 119, 6, 0.12)',
+                                borderColor: isDark ? colors.warning : 'rgba(217, 119, 6, 0.35)',
                               },
                             ]}
                           >
-                            <Text style={[styles.simBadgeText, { color: isDark ? '#FDE68A' : '#92400E' }]}>
+                            <Text style={[styles.simBadgeText, { color: isDark ? colors.neonAmber : '#92400E', fontFamily: Fonts.semiBold }]}>
                               Reembolsos
                             </Text>
                           </View>
@@ -522,23 +1001,24 @@ export default function HomeScreen() {
                             style={[
                               styles.simBadgeCuotas,
                               {
-                                backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : '#EFF6FF',
-                                borderColor: isDark ? '#38BDF8' : '#BFDBFE',
+                                backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(2, 132, 199, 0.12)',
+                                borderColor: isDark ? colors.primary : 'rgba(2, 132, 199, 0.35)',
                               },
                             ]}
                           >
-                            <Text style={[styles.simBadgeText, { color: isDark ? '#38BDF8' : '#1E40AF' }]}>
+                            <Text style={[styles.simBadgeText, { color: isDark ? colors.primary : '#1E40AF', fontFamily: Fonts.semiBold }]}>
                               Cuotas Fijas
                             </Text>
                           </View>
                         )}
                       </View>
 
-                      {/* Acciones de tarjeta con iconos esculpidos */}
+                      {/* Botones de acción esculpidos en la tarjeta */}
                       <View style={styles.cardActions}>
                         <TouchableOpacity
                           onPress={() => handleToggleArchive(event)}
                           accessibilityLabel={event.isArchived ? 'Desarchivar' : 'Archivar'}
+                          activeOpacity={0.7}
                         >
                           <SculptedIcon
                             name={event.isArchived ? 'unarchive' : 'archive'}
@@ -551,6 +1031,7 @@ export default function HomeScreen() {
                         <TouchableOpacity
                           onPress={() => handleDelete(event)}
                           accessibilityLabel="Eliminar evento"
+                          activeOpacity={0.7}
                         >
                           <SculptedIcon
                             name="trash"
@@ -565,16 +1046,44 @@ export default function HomeScreen() {
                       </View>
                     </View>
 
-                    {/* Título */}
-                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {/* Título Principal del Evento */}
+                    <Text
+                      style={[
+                        styles.cardTitle,
+                        { color: colors.textPrimary, fontFamily: Fonts.bold },
+                      ]}
+                      numberOfLines={1}
+                    >
                       {event.title}
                     </Text>
 
-                    {/* Métricas clave */}
-                    <View style={[styles.metricsRow, { backgroundColor: colors.surfaceSubtle }]}>
+                    {/* Bandeja de Métricas de Cristal */}
+                    <View
+                      style={[
+                        styles.metricsTray,
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          borderColor: colors.border,
+                          ...(Platform.OS === 'web'
+                            ? ({
+                                backdropFilter: 'blur(8px)',
+                                WebkitBackdropFilter: 'blur(8px)',
+                                boxShadow: isDark
+                                  ? 'inset 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.04)'
+                                  : 'inset 0 1px 3px rgba(31, 38, 135, 0.05), inset 0 -1px 0 rgba(255, 255, 255, 0.6)',
+                              } as any)
+                            : {}),
+                        },
+                      ]}
+                    >
                       <View style={styles.metricItem}>
-                        <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Total Gastos</Text>
-                        <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
+                        <View style={styles.metricHeaderRow}>
+                          <SculptedIcon name="money" size={11} variant="plain" color={colors.textMuted} />
+                          <Text style={[styles.metricLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                            Total Gastos
+                          </Text>
+                        </View>
+                        <Text style={[styles.metricValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
                           {FormatCurrency(totals.totalExpenses)}
                         </Text>
                       </View>
@@ -582,8 +1091,13 @@ export default function HomeScreen() {
                       <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
 
                       <View style={styles.metricItem}>
-                        <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Asistentes</Text>
-                        <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
+                        <View style={styles.metricHeaderRow}>
+                          <SculptedIcon name="user" size={11} variant="plain" color={colors.textMuted} />
+                          <Text style={[styles.metricLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                            Asistentes
+                          </Text>
+                        </View>
+                        <Text style={[styles.metricValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
                           {totals.totalAttendingCount}/{event.participants.length}
                         </Text>
                       </View>
@@ -591,62 +1105,141 @@ export default function HomeScreen() {
                       <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
 
                       <View style={styles.metricItem}>
-                        <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Subfamilias</Text>
-                        <Text style={[styles.metricValue, { color: colors.textPrimary }]}>
+                        <View style={styles.metricHeaderRow}>
+                          <SculptedIcon name="family" size={11} variant="plain" color={colors.textMuted} />
+                          <Text style={[styles.metricLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                            Familias
+                          </Text>
+                        </View>
+                        <Text style={[styles.metricValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
                           {totals.subFamilies.length}
                         </Text>
                       </View>
                     </View>
 
-                    {/* Botón de acceso al Dashboard */}
+                    {/* Botón de Entrada al Dashboard */}
                     <TouchableOpacity
                       style={[
                         styles.openButton,
                         {
                           backgroundColor: colors.primaryLight,
                           borderColor: colors.primaryBorder,
-                          ...(isDark ? getNeonGlow(colors.neonCyan, 'low') : {}),
+                          borderWidth: 1,
                         },
                       ]}
                       onPress={() => router.push(`/event/${event.id}`)}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.openButtonText, { color: colors.primaryText }]}>Abrir Dashboard</Text>
+                      <Text style={[styles.openButtonText, { color: colors.primaryText, fontFamily: Fonts.bold }]}>
+                        Abrir Dashboard
+                      </Text>
                       <SculptedIcon name="chevron-right" size={14} variant="plain" color={colors.primaryText} />
                     </TouchableOpacity>
                   </GlassCard>
                 );
               })}
+
+              {/* Tarjeta Complementaria para Crear Nuevo Evento en el Grid */}
+              {filterTab !== 'archived' && (
+                <TouchableOpacity
+                  style={[
+                    styles.createEventCardCompanion,
+                    isTablet && styles.eventCardTablet,
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      borderColor: colors.border,
+                      borderWidth: 1.5,
+                    },
+                  ]}
+                  onPress={() => {
+                    setNewYear(new Date().getFullYear().toString());
+                    setNewTitle(`Vacaciones ${new Date().getFullYear()}`);
+                    setSelectedDirectoryContacts([]);
+                    setIsModalOpen(true);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.createEventCardInner}>
+                    <SculptedIcon
+                      name="plus"
+                      size={24}
+                      containerSize={52}
+                      variant="sunken"
+                      glow={false}
+                      accentColor={colors.primary}
+                      color={colors.primary}
+                    />
+                    <Text style={[styles.createEventCardTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                      Crear Nuevo Evento
+                    </Text>
+                    <Text style={[styles.createEventCardSubtitle, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
+                      Registrar finanzas para un nuevo año
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
             </ScrollView>
           )}
         </View>
       </View>
 
       {/* Modal para Crear Evento */}
-      <Modal visible={isModalOpen} transparent animationType="fade">
-        <View style={styles.modalBackdrop}>
+      <Modal
+        visible={isModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsModalOpen(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={[
+            styles.modalBackdrop,
+            {
+              backgroundColor: isDark ? 'rgba(20, 18, 16, 0.75)' : 'rgba(20, 18, 16, 0.40)',
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.modalBackdropTouch}
+            activeOpacity={1}
+            onPress={() => setIsModalOpen(false)}
+          />
           <GlassCard
-            variant="cyan"
-            glow={isDark}
             style={[styles.modalCard, isTablet && styles.modalCardTablet]}
             contentStyle={styles.modalCardContent}
           >
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Crear Nuevo Evento Anual</Text>
-              <TouchableOpacity onPress={() => setIsModalOpen(false)}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <SculptedIcon
+                  name="calendar"
+                  size={16}
+                  containerSize={36}
+                  variant="sunken"
+                  glow={isDark}
+                  accentColor={colors.primary}
+                  color={colors.primary}
+                />
+                <Text style={[styles.modalTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                  Crear Nuevo Evento Anual
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setIsModalOpen(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <SculptedIcon name="close" size={16} variant="plain" color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.textPrimary }]}>Año del Evento</Text>
+              <Text style={[styles.formLabel, { color: colors.textPrimary, fontFamily: Fonts.semiBold }]}>
+                Año del Evento
+              </Text>
               <TextInput
                 style={[
                   styles.formInput,
                   {
-                    backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                    borderColor: isDark ? '#111317' : colors.border,
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
                     color: colors.textPrimary,
+                    fontFamily: Fonts.regular,
                   },
                 ]}
                 keyboardType="numeric"
@@ -661,14 +1254,17 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.textPrimary }]}>Título o Nombre del Evento</Text>
+              <Text style={[styles.formLabel, { color: colors.textPrimary, fontFamily: Fonts.semiBold }]}>
+                Título o Nombre del Evento
+              </Text>
               <TextInput
                 style={[
                   styles.formInput,
                   {
-                    backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                    borderColor: isDark ? '#111317' : colors.border,
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
                     color: colors.textPrimary,
+                    fontFamily: Fonts.regular,
                   },
                 ]}
                 value={newTitle}
@@ -679,14 +1275,17 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.textPrimary }]}>Número de Días del Evento</Text>
+              <Text style={[styles.formLabel, { color: colors.textPrimary, fontFamily: Fonts.semiBold }]}>
+                Número de Días del Evento
+              </Text>
               <TextInput
                 style={[
                   styles.formInput,
                   {
-                    backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                    borderColor: isDark ? '#111317' : colors.border,
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
                     color: colors.textPrimary,
+                    fontFamily: Fonts.regular,
                   },
                 ]}
                 keyboardType="numeric"
@@ -708,7 +1307,7 @@ export default function HomeScreen() {
               ]}
             >
               <View style={styles.directoryPickerHeader}>
-                <Text style={[styles.formLabel, { color: colors.textPrimary, marginBottom: 0 }]}>
+                <Text style={[styles.formLabel, { color: colors.textPrimary, marginBottom: 0, fontFamily: Fonts.semiBold }]}>
                   Participantes Iniciales
                 </Text>
                 <TouchableOpacity
@@ -716,7 +1315,7 @@ export default function HomeScreen() {
                   onPress={() => setIsPickDirectoryForNewEventOpen(true)}
                 >
                   <SculptedIcon name="users" size={13} variant="plain" color={colors.purple} />
-                  <Text style={[styles.directoryPickerLink, { color: colors.purple }]}>
+                  <Text style={[styles.directoryPickerLink, { color: colors.purple, fontFamily: Fonts.semiBold }]}>
                     {selectedDirectoryContacts.length > 0
                       ? 'Cambiar selección'
                       : 'Seleccionar del Directorio'}
@@ -743,14 +1342,14 @@ export default function HomeScreen() {
                         variant="plain"
                         color={colors.purple}
                       />
-                      <Text style={[styles.selectedChipText, { color: colors.purple }]}>
+                      <Text style={[styles.selectedChipText, { color: colors.purple, fontFamily: Fonts.medium }]}>
                         {c.name} ({c.subFamily || c.familyGroup})
                       </Text>
                     </View>
                   ))}
                 </View>
               ) : (
-                <Text style={[styles.formHelp, { color: colors.textSecondary }]}>
+                <Text style={[styles.formHelp, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
                   Importa integrantes de subfamilias desde el Directorio Global en un solo paso.
                 </Text>
               )}
@@ -758,31 +1357,39 @@ export default function HomeScreen() {
 
             <View style={styles.modalFooter}>
               <TouchableOpacity
-                style={[styles.secondaryButton, { backgroundColor: colors.surfaceSubtle }]}
+                style={[
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
+                  },
+                ]}
                 onPress={() => setIsModalOpen(false)}
                 disabled={creating}
               >
-                <Text style={[styles.secondaryButtonText, { color: colors.textSecondary }]}>Cancelar</Text>
+                <Text style={[styles.secondaryButtonText, { color: colors.textSecondary, fontFamily: Fonts.medium }]}>
+                  Cancelar
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
-                  styles.primaryButton,
+                  styles.primaryHeaderButton,
                   {
                     backgroundColor: colors.primary,
-                    ...(isDark ? getNeonGlow(colors.neonCyan, 'medium') : {}),
+                    borderWidth: 0,
                   },
                 ]}
                 onPress={handleCreateEvent}
                 disabled={creating}
               >
-                <Text style={[styles.primaryButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>
+                <Text style={[styles.primaryHeaderButtonText, { color: isDark ? '#141210' : '#FFFFFF', fontFamily: Fonts.bold }]}>
                   {creating ? 'Creando...' : 'Crear y Abrir'}
                 </Text>
               </TouchableOpacity>
             </View>
           </GlassCard>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modales de Directorio */}
@@ -801,6 +1408,19 @@ export default function HomeScreen() {
           setIsPickDirectoryForNewEventOpen(false);
         }}
       />
+
+      {/* Modal de confirmación para eliminar evento */}
+      <ConfirmModal
+        visible={confirmConfig.visible}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        variant={confirmConfig.variant}
+        icon={confirmConfig.icon}
+        loading={confirmLoading}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig((prev) => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }
@@ -813,10 +1433,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 28,
-    paddingTop: Platform.OS === 'ios' ? 54 : 44,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
+    marginHorizontal: 14,
+    marginTop: Platform.OS === 'ios' ? 48 : 12,
+    marginBottom: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: Radii.xl,
+    borderWidth: 1,
+    zIndex: 10,
+  },
+  headerTablet: {
+    marginHorizontal: 24,
+    marginTop: 18,
+    marginBottom: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 24,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -828,31 +1460,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  themeIconOnlyButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  themeIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: Radii.md,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  themeToggleIcon: {
-    fontSize: 20,
-  },
-  logoBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    fontSize: 24,
   },
   appTitle: {
     fontSize: 22,
-    fontWeight: '600',
     letterSpacing: -0.5,
   },
   appSubtitle: {
@@ -862,24 +1479,26 @@ const styles = StyleSheet.create({
   directoryHeaderButton: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: Radii.md,
     borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   directoryHeaderButtonText: {
     fontSize: 13,
-    fontWeight: '500',
   },
-  primaryButton: {
+  primaryHeaderButton: {
     paddingHorizontal: 18,
     paddingVertical: 11,
-    borderRadius: 10,
+    borderRadius: Radii.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
   },
-  primaryButtonText: {
+  primaryHeaderButtonText: {
     fontSize: 14,
-    fontWeight: '500',
   },
   mainLayout: {
     flex: 1,
@@ -888,83 +1507,184 @@ const styles = StyleSheet.create({
   mainLayoutTablet: {
     flexDirection: 'row',
   },
+  mobileFilterBar: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginBottom: 4,
+  },
+  mobileFilterTriggerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Radii.lg,
+    borderWidth: 1,
+  },
+  mobileFilterTriggerText: {
+    fontSize: 13,
+  },
+  mobileFilterBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radii.sm,
+  },
+  mobileFilterBadgeText: {
+    fontSize: 11,
+  },
   sidebar: {
-    padding: 20,
+    padding: 24,
     borderBottomWidth: 1,
   },
+  sidebarMobileExpanded: {
+    marginHorizontal: 14,
+    marginBottom: 12,
+    borderRadius: Radii.xl,
+    borderWidth: 1,
+    padding: 16,
+  },
   sidebarTablet: {
-    width: '25%',
-    minWidth: 240,
-    maxWidth: 320,
+    width: 320,
+    minWidth: 300,
+    maxWidth: 360,
+    flexShrink: 0,
     borderBottomWidth: 0,
     borderRightWidth: 1,
     padding: 24,
   },
+  sidebarHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
   sectionHeading: {
     fontSize: 12,
-    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 14,
+    letterSpacing: 1.2,
   },
   tabsContainer: {
-    gap: 8,
-    marginBottom: 20,
+    gap: 12,
+    marginBottom: 24,
   },
   tabButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: Radii.lg,
+    borderWidth: 1,
+    minHeight: 52,
+    justifyContent: 'center',
+  },
+  tabButtonActive: {},
+  tabButtonInactive: {},
+  tabContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flex: 1,
+    gap: 10,
+  },
+  tabStatusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
   },
   tabButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    lineHeight: 20,
+    flexShrink: 1,
+  },
+  tabBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
+    flexShrink: 0,
+  },
+  tabBadgeText: {
+    fontSize: 12,
   },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: Radii.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 50,
     borderWidth: 1,
-    marginBottom: 20,
-    ...Platform.select({
-      web: {
-        boxShadow: 'inset 2px 2px 5px rgba(0, 0, 0, 0.45)',
-      } as any,
-    }),
-  },
-  searchIcon: {
-    fontSize: 14,
-    marginRight: 8,
+    marginBottom: 24,
+    gap: 10,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
+    paddingVertical: 2,
   },
   directoryCardPromo: {
     marginTop: 'auto',
+    width: '100%',
   },
   directoryCardPromoContent: {
-    padding: 16,
-    gap: 6,
+    padding: 20,
+    gap: 10,
+    minHeight: 140,
+    justifyContent: 'center',
   },
   directoryCardPromoTitle: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    lineHeight: 20,
+    flexShrink: 1,
   },
   directoryCardPromoText: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 19,
+    flexShrink: 1,
   },
   directoryCardPromoLink: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 4,
+    fontSize: 13,
   },
   contentArea: {
     flex: 1,
     padding: 24,
+  },
+  executiveSummaryBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: Radii.lg,
+    borderWidth: 1,
+    marginBottom: 22,
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  summaryItem: {
+    flex: 1,
+    minWidth: 110,
+  },
+  summaryItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  pulseDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  summaryValue: {
+    fontSize: 15,
+  },
+  summaryDivider: {
+    width: 1,
+    height: 30,
   },
   emptyContainer: {
     flex: 1,
@@ -972,13 +1692,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 40,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '600',
     marginBottom: 8,
   },
   emptyDescription: {
@@ -991,6 +1706,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 20,
+    paddingBottom: 40,
   },
   eventCard: {
     width: '100%',
@@ -1018,20 +1734,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: Radii.sm,
+    borderWidth: 1,
   },
   yearBadgeText: {
     fontSize: 12,
-    fontWeight: '600',
   },
   activeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: Radii.sm,
     borderWidth: 1,
   },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   activeBadgeText: {
     fontSize: 11,
-    fontWeight: '500',
   },
   archivedBadge: {
     paddingHorizontal: 8,
@@ -1041,7 +1764,6 @@ const styles = StyleSheet.create({
   },
   archivedBadgeText: {
     fontSize: 11,
-    fontWeight: '500',
   },
   simBadgeReembolso: {
     paddingHorizontal: 8,
@@ -1057,49 +1779,42 @@ const styles = StyleSheet.create({
   },
   simBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
   },
   cardActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  iconButton: {
-    width: 34,
-    height: 34,
-    borderRadius: Radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconButtonText: {
-    fontSize: 14,
-  },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 19,
     marginBottom: 16,
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
   },
-  metricsRow: {
+  metricsTray: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderRadius: Radii.md,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     marginBottom: 16,
+    borderWidth: 1,
   },
   metricItem: {
+    flex: 1,
     alignItems: 'center',
+  },
+  metricHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 3,
   },
   metricLabel: {
     fontSize: 11,
-    marginBottom: 4,
-    fontWeight: '400',
   },
   metricValue: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 14,
   },
   metricDivider: {
     width: 1,
@@ -1116,18 +1831,43 @@ const styles = StyleSheet.create({
   },
   openButtonText: {
     fontSize: 13,
-    fontWeight: '500',
   },
-  openButtonArrow: {
-    fontSize: 14,
-    fontWeight: '500',
+  createEventCardCompanion: {
+    borderRadius: Radii.lg,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 220,
+    width: '100%',
+    padding: 24,
+  },
+  createEventCardInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  createEventCardTitle: {
+    fontSize: 16,
+    marginTop: 4,
+  },
+  createEventCardSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(11, 15, 25, 0.75)',
+    backgroundColor: 'rgba(11, 15, 25, 0.78)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  modalBackdropTouch: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   modalCard: {
     width: '100%',
@@ -1147,23 +1887,17 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-  },
-  modalCloseText: {
-    fontSize: 18,
-    padding: 4,
   },
   formGroup: {
     marginBottom: 16,
   },
   formLabel: {
     fontSize: 13,
-    fontWeight: '500',
     marginBottom: 6,
   },
   formInput: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: Radii.md,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
@@ -1174,7 +1908,7 @@ const styles = StyleSheet.create({
   },
   directoryPickerSection: {
     padding: 14,
-    borderRadius: 12,
+    borderRadius: Radii.md,
     borderWidth: 1,
     marginBottom: 16,
   },
@@ -1185,7 +1919,6 @@ const styles = StyleSheet.create({
   },
   directoryPickerLink: {
     fontSize: 12,
-    fontWeight: '500',
   },
   selectedDirectoryChips: {
     flexDirection: 'row',
@@ -1194,6 +1927,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   selectedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -1201,7 +1937,6 @@ const styles = StyleSheet.create({
   },
   selectedChipText: {
     fontSize: 11,
-    fontWeight: '500',
   },
   modalFooter: {
     flexDirection: 'row',
@@ -1212,13 +1947,13 @@ const styles = StyleSheet.create({
   secondaryButton: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: Radii.md,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
     fontSize: 14,
-    fontWeight: '500',
   },
   centeredLoading: {
     flex: 1,
@@ -1229,7 +1964,6 @@ const styles = StyleSheet.create({
   },
   loadingTitle: {
     fontSize: 22,
-    fontWeight: '600',
     marginTop: 8,
   },
   loadingSubtitle: {
@@ -1237,4 +1971,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
 

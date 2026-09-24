@@ -35,11 +35,61 @@ interface QuickExpenseModalProps {
 }
 
 const CATEGORIES = [
-  { id: 'Comida', label: 'Comida', icon: 'cart' as const },
-  { id: 'Hospedaje', label: 'Hospedaje', icon: 'bed' as const },
-  { id: 'Transporte', label: 'Transporte', icon: 'car' as const },
-  { id: 'Bebidas', label: 'Bebidas', icon: 'food' as const },
-  { id: 'Varios', label: 'Varios', icon: 'receipt' as const },
+  {
+    id: 'Comida',
+    label: 'Comida',
+    icon: 'cart' as const,
+    colorLight: '#D97706',
+    colorDark: '#FBBF24',
+    bgLight: 'rgba(217, 119, 6, 0.12)',
+    bgDark: 'rgba(251, 191, 36, 0.16)',
+    borderLight: 'rgba(217, 119, 6, 0.40)',
+    borderDark: 'rgba(251, 191, 36, 0.45)',
+  },
+  {
+    id: 'Hospedaje',
+    label: 'Hospedaje',
+    icon: 'bed' as const,
+    colorLight: '#7C3AED',
+    colorDark: '#C084FC',
+    bgLight: 'rgba(124, 58, 237, 0.12)',
+    bgDark: 'rgba(192, 132, 252, 0.16)',
+    borderLight: 'rgba(124, 58, 237, 0.40)',
+    borderDark: 'rgba(192, 132, 252, 0.45)',
+  },
+  {
+    id: 'Transporte',
+    label: 'Transporte',
+    icon: 'car' as const,
+    colorLight: '#0284C7',
+    colorDark: '#38BDF8',
+    bgLight: 'rgba(2, 132, 199, 0.12)',
+    bgDark: 'rgba(56, 189, 248, 0.16)',
+    borderLight: 'rgba(2, 132, 199, 0.40)',
+    borderDark: 'rgba(56, 189, 248, 0.45)',
+  },
+  {
+    id: 'Bebidas',
+    label: 'Bebidas',
+    icon: 'food' as const,
+    colorLight: '#E11D48',
+    colorDark: '#FB7185',
+    bgLight: 'rgba(225, 29, 72, 0.12)',
+    bgDark: 'rgba(251, 113, 133, 0.16)',
+    borderLight: 'rgba(225, 29, 72, 0.40)',
+    borderDark: 'rgba(251, 113, 133, 0.45)',
+  },
+  {
+    id: 'Varios',
+    label: 'Varios',
+    icon: 'receipt' as const,
+    colorLight: '#059669',
+    colorDark: '#34D399',
+    bgLight: 'rgba(5, 150, 105, 0.12)',
+    bgDark: 'rgba(52, 211, 153, 0.16)',
+    borderLight: 'rgba(5, 150, 105, 0.40)',
+    borderDark: 'rgba(52, 211, 153, 0.45)',
+  },
 ];
 
 export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
@@ -220,7 +270,18 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.backdrop}
+        style={[
+          styles.backdrop,
+          {
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(15, 23, 42, 0.52)',
+            ...(Platform.OS === 'web'
+              ? ({
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                } as any)
+              : {}),
+          },
+        ]}
       >
         <TouchableOpacity
           style={styles.backdropTouchable}
@@ -232,21 +293,45 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
           style={[
             styles.bottomSheet,
             isTablet && styles.bottomSheetTablet,
-            { backgroundColor: colors.surface },
+            {
+              backgroundColor: isDark ? 'rgba(19, 25, 36, 0.92)' : 'rgba(255, 255, 255, 0.95)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.95)',
+              borderWidth: 1.5,
+              ...(Platform.OS === 'web'
+                ? ({
+                    backdropFilter: 'blur(36px) saturate(200%)',
+                    WebkitBackdropFilter: 'blur(36px) saturate(200%)',
+                    boxShadow: isDark
+                      ? '0 -12px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                      : '0 -12px 48px rgba(15, 23, 42, 0.20), 0 0 0 1px rgba(226, 232, 240, 0.90), inset 0 1px 0 rgba(255, 255, 255, 1)',
+                  } as any)
+                : {}),
+            },
           ]}
         >
           {/* Barra superior del BottomSheet */}
           <View style={styles.sheetHeader}>
-            <View style={[styles.dragHandle, { backgroundColor: colors.border }]} />
+            <View style={[styles.dragHandle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(148, 163, 184, 0.5)' }]} />
             <View style={styles.headerRow}>
               <View>
-                <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>Captura Rápida de Gasto</Text>
+                <Text style={[styles.sheetTitle, { color: colors.textPrimary, fontWeight: '700' }]}>Captura Rápida de Gasto</Text>
                 <Text style={[styles.sheetSub, { color: colors.textSecondary }]}>
                   Registra compras manuales o con escáner de IA
                 </Text>
               </View>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                <SculptedIcon name="close" size={16} variant="plain" color={colors.textMuted} />
+              <TouchableOpacity
+                onPress={onClose}
+                style={[
+                  styles.closeBtn,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(241, 245, 249, 0.90)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.90)',
+                    borderWidth: 1,
+                    borderRadius: 16,
+                  },
+                ]}
+              >
+                <SculptedIcon name="close" size={14} variant="plain" color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -257,13 +342,13 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
               style={[
                 styles.scanTicketButton,
                 {
-                  backgroundColor: isDark ? 'rgba(0, 229, 255, 0.12)' : '#EFF6FF',
-                  borderColor: isDark ? colors.neonCyan : '#93C5FD',
+                  backgroundColor: isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(2, 132, 199, 0.08)',
+                  borderColor: isDark ? colors.neonCyan : colors.primary,
+                  borderWidth: 1.5,
                 },
                 isDark ? getNeonGlow(colors.neonCyan, 'low') : {},
                 isScanning && {
-                  backgroundColor: isDark ? 'rgba(0, 229, 255, 0.2)' : '#DBEAFE',
-                  borderColor: colors.primary,
+                  backgroundColor: isDark ? 'rgba(0, 240, 255, 0.22)' : 'rgba(2, 132, 199, 0.14)',
                 },
               ]}
               onPress={handleScanTicket}
@@ -273,23 +358,32 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
               {isScanning ? (
                 <View style={styles.scanningLoaderRow}>
                   <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={[styles.scanTicketButtonTextActive, { color: colors.primary }]}>
+                  <Text style={[styles.scanTicketButtonTextActive, { color: colors.primary, fontWeight: '700' }]}>
                     Analizando ticket con IA... (extrayendo monto y concepto)
                   </Text>
                 </View>
               ) : (
                 <View style={styles.scanButtonContent}>
-                  <SculptedIcon name="receipt" size={20} variant="plain" color={isDark ? colors.neonCyan : '#1D4ED8'} />
+                  <View
+                    style={[
+                      styles.scanIconCircle,
+                      {
+                        backgroundColor: isDark ? 'rgba(0, 240, 255, 0.20)' : 'rgba(2, 132, 199, 0.14)',
+                      },
+                    ]}
+                  >
+                    <SculptedIcon name="receipt" size={18} variant="plain" color={colors.primary} />
+                  </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.scanTicketTitle, { color: isDark ? colors.neonCyan : '#1D4ED8' }]}>
+                    <Text style={[styles.scanTicketTitle, { color: colors.primary, fontWeight: '700' }]}>
                       Escanear Ticket con IA
                     </Text>
-                    <Text style={[styles.scanTicketSub, { color: isDark ? colors.textSecondary : '#3B82F6' }]}>
+                    <Text style={[styles.scanTicketSub, { color: colors.textSecondary }]}>
                       Toma una foto para autocompletar monto y concepto
                     </Text>
                   </View>
-                  <View style={[styles.scanBadge, { backgroundColor: isDark ? colors.primary : '#2563EB' }]}>
-                    <Text style={styles.scanBadgeText}>NUEVO</Text>
+                  <View style={[styles.scanBadge, { backgroundColor: colors.primary }]}>
+                    <Text style={[styles.scanBadgeText, { color: isDark ? '#0D1117' : '#FFFFFF', fontWeight: '800' }]}>IA</Text>
                   </View>
                 </View>
               )}
@@ -306,7 +400,7 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                   },
                 ]}
               >
-                <Text style={[styles.aiSuccessText, { color: colors.successText }]}>{aiSuccessMessage}</Text>
+                <Text style={[styles.aiSuccessText, { color: colors.successText, fontWeight: '700' }]}>{aiSuccessMessage}</Text>
               </View>
             )}
 
@@ -316,15 +410,16 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                 style={[
                   styles.scannedPreviewRow,
                   {
-                    backgroundColor: colors.surfaceSubtle,
-                    borderColor: colors.border,
+                    backgroundColor: isDark ? 'rgba(13, 17, 23, 0.70)' : 'rgba(241, 245, 249, 0.90)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.95)',
+                    borderWidth: 1,
                   },
                 ]}
               >
                 <Image source={{ uri: scannedImageUri }} style={styles.scannedThumbnail} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.scannedLabel, { color: colors.textMuted }]}>Ticket adjuntado:</Text>
-                  <Text style={[styles.scannedSub, { color: colors.textPrimary }]} numberOfLines={1}>
+                  <Text style={[styles.scannedSub, { color: colors.textPrimary, fontWeight: '700' }]} numberOfLines={1}>
                     {title || 'Comprobante escaneado'}
                   </Text>
                 </View>
@@ -335,7 +430,7 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                   }}
                   style={styles.removeImageBtn}
                 >
-                  <Text style={[styles.removeImageText, { color: colors.dangerText }]}>✕ Quitar</Text>
+                  <Text style={[styles.removeImageText, { color: colors.dangerText, fontWeight: '700' }]}>✕ Quitar</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -345,14 +440,15 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
               style={[
                 styles.giantAmountContainer,
                 {
-                  backgroundColor: colors.surfaceSubtle,
-                  borderColor: isDark ? colors.border : colors.primaryLight,
+                  backgroundColor: isDark ? 'rgba(13, 17, 23, 0.75)' : 'rgba(241, 245, 249, 0.95)',
+                  borderColor: isDark ? 'rgba(0, 240, 255, 0.35)' : 'rgba(203, 213, 225, 0.95)',
+                  borderWidth: 1.5,
                 },
               ]}
             >
-              <Text style={[styles.currencySymbol, { color: colors.primary }]}>$</Text>
+              <Text style={[styles.currencySymbol, { color: isDark ? colors.neonCyan : colors.primary, fontWeight: '700' }]}>$</Text>
               <TextInput
-                style={[styles.giantAmountInput, { color: colors.textPrimary }]}
+                style={[styles.giantAmountInput, { color: colors.textPrimary, fontWeight: '800' }]}
                 placeholder="0.00"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="decimal-pad"
@@ -364,13 +460,14 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
 
             {/* 2. CONCEPTO O TÍTULO */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Concepto / ¿Qué se compró?</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontWeight: '700' }]}>Concepto / ¿Qué se compró?</Text>
               <TextInput
                 style={[
                   styles.textInput,
                   {
-                    backgroundColor: colors.surfaceSubtle,
-                    borderColor: colors.border,
+                    backgroundColor: isDark ? 'rgba(13, 17, 23, 0.75)' : 'rgba(248, 250, 252, 0.95)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.95)',
+                    borderWidth: 1.5,
                     color: colors.textPrimary,
                   },
                 ]}
@@ -381,50 +478,90 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
               />
             </View>
 
-            {/* 3. CATEGORÍA */}
+            {/* 3. CATEGORÍA / RUBRO */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Rubro / Categoría</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontWeight: '700' }]}>Rubro / Categoría</Text>
+                <Text style={[styles.fieldLabelSub, { color: colors.textMuted, fontSize: 11, fontWeight: '600' }]}>
+                  {category}
+                </Text>
+              </View>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoryScrollContent}
                 style={styles.categoryScroll}
               >
                 {CATEGORIES.map((cat) => {
                   const isSelected = category === cat.id;
+                  const catColor = isDark ? cat.colorDark : cat.colorLight;
+                  const catBg = isDark ? cat.bgDark : cat.bgLight;
+                  const catBorder = isDark ? cat.borderDark : cat.borderLight;
+
                   return (
                     <TouchableOpacity
                       key={cat.id}
                       style={[
                         styles.categoryChip,
                         {
-                          backgroundColor: colors.surfaceSubtle,
-                          borderColor: colors.border,
+                          backgroundColor: isSelected
+                            ? catBg
+                            : isDark
+                            ? 'rgba(26, 36, 52, 0.80)'
+                            : 'rgba(248, 250, 252, 0.95)',
+                          borderColor: isSelected
+                            ? catBorder
+                            : isDark
+                            ? 'rgba(255, 255, 255, 0.10)'
+                            : 'rgba(203, 213, 225, 0.90)',
+                          borderWidth: isSelected ? 1.5 : 1,
                           flexDirection: 'row',
                           alignItems: 'center',
                           gap: 6,
+                          ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
                         },
-                        isSelected && {
-                          backgroundColor: colors.primaryLight,
-                          borderColor: colors.primaryBorder,
-                        },
+                        isSelected && isDark ? getNeonGlow(catColor, 'low') : {},
                       ]}
                       onPress={() => setCategory(cat.id)}
+                      activeOpacity={0.7}
                     >
-                      <SculptedIcon
-                        name={cat.icon}
-                        size={13}
-                        variant="plain"
-                        color={isSelected ? colors.primary : colors.textSecondary}
-                      />
+                      <View
+                        style={[
+                          styles.categoryIconCircle,
+                          {
+                            backgroundColor: isSelected
+                              ? isDark
+                                ? 'rgba(0, 0, 0, 0.35)'
+                                : 'rgba(255, 255, 255, 0.90)'
+                              : isDark
+                              ? 'rgba(13, 17, 23, 0.50)'
+                              : 'rgba(241, 245, 249, 0.85)',
+                          },
+                        ]}
+                      >
+                        <SculptedIcon
+                          name={cat.icon}
+                          size={13}
+                          variant="plain"
+                          color={isSelected ? catColor : (isDark ? colors.textSecondary : '#475569')}
+                        />
+                      </View>
                       <Text
                         style={[
                           styles.categoryChipText,
-                          { color: colors.textSecondary },
-                          isSelected && { color: colors.primary, fontWeight: '700' },
+                          {
+                            color: isSelected ? catColor : colors.textPrimary,
+                            fontWeight: isSelected ? '700' : '600',
+                          },
                         ]}
                       >
                         {cat.label}
                       </Text>
+                      {isSelected && (
+                        <View style={[styles.categoryActiveCheck, { backgroundColor: catColor }]}>
+                          <SculptedIcon name="check" size={8} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                        </View>
+                      )}
                     </TouchableOpacity>
                   );
                 })}
@@ -434,11 +571,11 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
             {/* 4. ¿QUIÉN LO PAGÓ? */}
             <View style={styles.fieldGroup}>
               <View style={styles.payerLabelRow}>
-                <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>¿Quién lo pagó de su bolsillo?</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontWeight: '700' }]}>¿Quién lo pagó de su bolsillo?</Text>
                 {selectedParticipant && (
-                  <View style={[styles.selectedPayerPill, { backgroundColor: colors.primaryLight, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                  <View style={[styles.selectedPayerPill, { backgroundColor: isDark ? 'rgba(0, 240, 255, 0.15)' : colors.primaryLight, borderColor: isDark ? colors.primaryBorder : colors.primaryBorder, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
                     <SculptedIcon name="user" size={11} variant="plain" color={colors.primary} />
-                    <Text style={[styles.selectedPayerText, { color: colors.primary }]}>
+                    <Text style={[styles.selectedPayerText, { color: isDark ? colors.neonCyan : colors.primary, fontWeight: '700' }]}>
                       {selectedParticipant.name}
                     </Text>
                   </View>
@@ -449,8 +586,9 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                 style={[
                   styles.searchPayerInput,
                   {
-                    backgroundColor: colors.surfaceSubtle,
-                    borderColor: colors.border,
+                    backgroundColor: isDark ? 'rgba(13, 17, 23, 0.75)' : 'rgba(248, 250, 252, 0.95)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.95)',
+                    borderWidth: 1.5,
                     color: colors.textPrimary,
                   },
                 ]}
@@ -464,8 +602,9 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                 style={[
                   styles.payerChipsScroll,
                   {
-                    backgroundColor: colors.surfaceSubtle,
-                    borderColor: colors.border,
+                    backgroundColor: isDark ? 'rgba(13, 17, 23, 0.60)' : 'rgba(241, 245, 249, 0.85)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.95)',
+                    borderWidth: 1.5,
                   },
                 ]}
                 contentContainerStyle={styles.payerChipsContent}
@@ -478,10 +617,20 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                       key={p.id}
                       style={[
                         styles.payerItemCard,
-                        { backgroundColor: colors.surface },
-                        isSelected && {
-                          backgroundColor: colors.primaryLight,
-                          borderColor: colors.primaryBorder,
+                        {
+                          backgroundColor: isSelected
+                            ? isDark
+                              ? 'rgba(0, 240, 255, 0.15)'
+                              : 'rgba(2, 132, 199, 0.12)'
+                            : isDark
+                            ? 'rgba(19, 25, 36, 0.85)'
+                            : 'rgba(255, 255, 255, 0.95)',
+                          borderColor: isSelected
+                            ? colors.primary
+                            : isDark
+                            ? 'rgba(255, 255, 255, 0.08)'
+                            : 'rgba(226, 232, 240, 0.95)',
+                          borderWidth: isSelected ? 1.5 : 1,
                         },
                       ]}
                       onPress={() => setPaidBy(p.id)}
@@ -489,8 +638,8 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                       <View
                         style={[
                           styles.payerRadioCircle,
-                          { borderColor: colors.border },
-                          isSelected && { borderColor: colors.primary },
+                          { borderColor: isSelected ? colors.primary : (isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(203, 213, 225, 0.90)') },
+                          isSelected && { borderColor: colors.primary, backgroundColor: colors.surface },
                         ]}
                       >
                         {isSelected && (
@@ -502,13 +651,13 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                           style={[
                             styles.payerNameText,
                             { color: colors.textPrimary },
-                            isSelected && { color: colors.primary, fontWeight: '700' },
+                            isSelected && { color: isDark ? colors.neonCyan : colors.primary, fontWeight: '700' },
                           ]}
                         >
                           {p.name}
                         </Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <SculptedIcon name="home" size={10} variant="plain" color={colors.textSecondary} />
+                          <SculptedIcon name="home" size={11} variant="plain" color={colors.textSecondary} />
                           <Text style={[styles.payerSubFamilyText, { color: colors.textSecondary }]}>
                             {p.subFamily || 'General'}
                           </Text>
@@ -522,7 +671,7 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
           </ScrollView>
 
           {/* BOTÓN GUARDAR GASTO DE ANCHO COMPLETO */}
-          <View style={styles.sheetFooter}>
+          <View style={[styles.sheetFooter, { borderTopColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.95)' }]}>
             <TouchableOpacity
               style={[
                 styles.saveExpenseBtn,
@@ -531,15 +680,15 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 6,
+                  gap: 8,
                 },
                 isDark ? getNeonGlow(colors.neonGreen, 'medium') : {},
               ]}
               onPress={handleSave}
               activeOpacity={0.8}
             >
-              <SculptedIcon name="check" size={16} variant="plain" color={isDark ? '#121212' : '#FFFFFF'} />
-              <Text style={[styles.saveExpenseBtnText, { color: isDark ? '#121212' : '#FFFFFF' }]}>
+              <SculptedIcon name="check" size={16} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+              <Text style={[styles.saveExpenseBtnText, { color: isDark ? '#0D1117' : '#FFFFFF', fontWeight: '700' }]}>
                 Guardar Gasto
               </Text>
             </TouchableOpacity>
@@ -634,28 +783,33 @@ const styles = StyleSheet.create({
   scanButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
+  },
+  scanIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scanIcon: {
     fontSize: 24,
   },
   scanTicketTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   scanTicketSub: {
     fontSize: 11,
     marginTop: 1,
   },
   scanBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   scanBadgeText: {
-    fontSize: 9,
-    fontWeight: '500',
-    color: '#FFFFFF',
+    fontSize: 10,
     letterSpacing: 0.5,
   },
   scanningLoaderRow: {
@@ -683,9 +837,8 @@ const styles = StyleSheet.create({
   scannedPreviewRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 10,
     padding: 8,
-    borderWidth: 1,
     marginBottom: 8,
     gap: 10,
   },
@@ -716,19 +869,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    borderWidth: 2,
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginVertical: 4,
-    gap: 6,
+    gap: 8,
   },
   currencySymbol: {
     fontSize: 34,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   giantAmountInput: {
     fontSize: 34,
-    fontWeight: '600',
+    fontWeight: '700',
     minWidth: 120,
     textAlign: 'left',
     padding: 0,
@@ -739,29 +891,46 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 13,
-    fontWeight: '500',
+  },
+  fieldLabelSub: {
+    textTransform: 'capitalize',
   },
   textInput: {
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
     fontSize: 14,
   },
   categoryScroll: {
     flexDirection: 'row',
-    paddingVertical: 2,
+  },
+  categoryScrollContent: {
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    gap: 8,
   },
   categoryChip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 11,
     paddingVertical: 8,
-    borderRadius: 8,
-    marginRight: 8,
-    borderWidth: 1,
+    borderRadius: 10,
+  },
+  categoryIconCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryActiveCheck: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 2,
   },
   categoryChipText: {
     fontSize: 12,
-    fontWeight: '500',
   },
   payerLabelRow: {
     flexDirection: 'row',
@@ -770,42 +939,39 @@ const styles = StyleSheet.create({
   },
   selectedPayerPill: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: 6,
   },
   selectedPayerText: {
     fontSize: 11,
-    fontWeight: '500',
   },
   searchPayerInput: {
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     fontSize: 12,
   },
   payerChipsScroll: {
-    maxHeight: 120,
-    borderRadius: 8,
-    borderWidth: 1,
+    maxHeight: 125,
+    borderRadius: 12,
   },
   payerChipsContent: {
-    padding: 4,
-    gap: 4,
+    padding: 6,
+    gap: 6,
   },
   payerItemCard: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 6,
+    borderRadius: 8,
     gap: 10,
   },
   payerRadioCircle: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    borderWidth: 2,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -819,19 +985,20 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   payerSubFamilyText: {
-    fontSize: 10,
+    fontSize: 11,
   },
   sheetFooter: {
-    marginTop: 4,
+    marginTop: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
   },
   saveExpenseBtn: {
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   saveExpenseBtnText: {
     fontSize: 15,
-    fontWeight: '600',
   },
 });

@@ -360,41 +360,41 @@ export const SculptedIcon: React.FC<SculptedIconProps> = ({
   const borderRadius =
     shape === 'circle' ? containerSize / 2 : shape === 'square' ? Radii.sm : Radii.md;
 
-  // Sombra de relieve bajorrelieve (sunken) / grabado con Glow sutil
   const isSunken = variant === 'sunken';
   const hasGlow = glow || variant === 'glow';
 
-  let webShadow = '';
+  let webStyle: any = {};
   if (Platform.OS === 'web') {
-    if (isSunken) {
-      const insetShadow = isDark
-        ? 'inset 2px 2px 4px rgba(0, 0, 0, 0.55), inset -2px -2px 4px rgba(255, 255, 255, 0.03)'
-        : 'inset 2px 2px 4px rgba(166, 171, 189, 0.5), inset -2px -2px 4px #FFFFFF';
-      webShadow = hasGlow
-        ? `${insetShadow}, 0 0 10px ${glowAccent}${isDark ? '35' : '20'}`
-        : insetShadow;
-    } else if (hasGlow) {
-      webShadow = `0 0 12px ${glowAccent}${isDark ? '45' : '25'}`;
+    let webBoxShadow = isDark
+      ? '0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+      : '0 2px 8px rgba(44, 38, 32, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)';
+
+    if (hasGlow) {
+      webBoxShadow = `${webBoxShadow}, 0 0 14px ${glowAccent}${isDark ? '40' : '25'}`;
     }
+
+    webStyle = {
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      boxShadow: webBoxShadow,
+    };
   }
 
   const nativeGlow = hasGlow
     ? {
         shadowColor: glowAccent,
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: isDark ? 0.28 : 0.18,
+        shadowOpacity: isDark ? 0.35 : 0.20,
         shadowRadius: 6,
         elevation: 2,
       }
-    : isSunken
-    ? {
-        shadowColor: '#000000',
-        shadowOffset: { width: 1, height: 1 },
-        shadowOpacity: isDark ? 0.35 : 0.15,
-        shadowRadius: 3,
+    : {
+        shadowColor: isDark ? '#000000' : '#2C2620',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDark ? 0.25 : 0.05,
+        shadowRadius: 4,
         elevation: 1,
-      }
-    : {};
+      };
 
   return (
     <View
@@ -407,11 +407,11 @@ export const SculptedIcon: React.FC<SculptedIconProps> = ({
           backgroundColor: isSunken ? colors.surfaceSubtle : colors.surface,
           borderColor: isSunken
             ? isDark
-              ? 'rgba(255, 255, 255, 0.04)'
-              : 'rgba(0, 0, 0, 0.06)'
+              ? 'rgba(255, 255, 255, 0.08)'
+              : colors.border
             : colors.border,
           borderWidth: 1,
-          ...(Platform.OS === 'web' ? ({ boxShadow: webShadow } as any) : nativeGlow),
+          ...(Platform.OS === 'web' ? webStyle : nativeGlow),
         },
         style,
       ]}

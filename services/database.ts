@@ -685,6 +685,49 @@ export const toggleParticipantAttendance = async (
   }
 };
 
+export const updateParticipantCategory = async (
+  eventId: string,
+  participantId: string,
+  category: CategoryType,
+  weight?: number
+): Promise<EventConfig | null> => {
+  try {
+    const currentEvent = await getEventById(eventId);
+    if (!currentEvent) return null;
+
+    const participant = currentEvent.participants.find((p) => p.id === participantId);
+    if (!participant) return currentEvent;
+
+    const newWeight = typeof weight === 'number' ? weight : (category === 'nino' ? 0.5 : 1.0);
+
+    if (isSupabaseConfigured) {
+      const { error } = await supabase
+        .from('participants')
+        .update({
+          category,
+          weight: newWeight,
+        })
+        .eq('id', participantId);
+
+      if (error) {
+        console.error('[Supabase DB] Error al actualizar categoría/tarifa de participante:', error);
+      }
+    }
+
+    syncEngine.broadcastChange({
+      entityType: 'participant',
+      action: 'update',
+      eventId,
+      participantId,
+    });
+
+    return await getEventById(eventId);
+  } catch (err: any) {
+    console.error('[Supabase DB] Excepción en updateParticipantCategory:', err);
+    return await getEventById(eventId);
+  }
+};
+
 export const toggleSubFamilyAttendance = async (
   eventId: string,
   subFamilyName: string,

@@ -32,6 +32,7 @@ interface PosTicketViewProps {
   onToggleAttendance: (participantId: string) => void;
   onToggleSettlement?: (participantId: string) => void;
   onSettleSubFamily?: (subFamilyName: string, isSettled: boolean) => void;
+  onToggleParticipantRole?: (participantId: string) => void;
   onBackToList?: () => void;
   isMobile?: boolean;
 }
@@ -43,6 +44,7 @@ export const PosTicketView: React.FC<PosTicketViewProps> = ({
   onToggleAttendance,
   onToggleSettlement,
   onSettleSubFamily,
+  onToggleParticipantRole,
   onBackToList,
   isMobile = false,
 }) => {
@@ -266,6 +268,7 @@ export const PosTicketView: React.FC<PosTicketViewProps> = ({
 
       {/* TARJETA RECIBO POS */}
       <GlassCard
+        frosted={true}
         variant={isSubFamilyPaid ? 'lime' : isRefund ? 'cyan' : isOwed ? 'coral' : 'subtle'}
         glow={isDark}
         borderRadius={Radii.xl}
@@ -277,14 +280,15 @@ export const PosTicketView: React.FC<PosTicketViewProps> = ({
             style={[
               styles.posBadge,
               {
-                backgroundColor: colors.primaryLight,
-                borderColor: colors.primaryBorder,
+                backgroundColor: isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(2, 132, 199, 0.08)',
+                borderColor: isDark ? colors.primaryBorder : 'rgba(2, 132, 199, 0.25)',
+                borderWidth: 1,
                 ...(isDark ? getNeonGlow(colors.primary, 'low') : {}),
               },
             ]}
           >
-            <SculptedIcon name="receipt" size={13} variant="plain" color={colors.primaryText} />
-            <Text style={[styles.posBadgeText, { color: colors.primaryText }]}>TICKET DE CUENTA POS</Text>
+            <SculptedIcon name="receipt" size={13} variant="plain" color={colors.primary} />
+            <Text style={[styles.posBadgeText, { color: colors.primary, fontWeight: '700' }]}>TICKET DE CUENTA POS</Text>
           </View>
           <Text style={[styles.posTitle, { color: colors.textPrimary }]}>{subFamilyName}</Text>
           <Text style={[styles.posSubtitle, { color: colors.textSecondary }]}>
@@ -344,8 +348,9 @@ export const PosTicketView: React.FC<PosTicketViewProps> = ({
                   style={[
                     styles.memberRow,
                     {
-                      backgroundColor: isAttending ? colors.surfaceSubtle : colors.background,
-                      borderColor: colors.borderLight,
+                      backgroundColor: isDark ? 'rgba(13, 17, 23, 0.55)' : 'rgba(255, 255, 255, 0.85)',
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.95)',
+                      borderWidth: 1,
                     },
                     !isAttending && styles.memberRowAbsent,
                   ]}
@@ -361,28 +366,51 @@ export const PosTicketView: React.FC<PosTicketViewProps> = ({
                       >
                         {member.name}
                       </Text>
-                      <View
+                      <TouchableOpacity
                         style={[
                           styles.memberCategoryBadge,
                           {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.border,
+                            backgroundColor: member.category === 'nino' ? colors.purpleLight : colors.primaryLight,
+                            borderColor: member.category === 'nino' ? colors.purpleBorder : colors.primaryBorder,
                             flexDirection: 'row',
                             alignItems: 'center',
                             gap: 4,
+                            paddingHorizontal: 7,
+                            paddingVertical: 3,
+                            borderRadius: Radii.sm,
+                            borderWidth: 1,
+                            ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
                           },
                         ]}
+                        onPress={() => onToggleParticipantRole?.(member.id)}
+                        activeOpacity={0.7}
+                        accessibilityLabel={`Cambiar categoría de ${member.name}, actualmente ${member.category === 'nino' ? 'Niño (0.5)' : 'Adulto (1.0)'}`}
+                        accessibilityHint="Presiona para cambiar tarifa entre Adulto y Niño"
                       >
                         <SculptedIcon
                           name={member.category === 'nino' ? 'child' : 'user'}
                           size={11}
                           variant="plain"
-                          color={colors.textSecondary}
+                          color={member.category === 'nino' ? (isDark ? colors.neonPurple : colors.purple) : colors.primary}
                         />
-                        <Text style={[styles.memberCategoryBadgeText, { color: colors.textSecondary }]}>
+                        <Text
+                          style={[
+                            styles.memberCategoryBadgeText,
+                            {
+                              color: member.category === 'nino' ? (isDark ? colors.neonPurple : colors.purple) : colors.primary,
+                              fontWeight: '600',
+                            },
+                          ]}
+                        >
                           {member.category === 'nino' ? 'Niño (0.5)' : 'Adulto (1.0)'}
                         </Text>
-                      </View>
+                        <SculptedIcon
+                          name="refresh"
+                          size={9}
+                          variant="plain"
+                          color={member.category === 'nino' ? (isDark ? colors.neonPurple : colors.purple) : colors.primary}
+                        />
+                      </TouchableOpacity>
                     </View>
 
                     <Text style={[styles.memberDaysText, { color: colors.textSecondary }]}>
@@ -599,8 +627,8 @@ export const PosTicketView: React.FC<PosTicketViewProps> = ({
                   ]}
                   onPress={handleAddGuest}
                 >
-                  <SculptedIcon name="plus" size={13} variant="plain" color={isDark ? '#121212' : '#FFFFFF'} />
-                  <Text style={[styles.guestSubmitBtnText, { color: isDark ? '#121212' : '#FFFFFF' }]}>Sumar al Ticket</Text>
+                  <SculptedIcon name="plus" size={13} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                  <Text style={[styles.guestSubmitBtnText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Sumar al Ticket</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -800,8 +828,8 @@ export const PosTicketView: React.FC<PosTicketViewProps> = ({
               onPress={handleConfirmSettleAccount}
               activeOpacity={0.8}
             >
-              <SculptedIcon name="check" size={16} variant="plain" color={isDark ? '#121212' : '#FFFFFF'} />
-              <Text style={[styles.settleAccountPrimaryBtnText, { color: isDark ? '#121212' : '#FFFFFF' }]}>Liquidar Cuenta</Text>
+              <SculptedIcon name="check" size={16} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+              <Text style={[styles.settleAccountPrimaryBtnText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Liquidar Cuenta</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -853,15 +881,20 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   posBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: Radii.sm,
     borderWidth: 1,
   },
   posBadgeText: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '700',
     letterSpacing: 0.8,
+    includeFontPadding: false,
   },
   posTitle: {
     fontSize: 22,

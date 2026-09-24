@@ -4,22 +4,13 @@
     "slug": "chap-app",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "chapapp",
-    "newArchEnabled": true,
-    "splash": {
-      "resizeMode": "contain",
-      "backgroundColor": "#F8FAFC"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.ariel.chapapp"
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#F8FAFC"
-      },
       "package": "com.ariel.chapapp"
     },
     "web": {
@@ -27,9 +18,7 @@
       "output": "static"
     },
     "plugins": [
-      "expo-router",
-      "expo-asset",
-      "expo-font"
+      "expo-router"
     ]
   }
 }

@@ -13,11 +13,30 @@ import {
   Share,
   Platform,
   RefreshControl,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { FormatCurrency, Radii } from '../../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FormatCurrency, Radii, Fonts } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import type { EventConfig, Participant, Expense, CategoryType, DirectoryParticipant } from '../../types';
+
+const getInitials = (name: string): string => {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return parts[0].substring(0, 2).toUpperCase();
+};
+
+const EXPENSE_CATEGORIES = [
+  { id: 'Comida', label: 'Comida', icon: 'food' as const },
+  { id: 'Gastos Generales', label: 'Gastos Generales', icon: 'bank' as const },
+  { id: 'Varios', label: 'Varios', icon: 'receipt' as const },
+  { id: 'Rentas', label: 'Rentas', icon: 'home' as const },
+  { id: 'Mejoras', label: 'Mejoras', icon: 'trending-up' as const },
+];
 import {
   getEventById,
   updateEvent,
@@ -25,6 +44,7 @@ import {
   generateId,
   toggleParticipantSettlement,
   toggleParticipantAttendance,
+  updateParticipantCategory,
   toggleSubFamilyAttendance,
   settleSubFamily,
   importDirectoryParticipantsToEvent,
@@ -48,13 +68,17 @@ import { PosTicketView } from '../../components/PosTicketView';
 import { QuickExpenseModal } from '../../components/QuickExpenseModal';
 import { GlassCard } from '../../components/GlassCard';
 import { SculptedIcon } from '../../components/SculptedIcon';
+import { ConfirmModal } from '../../components/ConfirmModal';
+import { AmbientBackground } from '../../components/AmbientBackground';
 import { generateEventReportPlainText } from '../../utils/reportGenerator';
 
 export default function EventDetailDashboard() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const isTablet = width >= 768;
+  const isSmallPhone = width < 420;
   const { colors, isDark, toggleTheme, getNeonGlow } = useTheme();
 
   const [event, setEvent] = useState<EventConfig | null>(null);
@@ -63,7 +87,7 @@ export default function EventDetailDashboard() {
   const [activeTab, setActiveTab] = useState<'summary' | 'participants' | 'expenses'>('summary');
 
   // Menú Lateral Colapsable Estático (Estilo iPadOS / Web)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed((prev) => !prev);
@@ -82,6 +106,24 @@ export default function EventDetailDashboard() {
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
   const [isDirectoryImportOpen, setIsDirectoryImportOpen] = useState(false);
   const [isQuickExpenseOpen, setIsQuickExpenseOpen] = useState(false);
+
+  // Modal de confirmación estilizado
+  const [confirmConfig, setConfirmConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'warning' | 'success' | 'teal' | 'primary';
+    icon?: any;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   // Modal para agregar participante manual
   const [isParticipantModalOpen, setIsParticipantModalOpen] = useState(false);
@@ -267,6 +309,43 @@ export default function EventDetailDashboard() {
       console.error('[ToggleAttendance] Error:', err);
       setEvent(previousEvent);
       Alert.alert('Error', 'No se pudo actualizar la asistencia en el servidor.');
+    }
+  };
+
+  // Alternar o cambiar tarifa/rol de un participante ('adulto' 1.0 <-> 'nino' 0.5) con recálculo en tiempo real
+  const handleToggleParticipantRole = async (participantId: string) => {
+    if (!event) return;
+    const participant = event.participants.find((p) => p.id === participantId);
+    if (!participant) return;
+
+    const newCategory: CategoryType = participant.category === 'nino' ? 'adulto' : 'nino';
+    const newWeight = newCategory === 'nino' ? 0.5 : 1.0;
+
+    const previousEvent = event;
+    const updatedParticipants = event.participants.map((p) => {
+      if (p.id === participantId) {
+        return {
+          ...p,
+          category: newCategory,
+          weight: newWeight,
+        };
+      }
+      return p;
+    });
+
+    // 1. Actualización de estado local reactiva e inmediata (recalcula automáticamente todas las métricas)
+    setEvent({ ...event, participants: updatedParticipants });
+
+    // 2. Persistencia en base de datos
+    try {
+      const updated = await updateParticipantCategory(event.id, participantId, newCategory, newWeight);
+      if (updated) {
+        setEvent(updated);
+      }
+    } catch (err: any) {
+      console.error('[ToggleParticipantRole] Error:', err);
+      setEvent(previousEvent);
+      Alert.alert('Error', 'No se pudo actualizar la tarifa en el servidor.');
     }
   };
 
@@ -522,70 +601,69 @@ export default function EventDetailDashboard() {
     }
   };
 
-  // Subfamilias: Eliminar con borrado en cascada
-  const handleDeleteSubFamily = (subFamilyName: string) => {
+  // Subfamilias: Eliminar en cascada
+  const handleDeleteSubFamily = (subFamilyName: string, passedCount?: number) => {
     if (!event) return;
     const membersInFamily = event.participants.filter(
       (p) => (p.subFamily || 'Familia General').trim() === subFamilyName.trim()
     );
-    const count = membersInFamily.length;
+    const count = passedCount !== undefined ? passedCount : membersInFamily.length;
 
-    Alert.alert(
-      '⚠️ Eliminar Subfamilia',
-      `¿Deseas eliminar permanentemente a "${subFamilyName}"?\n\nEsta acción borrará en cascada a sus ${count} integrante${count === 1 ? '' : 's'} y recalculará las cuotas y el balance general de todo el evento.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar en Cascada',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const updated = await deleteSubFamily(event.id, subFamilyName);
-              if (updated) {
-                setEvent(updated);
-                if (selectedSubFamily === subFamilyName && updated.participants.length > 0) {
-                  setSelectedSubFamily(updated.participants[0].subFamily || 'Familia General');
-                }
-              }
-            } catch (err) {
-              Alert.alert('Error', 'No se pudo eliminar la subfamilia.');
-            } finally {
-              setLoading(false);
+    setConfirmConfig({
+      visible: true,
+      title: 'Eliminar Subfamilia',
+      message: `¿Deseas eliminar permanentemente a "${subFamilyName}"?\n\nEsta acción borrará en cascada a sus ${count} integrante${count === 1 ? '' : 's'} y recalculará las cuotas y el balance general de todo el evento.`,
+      confirmText: 'Eliminar en Cascada',
+      variant: 'danger',
+      icon: 'trash',
+      onConfirm: async () => {
+        setConfirmLoading(true);
+        try {
+          const updated = await deleteSubFamily(event.id, subFamilyName);
+          if (updated) {
+            setEvent(updated);
+            if (selectedSubFamily === subFamilyName && updated.participants.length > 0) {
+              setSelectedSubFamily(updated.participants[0].subFamily || 'Familia General');
             }
-          },
-        },
-      ]
-    );
+          }
+          setConfirmConfig((prev) => ({ ...prev, visible: false }));
+        } catch (err: any) {
+          console.error('[DeleteSubFamily] Error:', err);
+          setConfirmConfig((prev) => ({ ...prev, visible: false }));
+        } finally {
+          setConfirmLoading(false);
+        }
+      },
+    });
   };
 
   // Participantes: Eliminar individual
-  const handleDeleteParticipant = (partId: string, name: string) => {
+  const handleDeleteParticipant = async (partId: string, name: string) => {
     if (!event) return;
-    Alert.alert(
-      '⚠️ Eliminar Participante',
-      `¿Deseas eliminar a "${name}" de este evento?\n\nSe removerá de las cuotas y los cálculos contables en la base de datos.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const updated = await deleteParticipant(event.id, partId);
-              if (updated) {
-                setEvent(updated);
-              }
-            } catch (err) {
-              Alert.alert('Error', 'No se pudo eliminar el participante.');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+
+    setConfirmConfig({
+      visible: true,
+      title: 'Eliminar Participante',
+      message: `¿Deseas eliminar a "${name}" de este evento?\n\nSe removerá de las cuotas y los cálculos contables en la base de datos.`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+      icon: 'trash',
+      onConfirm: async () => {
+        setConfirmLoading(true);
+        try {
+          const updated = await deleteParticipant(event.id, partId);
+          if (updated) {
+            setEvent(updated);
+          }
+          setConfirmConfig((prev) => ({ ...prev, visible: false }));
+        } catch (err: any) {
+          console.error('[DeleteParticipant] Error:', err);
+          setConfirmConfig((prev) => ({ ...prev, visible: false }));
+        } finally {
+          setConfirmLoading(false);
+        }
+      },
+    });
   };
 
   // Gastos: Agregar nuevo manual
@@ -593,7 +671,11 @@ export default function EventDetailDashboard() {
     if (!event) return;
     const amountNum = parseFloat(expAmount);
     if (!expTitle.trim() || isNaN(amountNum) || amountNum <= 0) {
-      Alert.alert('Datos inválidos', 'Ingresa un concepto y un monto válido.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Datos inválidos: Ingresa un concepto y un monto válido mayor a 0.');
+      } else {
+        Alert.alert('Datos inválidos', 'Ingresa un concepto y un monto válido.');
+      }
       return;
     }
 
@@ -619,52 +701,63 @@ export default function EventDetailDashboard() {
       setExpTitle('');
       setExpAmount('');
       setExpCategory('Comida');
-      Alert.alert('¡Gasto Guardado!', `Se registró "${savedExpense.title}" exitosamente.`);
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`¡Gasto Guardado! Se registró "${savedExpense.title}" exitosamente.`);
+      } else {
+        Alert.alert('¡Gasto Guardado!', `Se registró "${savedExpense.title}" exitosamente.`);
+      }
     } catch (err: any) {
       console.error('[AddExpense] Error al guardar gasto:', err);
-      Alert.alert('Error al guardar gasto', err?.message || 'No se pudo registrar el gasto en Supabase.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`Error al guardar gasto: ${err?.message || 'No se pudo registrar el gasto en Supabase.'}`);
+      } else {
+        Alert.alert('Error al guardar gasto', err?.message || 'No se pudo registrar el gasto en Supabase.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Gastos: Eliminar
-  const handleDeleteExpense = (expId: string, title: string) => {
+  // Gastos: Eliminar (Compatible con Web y Móvil con Actualización Optimista)
+  const handleDeleteExpense = async (expId: string, title: string) => {
     if (!event) return;
-    Alert.alert(
-      '⚠️ Eliminar Gasto',
-      `¿Deseas eliminar el gasto "${title}"?\n\nSe eliminará de la base de datos y se recalculará el balance del evento.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const updated = await deleteExpense(event.id, expId);
-              if (updated) {
-                setEvent(updated);
-              } else {
-                setEvent((prev) => {
-                  if (!prev) return null;
-                  return {
-                    ...prev,
-                    expenses: prev.expenses.filter((e) => e.id !== expId),
-                  };
-                });
-              }
-              Alert.alert('Gasto eliminado', `Se eliminó "${title}" correctamente.`);
-            } catch (err: any) {
-              console.error('[DeleteExpense] Error al eliminar gasto:', err);
-              Alert.alert('Error al eliminar gasto', err?.message || 'No se pudo eliminar el gasto.');
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+
+    setConfirmConfig({
+      visible: true,
+      title: 'Eliminar Gasto',
+      message: `¿Deseas eliminar el gasto "${title}"?\n\nSe eliminará de la base de datos y se recalculará el balance del evento.`,
+      confirmText: 'Eliminar',
+      variant: 'danger',
+      icon: 'trash',
+      onConfirm: async () => {
+        setConfirmLoading(true);
+        // 1. Actualización optimista instantánea
+        const previousExpenses = event.expenses;
+        setEvent({
+          ...event,
+          expenses: event.expenses.filter((e) => e.id !== expId),
+        });
+        setConfirmConfig((prev) => ({ ...prev, visible: false }));
+
+        try {
+          const updated = await deleteExpense(event.id, expId);
+          if (updated) {
+            setEvent(updated);
+          }
+        } catch (err: any) {
+          console.error('[DeleteExpense] Error al eliminar gasto:', err);
+          // Revertir en caso de fallo
+          setEvent((prev) => (prev ? { ...prev, expenses: previousExpenses } : null));
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            window.alert(`Error al eliminar gasto: ${err?.message || 'No se pudo eliminar el gasto en Supabase.'}`);
+          } else {
+            Alert.alert('Error al eliminar gasto', err?.message || 'No se pudo eliminar el gasto.');
+          }
+        } finally {
+          setConfirmLoading(false);
+        }
+      },
+    });
   };
 
   if (loading) {
@@ -684,7 +777,7 @@ export default function EventDetailDashboard() {
           style={[styles.primaryButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push('/')}
         >
-          <Text style={[styles.primaryButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>Volver al Inicio</Text>
+          <Text style={[styles.primaryButtonText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Volver al Inicio</Text>
         </TouchableOpacity>
       </View>
     );
@@ -692,19 +785,59 @@ export default function EventDetailDashboard() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Barra de Encabezado Superior Sci-Fi Glass */}
-      <View style={[styles.topHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <View style={styles.headerLeft}>
+      <AmbientBackground />
+      {/* Barra de Encabezado Superior Flotante (Opción A) */}
+      <View
+        style={[
+          styles.topHeader,
+          isTablet && styles.topHeaderTablet,
+          {
+            marginTop:
+              Platform.OS === 'web'
+                ? isTablet ? 20 : 12
+                : Math.max(insets.top, 12) + (isTablet ? 8 : 4),
+            backgroundColor: isDark ? 'rgba(19, 25, 36, 0.76)' : 'rgba(255, 255, 255, 0.82)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.90)',
+            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.98)',
+            ...(Platform.OS === 'web'
+              ? ({
+                  backdropFilter: 'blur(24px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                  boxShadow: isDark
+                    ? '0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14)'
+                    : '0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
+                } as any)
+              : {
+                  shadowColor: isDark ? '#000000' : '#0F172A',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.35 : 0.08,
+                  shadowRadius: 12,
+                  elevation: 5,
+                }),
+          },
+        ]}
+      >
+        <View style={[styles.headerLeft, isSmallPhone && { gap: 8, flex: 1 }]}>
           <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.surfaceSubtle, flexDirection: 'row', alignItems: 'center', gap: 6 }]}
+            style={[
+              styles.backButton,
+              isSmallPhone && { paddingHorizontal: 8, paddingVertical: 6 },
+              { backgroundColor: colors.surfaceSubtle, flexDirection: 'row', alignItems: 'center', gap: 4 }
+            ]}
             onPress={() => router.push('/')}
           >
-            <SculptedIcon name="arrow-left" size={14} variant="plain" color={colors.textPrimary} />
-            <Text style={[styles.backButtonText, { color: colors.textPrimary }]}>Inicio</Text>
+            <SculptedIcon name="arrow-left" size={13} variant="plain" color={colors.textPrimary} />
+            {!isSmallPhone && <Text style={[styles.backButtonText, { color: colors.textPrimary }]}>Inicio</Text>}
           </TouchableOpacity>
-          <View>
+          <View style={{ flexShrink: 1 }}>
             <View style={styles.titleRow}>
-              <Text style={[styles.eventTitle, { color: colors.textPrimary }]}>{event.title}</Text>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[styles.eventTitle, isSmallPhone && { fontSize: 16 }, { color: colors.textPrimary }]}
+              >
+                {event.title}
+              </Text>
               <View
                 style={[
                   styles.badgeStatus,
@@ -723,14 +856,18 @@ export default function EventDetailDashboard() {
                 </Text>
               </View>
             </View>
-            <Text style={[styles.eventSubtitle, { color: colors.textSecondary }]}>
-              Año {event.year} • {totals?.totalAttendingCount || 0} Asistentes de {event.participants.length} Registrados • {totals?.subFamilies.length || 0} Subfamilias
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.eventSubtitle, { color: colors.textSecondary }]}
+            >
+              Año {event.year} • {totals?.totalAttendingCount || 0} Asistentes • {totals?.subFamilies.length || 0} Familias
             </Text>
           </View>
         </View>
 
-        <View style={styles.headerActions}>
-          {/* Botón de Cambio de Tema: EXCLUSIVAMENTE ICONO (☀️ / 🌙) */}
+        <View style={[styles.headerActions, isSmallPhone && { gap: 6 }]}>
+          {/* Botón de Cambio de Tema */}
           <TouchableOpacity
             onPress={toggleTheme}
             activeOpacity={0.8}
@@ -738,8 +875,8 @@ export default function EventDetailDashboard() {
           >
             <SculptedIcon
               name={isDark ? 'moon' : 'sun'}
-              size={18}
-              containerSize={40}
+              size={isSmallPhone ? 16 : 18}
+              containerSize={isSmallPhone ? 34 : 40}
               variant="sunken"
               glow={isDark}
               accentColor={colors.neonAmber}
@@ -750,213 +887,267 @@ export default function EventDetailDashboard() {
           <TouchableOpacity
             style={[
               styles.cutReportButton,
+              isSmallPhone && { paddingHorizontal: 10, paddingVertical: 6 },
               {
                 backgroundColor: colors.primaryLight,
                 borderColor: colors.primaryBorder,
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 6,
-                ...(isDark ? getNeonGlow(colors.neonCyan, 'low') : {}),
+                gap: 4,
               },
             ]}
             onPress={() => setIsCutModalOpen(true)}
             activeOpacity={0.8}
           >
-            <SculptedIcon name="receipt" size={15} variant="plain" color={colors.primaryText} />
-            <Text style={[styles.cutReportButtonText, { color: colors.primaryText }]}>Corte General</Text>
+            <SculptedIcon name="receipt" size={14} variant="plain" color={colors.primaryText} />
+            <Text style={[styles.cutReportButtonText, isSmallPhone && { fontSize: 12 }, { color: colors.primaryText }]}>
+              {isSmallPhone ? 'Corte' : 'Corte General'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.actionButton,
+              isSmallPhone && { paddingHorizontal: 8, paddingVertical: 6 },
               {
                 backgroundColor: event.isArchived ? colors.primaryLight : colors.surfaceSubtle,
                 borderColor: event.isArchived ? colors.primaryBorder : colors.border,
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 6,
+                gap: 4,
               },
             ]}
             onPress={handleToggleArchive}
           >
             <SculptedIcon
               name={event.isArchived ? 'unarchive' : 'archive'}
-              size={14}
+              size={13}
               variant="plain"
               color={colors.textPrimary}
             />
-            <Text style={[styles.actionButtonText, { color: colors.textPrimary }]}>
-              {event.isArchived ? 'Desarchivar' : 'Archivar'}
-            </Text>
+            {isTablet && (
+              <Text style={[styles.actionButtonText, { color: colors.textPrimary }]}>
+                {event.isArchived ? 'Desarchivar' : 'Archivar'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Contenido Principal Responsivo con Sidebar iPadOS Reanimated */}
+      {/* Contenido Principal Responsivo con Floating Capsule Sidebar (Image 3 Concept) */}
       <View style={[styles.dashboardLayout, isTablet && styles.dashboardLayoutTablet]}>
-        {/* Barra lateral de navegación estática */}
-        <View
-          style={[
-            styles.tabBar,
-            isTablet && (isSidebarCollapsed ? styles.tabBarTabletCollapsed : styles.tabBarTablet),
-            {
-              backgroundColor: colors.surface,
-              borderRightColor: colors.border,
-              borderBottomColor: colors.border,
-            },
-          ]}
-        >
-          {/* Botón para Colapsar / Expandir Barra Lateral (iPad) */}
-          {isTablet && (
-            <TouchableOpacity
-              style={[
-                styles.sidebarCollapseBtn,
-                {
-                  backgroundColor: colors.surfaceSubtle,
-                  borderColor: colors.border,
-                  justifyContent: isSidebarCollapsed ? 'center' : 'flex-start',
-                },
-              ]}
-              onPress={toggleSidebar}
-              accessibilityLabel={isSidebarCollapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
-            >
-              <SculptedIcon
-                name={isSidebarCollapsed ? 'chevron-right' : 'chevron-left'}
-                size={14}
-                variant="plain"
-                color={colors.textPrimary}
-              />
-              {!isSidebarCollapsed && (
-                <Text style={[styles.sidebarCollapseBtnText, { color: colors.textSecondary }]}>
-                  Colapsar Menú
-                </Text>
-              )}
-            </TouchableOpacity>
-          )}
-
-          {/* Tab 1: Corte y Tickets */}
-          <TouchableOpacity
+        {/* Barra lateral flotante en forma de cápsula (En tablet: lateral; En móvil: barra inferior flotante, oculta en detalle de ticket) */}
+        {(!mobileDetailOpen || isTablet) && (
+          <View
             style={[
-              styles.tabItem,
-              isSidebarCollapsed && styles.tabItemCollapsed,
+              styles.floatingCapsuleSidebar,
+              isTablet
+                ? (isSidebarCollapsed ? styles.capsuleTabletCollapsed : styles.capsuleTabletExpanded)
+                : [styles.capsuleMobileBottom, { bottom: Math.max(insets.bottom, 12) }],
               {
-                backgroundColor: activeTab === 'summary' ? colors.primaryLight : colors.surfaceSubtle,
-                borderColor: activeTab === 'summary' ? colors.primaryBorder : colors.borderLight,
-                borderWidth: 1,
-                ...(activeTab === 'summary' && isDark ? getNeonGlow(colors.neonCyan, 'low') : {}),
+                backgroundColor: isDark ? 'rgba(19, 25, 36, 0.85)' : 'rgba(255, 255, 255, 0.90)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.98)',
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(24px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                      boxShadow: isDark
+                        ? '0 12px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12)'
+                        : '0 10px 30px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
+                    } as any)
+                  : {
+                      shadowColor: isDark ? '#000000' : '#0F172A',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isDark ? 0.35 : 0.08,
+                      shadowRadius: 12,
+                      elevation: 8,
+                    }),
               },
             ]}
-            onPress={() => {
-              setActiveTab('summary');
-              setMobileDetailOpen(false);
-            }}
           >
-            <SculptedIcon
-              name="chart"
-              size={18}
-              containerSize={36}
-              variant="sunken"
-              color={activeTab === 'summary' ? colors.primary : colors.textMuted}
-              glow={activeTab === 'summary' && isDark}
-              accentColor={colors.primary}
-            />
-            {!isSidebarCollapsed && (
-              <View style={styles.tabTextWrapper}>
-                <Text
-                  style={[
-                    styles.tabTitle,
-                    { color: activeTab === 'summary' ? colors.primaryText : colors.textPrimary },
-                  ]}
-                >
-                  Corte y Tickets
-                </Text>
-                <Text style={[styles.tabDescription, { color: colors.textSecondary }]}>
-                  Métricas HUD y tickets POS
-                </Text>
-              </View>
+            {/* Botón para Colapsar / Expandir Barra Lateral (Solo Tablet) */}
+            {isTablet && (
+              <TouchableOpacity
+                style={[
+                  styles.capsuleToggleBtn,
+                  {
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
+                  },
+                ]}
+                onPress={toggleSidebar}
+                accessibilityLabel={isSidebarCollapsed ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+              >
+                <SculptedIcon
+                  name={isSidebarCollapsed ? 'chevron-right' : 'chevron-left'}
+                  size={14}
+                  variant="plain"
+                  color={colors.textPrimary}
+                />
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
 
-          {/* Tab 2: Subfamilias y Asistencia */}
-          <TouchableOpacity
-            style={[
-              styles.tabItem,
-              isSidebarCollapsed && styles.tabItemCollapsed,
-              {
-                backgroundColor: activeTab === 'participants' ? colors.primaryLight : colors.surfaceSubtle,
-                borderColor: activeTab === 'participants' ? colors.primaryBorder : colors.borderLight,
-                borderWidth: 1,
-                ...(activeTab === 'participants' && isDark ? getNeonGlow(colors.neonCyan, 'low') : {}),
-              },
-            ]}
-            onPress={() => setActiveTab('participants')}
-          >
-            <SculptedIcon
-              name="users"
-              size={18}
-              containerSize={36}
-              variant="sunken"
-              color={activeTab === 'participants' ? colors.primary : colors.textMuted}
-              glow={activeTab === 'participants' && isDark}
-              accentColor={colors.primary}
-            />
-            {!isSidebarCollapsed && (
-              <View style={styles.tabTextWrapper}>
-                <Text
-                  style={[
-                    styles.tabTitle,
-                    { color: activeTab === 'participants' ? colors.primaryText : colors.textPrimary },
-                  ]}
-                >
-                  Subfamilias & Asistencia
-                </Text>
-                <Text style={[styles.tabDescription, { color: colors.textSecondary }]}>
-                  {totals?.totalAttendingCount}/{event.participants.length} asistentes
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
+            {/* Grupo de Tabs en Cápsula */}
+            <View style={[styles.capsuleTabsGroup, !isTablet && styles.capsuleTabsGroupMobile]}>
+              {/* Tab 1: Corte y Tickets (Chart) */}
+              <TouchableOpacity
+                style={[
+                  styles.capsuleTabItem,
+                  isTablet
+                    ? isSidebarCollapsed ? styles.capsuleTabItemCollapsed : styles.capsuleTabItemExpanded
+                    : styles.capsuleTabItemMobile,
+                  activeTab === 'summary' && [
+                    styles.capsuleTabActiveSquircle,
+                    {
+                      backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+                      borderColor: isDark ? 'rgba(0, 240, 255, 0.45)' : 'rgba(2, 132, 199, 0.35)',
+                      ...(isDark && Platform.OS === 'web'
+                        ? ({ boxShadow: '0 0 16px rgba(0, 240, 255, 0.35)' } as any)
+                        : {}),
+                    },
+                  ],
+                ]}
+                onPress={() => {
+                  setActiveTab('summary');
+                  setMobileDetailOpen(false);
+                }}
+              >
+                <View style={styles.capsuleIconContainer}>
+                  <SculptedIcon
+                    name="chart"
+                    size={isTablet ? 19 : 17}
+                    variant="plain"
+                    color={activeTab === 'summary' ? (isDark ? '#00F0FF' : '#0284C7') : colors.textMuted}
+                  />
+                </View>
+                {(!isSidebarCollapsed || !isTablet) && (
+                  <View style={[styles.capsuleTextWrapper, !isTablet && { alignItems: 'center' }]}>
+                    <Text
+                      style={[
+                        styles.capsuleTabTitle,
+                        !isTablet && { fontSize: 10, marginTop: 1 },
+                        {
+                          color: activeTab === 'summary' ? (isDark ? '#00F0FF' : '#0284C7') : colors.textPrimary,
+                          fontFamily: activeTab === 'summary' ? Fonts.bold : Fonts.medium,
+                        },
+                      ]}
+                    >
+                      {isTablet ? 'Corte y Tickets' : 'Corte & POS'}
+                    </Text>
+                    {isTablet && !isSidebarCollapsed && (
+                      <Text style={[styles.capsuleTabSub, { color: colors.textSecondary }]}>
+                        Métricas & POS
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </TouchableOpacity>
 
-          {/* Tab 3: Gastos e Insumos */}
-          <TouchableOpacity
-            style={[
-              styles.tabItem,
-              isSidebarCollapsed && styles.tabItemCollapsed,
-              {
-                backgroundColor: activeTab === 'expenses' ? colors.primaryLight : colors.surfaceSubtle,
-                borderColor: activeTab === 'expenses' ? colors.primaryBorder : colors.borderLight,
-                borderWidth: 1,
-                ...(activeTab === 'expenses' && isDark ? getNeonGlow(colors.neonCyan, 'low') : {}),
-              },
-            ]}
-            onPress={() => setActiveTab('expenses')}
-          >
-            <SculptedIcon
-              name="cart"
-              size={18}
-              containerSize={36}
-              variant="sunken"
-              color={activeTab === 'expenses' ? colors.primary : colors.textMuted}
-              glow={activeTab === 'expenses' && isDark}
-              accentColor={colors.primary}
-            />
-            {!isSidebarCollapsed && (
-              <View style={styles.tabTextWrapper}>
-                <Text
-                  style={[
-                    styles.tabTitle,
-                    { color: activeTab === 'expenses' ? colors.primaryText : colors.textPrimary },
-                  ]}
-                >
-                  Gastos e Insumos
-                </Text>
-                <Text style={[styles.tabDescription, { color: colors.textSecondary }]}>
-                  {event.expenses.length} compras / CSV
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
+              {/* Tab 2: Subfamilias y Asistencia (Users) */}
+              <TouchableOpacity
+                style={[
+                  styles.capsuleTabItem,
+                  isTablet
+                    ? isSidebarCollapsed ? styles.capsuleTabItemCollapsed : styles.capsuleTabItemExpanded
+                    : styles.capsuleTabItemMobile,
+                  activeTab === 'participants' && [
+                    styles.capsuleTabActiveSquircle,
+                    {
+                      backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+                      borderColor: isDark ? 'rgba(0, 240, 255, 0.45)' : 'rgba(2, 132, 199, 0.35)',
+                      ...(isDark && Platform.OS === 'web'
+                        ? ({ boxShadow: '0 0 16px rgba(0, 240, 255, 0.35)' } as any)
+                        : {}),
+                    },
+                  ],
+                ]}
+                onPress={() => setActiveTab('participants')}
+              >
+                <View style={styles.capsuleIconContainer}>
+                  <SculptedIcon
+                    name="users"
+                    size={isTablet ? 19 : 17}
+                    variant="plain"
+                    color={activeTab === 'participants' ? (isDark ? '#00F0FF' : '#0284C7') : colors.textMuted}
+                  />
+                </View>
+                {(!isSidebarCollapsed || !isTablet) && (
+                  <View style={[styles.capsuleTextWrapper, !isTablet && { alignItems: 'center' }]}>
+                    <Text
+                      style={[
+                        styles.capsuleTabTitle,
+                        !isTablet && { fontSize: 10, marginTop: 1 },
+                        {
+                          color: activeTab === 'participants' ? (isDark ? '#00F0FF' : '#0284C7') : colors.textPrimary,
+                          fontFamily: activeTab === 'participants' ? Fonts.bold : Fonts.medium,
+                        },
+                      ]}
+                    >
+                      Subfamilias
+                    </Text>
+                    {isTablet && !isSidebarCollapsed && (
+                      <Text style={[styles.capsuleTabSub, { color: colors.textSecondary }]}>
+                        {totals?.totalAttendingCount}/{event.participants.length} asistentes
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* Tab 3: Gastos e Insumos (Cart) */}
+              <TouchableOpacity
+                style={[
+                  styles.capsuleTabItem,
+                  isTablet
+                    ? isSidebarCollapsed ? styles.capsuleTabItemCollapsed : styles.capsuleTabItemExpanded
+                    : styles.capsuleTabItemMobile,
+                  activeTab === 'expenses' && [
+                    styles.capsuleTabActiveSquircle,
+                    {
+                      backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+                      borderColor: isDark ? 'rgba(0, 240, 255, 0.45)' : 'rgba(2, 132, 199, 0.35)',
+                      ...(isDark && Platform.OS === 'web'
+                        ? ({ boxShadow: '0 0 16px rgba(0, 240, 255, 0.35)' } as any)
+                        : {}),
+                    },
+                  ],
+                ]}
+                onPress={() => setActiveTab('expenses')}
+              >
+                <View style={styles.capsuleIconContainer}>
+                  <SculptedIcon
+                    name="cart"
+                    size={isTablet ? 19 : 17}
+                    variant="plain"
+                    color={activeTab === 'expenses' ? (isDark ? '#00F0FF' : '#0284C7') : colors.textMuted}
+                  />
+                </View>
+                {(!isSidebarCollapsed || !isTablet) && (
+                  <View style={[styles.capsuleTextWrapper, !isTablet && { alignItems: 'center' }]}>
+                    <Text
+                      style={[
+                        styles.capsuleTabTitle,
+                        !isTablet && { fontSize: 10, marginTop: 1 },
+                        {
+                          color: activeTab === 'expenses' ? (isDark ? '#00F0FF' : '#0284C7') : colors.textPrimary,
+                          fontFamily: activeTab === 'expenses' ? Fonts.bold : Fonts.medium,
+                        },
+                      ]}
+                    >
+                      Gastos
+                    </Text>
+                    {isTablet && !isSidebarCollapsed && (
+                      <Text style={[styles.capsuleTabSub, { color: colors.textSecondary }]}>
+                        {event.expenses.length} compra{event.expenses.length === 1 ? '' : 's'}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Área de Visualización */}
         <ScrollView
@@ -983,14 +1174,14 @@ export default function EventDetailDashboard() {
                     style={[
                       styles.heroMetricItem,
                       {
-                        backgroundColor: isDark ? '#1A1C22' : colors.surfaceSubtle,
-                        borderColor: isDark ? 'rgba(0, 229, 255, 0.28)' : 'rgba(2, 132, 199, 0.25)',
-                        ...(isDark ? getNeonGlow(colors.neonCyan, 'low') : {}),
+                        backgroundColor: colors.surfaceSubtle,
+                        borderColor: colors.border,
+                        borderWidth: 1,
                       },
                     ]}
                   >
                     <View style={styles.kpiHeaderRow}>
-                      <Text style={[styles.heroMetricLabel, { color: isDark ? colors.neonCyan : colors.primary }]}>
+                      <Text style={[styles.heroMetricLabel, { color: colors.primary }]}>
                         TOTAL GASTADO
                       </Text>
                       <SculptedIcon
@@ -998,9 +1189,9 @@ export default function EventDetailDashboard() {
                         size={14}
                         containerSize={28}
                         variant="sunken"
-                        glow={isDark}
-                        accentColor={colors.neonCyan}
-                        color={isDark ? colors.neonCyan : colors.primary}
+                        glow={false}
+                        accentColor={colors.primary}
+                        color={colors.primary}
                       />
                     </View>
                     <Text style={[styles.heroMetricValue, { color: colors.textPrimary }]}>
@@ -1011,19 +1202,19 @@ export default function EventDetailDashboard() {
                     </Text>
                   </View>
 
-                  {/* Recaudado (Verde Esmeralda Suave) */}
+                  {/* Recaudado (Menta Pastel Suave) */}
                   <View
                     style={[
                       styles.heroMetricItem,
                       {
-                        backgroundColor: isDark ? '#1A1C22' : colors.successLight,
-                        borderColor: isDark ? 'rgba(0, 230, 118, 0.32)' : colors.successBorder,
-                        ...(isDark ? getNeonGlow(colors.neonGreen, 'low') : {}),
+                        backgroundColor: colors.successLight,
+                        borderColor: colors.successBorder,
+                        borderWidth: 1,
                       },
                     ]}
                   >
                     <View style={styles.kpiHeaderRow}>
-                      <Text style={[styles.heroMetricLabel, { color: isDark ? colors.neonGreen : colors.successText }]}>
+                      <Text style={[styles.heroMetricLabel, { color: colors.successText }]}>
                         RECAUDADO
                       </Text>
                       <SculptedIcon
@@ -1031,44 +1222,39 @@ export default function EventDetailDashboard() {
                         size={14}
                         containerSize={28}
                         variant="sunken"
-                        glow={isDark}
-                        accentColor={colors.neonGreen}
-                        color={isDark ? colors.neonGreen : colors.successText}
+                        glow={false}
+                        accentColor={colors.success}
+                        color={colors.successText}
                       />
                     </View>
-                    <Text style={[styles.heroMetricValue, { color: isDark ? colors.neonGreen : colors.successText }]}>
+                    <Text style={[styles.heroMetricValue, { color: colors.successText }]}>
                       {FormatCurrency(totals.totalCollected)}
                     </Text>
                     <View
                       style={[
                         styles.kpiPillSuccess,
                         {
-                          backgroundColor: isDark ? 'rgba(0, 230, 118, 0.16)' : '#DCFCE7',
-                          borderColor: isDark ? 'rgba(0, 230, 118, 0.32)' : colors.successBorder,
+                          backgroundColor: colors.surfaceSubtle,
+                          borderColor: colors.successBorder,
                           borderWidth: 1,
                         },
                       ]}
                     >
-                      <Text style={[styles.kpiPillSuccessText, { color: isDark ? colors.neonGreen : colors.successText }]}>
+                      <Text style={[styles.kpiPillSuccessText, { color: colors.successText }]}>
                         {collectedPercent}% de la meta
                       </Text>
                     </View>
                   </View>
 
-                  {/* Pendiente (Ámbar / Coral Sutil) */}
+                  {/* Pendiente (Melocotón Suave / Ámbar Pastel) */}
                   <View
                     style={[
                       styles.heroMetricItem,
-                      totals.totalPendingToCollect > 0
-                        ? {
-                            backgroundColor: isDark ? '#1A1C22' : colors.warningLight,
-                            borderColor: isDark ? 'rgba(255, 171, 0, 0.32)' : colors.warningBorder,
-                            ...(isDark ? getNeonGlow(colors.neonAmber, 'low') : {}),
-                          }
-                        : {
-                            backgroundColor: isDark ? '#1A1C22' : colors.surfaceSubtle,
-                            borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : colors.border,
-                          },
+                      {
+                        backgroundColor: totals.totalPendingToCollect > 0 ? colors.coralLight : colors.surfaceSubtle,
+                        borderColor: totals.totalPendingToCollect > 0 ? colors.coralBorder : colors.border,
+                        borderWidth: 1,
+                      },
                     ]}
                   >
                     <View style={styles.kpiHeaderRow}>
@@ -1078,7 +1264,7 @@ export default function EventDetailDashboard() {
                           {
                             color:
                               totals.totalPendingToCollect > 0
-                                ? (isDark ? colors.neonAmber : colors.warningText)
+                                ? colors.warningText
                                 : colors.textMuted,
                           },
                         ]}
@@ -1090,11 +1276,11 @@ export default function EventDetailDashboard() {
                         size={14}
                         containerSize={28}
                         variant="sunken"
-                        glow={totals.totalPendingToCollect > 0 && isDark}
-                        accentColor={colors.neonAmber}
+                        glow={false}
+                        accentColor={colors.warning}
                         color={
                           totals.totalPendingToCollect > 0
-                            ? (isDark ? colors.neonAmber : colors.warningText)
+                            ? colors.warningText
                             : colors.textMuted
                         }
                       />
@@ -1105,7 +1291,7 @@ export default function EventDetailDashboard() {
                         {
                           color:
                             totals.totalPendingToCollect > 0
-                              ? (isDark ? colors.neonAmber : colors.warningText)
+                              ? colors.warningText
                               : colors.textSecondary,
                         },
                       ]}
@@ -1118,7 +1304,7 @@ export default function EventDetailDashboard() {
                         {
                           color:
                             totals.totalPendingToCollect > 0
-                              ? (isDark ? 'rgba(255, 171, 0, 0.85)' : colors.warningText)
+                              ? colors.warningText
                               : colors.textSecondary,
                         },
                       ]}
@@ -1127,19 +1313,19 @@ export default function EventDetailDashboard() {
                     </Text>
                   </View>
 
-                  {/* En Caja (Verde Esmeralda / Teal) */}
+                  {/* En Caja (Menta Pastel / Azul Acero) */}
                   <View
                     style={[
                       styles.heroMetricItem,
                       {
-                        backgroundColor: isDark ? '#1A1C22' : colors.tealLight,
-                        borderColor: isDark ? 'rgba(0, 229, 255, 0.28)' : colors.tealBorder,
-                        ...(isDark ? getNeonGlow(colors.neonCyan, 'low') : {}),
+                        backgroundColor: colors.tealLight,
+                        borderColor: colors.tealBorder,
+                        borderWidth: 1,
                       },
                     ]}
                   >
                     <View style={styles.kpiHeaderRow}>
-                      <Text style={[styles.heroMetricLabel, { color: isDark ? colors.neonCyan : colors.tealText }]}>
+                      <Text style={[styles.heroMetricLabel, { color: colors.successText }]}>
                         EN CAJA
                       </Text>
                       <SculptedIcon
@@ -1147,12 +1333,12 @@ export default function EventDetailDashboard() {
                         size={14}
                         containerSize={28}
                         variant="sunken"
-                        glow={isDark}
-                        accentColor={colors.neonCyan}
-                        color={isDark ? colors.neonCyan : colors.tealText}
+                        glow={false}
+                        accentColor={colors.success}
+                        color={colors.successText}
                       />
                     </View>
-                    <Text style={[styles.heroMetricValue, { color: isDark ? colors.neonCyan : colors.tealText }]}>
+                    <Text style={[styles.heroMetricValue, { color: colors.successText }]}>
                       {FormatCurrency(totals.cashInHand)}
                     </Text>
                     <Text style={[styles.heroMetricSub, { color: colors.textSecondary }]}>Líquido disponible</Text>
@@ -1188,7 +1374,6 @@ export default function EventDetailDashboard() {
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 6,
-                        ...(isDark ? getNeonGlow(colors.neonCyan, 'low') : {}),
                       },
                     ]}
                     onPress={() => setIsCutModalOpen(true)}
@@ -1238,8 +1423,8 @@ export default function EventDetailDashboard() {
                         style={[
                           styles.searchBoxContainer,
                           {
-                            backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                            borderColor: isDark ? '#111317' : colors.border,
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: colors.border,
                           },
                         ]}
                       >
@@ -1382,20 +1567,36 @@ export default function EventDetailDashboard() {
                                   <TouchableOpacity
                                     style={[
                                       styles.sfQuickSettleBtn,
+                                      isOwed
+                                        ? {
+                                            backgroundColor: colors.warning,
+                                          }
+                                        : isRefund
+                                        ? {
+                                            backgroundColor: colors.teal,
+                                          }
+                                        : {
+                                            backgroundColor: colors.primary,
+                                          },
                                       {
-                                        backgroundColor: colors.primary,
                                         flexDirection: 'row',
                                         alignItems: 'center',
                                         gap: 4,
-                                        ...(isDark ? getNeonGlow(colors.neonGreen, 'low') : {}),
                                       },
                                     ]}
                                     onPress={(e) => {
                                       handleSettleSubFamily(sf.subFamilyName, true);
                                     }}
                                   >
-                                    <SculptedIcon name="check" size={12} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
-                                    <Text style={[styles.sfQuickSettleBtnText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>Liquidar</Text>
+                                    <SculptedIcon
+                                      name={isOwed ? 'wallet' : isRefund ? 'bank' : 'check'}
+                                      size={11}
+                                      variant="plain"
+                                      color={isDark ? '#0D1117' : '#FFFFFF'}
+                                    />
+                                    <Text style={[styles.sfQuickSettleBtnText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>
+                                      {isOwed ? 'Cobrar' : isRefund ? 'Reembolsar' : 'Saldar'}
+                                    </Text>
                                   </TouchableOpacity>
                                 )}
 
@@ -1424,6 +1625,7 @@ export default function EventDetailDashboard() {
                         onToggleAttendance={handleToggleAttendance}
                         onToggleSettlement={handleToggleSettlement}
                         onSettleSubFamily={handleSettleSubFamily}
+                        onToggleParticipantRole={handleToggleParticipantRole}
                       />
                     </View>
                   </View>
@@ -1437,8 +1639,8 @@ export default function EventDetailDashboard() {
                           style={[
                             styles.searchBoxContainer,
                             {
-                              backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                              borderColor: isDark ? '#111317' : colors.border,
+                              backgroundColor: colors.surfaceSubtle,
+                              borderColor: colors.border,
                             },
                           ]}
                         >
@@ -1532,12 +1734,12 @@ export default function EventDetailDashboard() {
                                       style={[
                                         styles.badgeOwed,
                                         {
-                                          backgroundColor: colors.coralLight,
-                                          borderColor: colors.coralBorder,
+                                          backgroundColor: colors.warningLight,
+                                          borderColor: colors.warningBorder,
                                         },
                                       ]}
                                     >
-                                      <Text style={[styles.badgeOwedText, { color: colors.coralText }]}>
+                                      <Text style={[styles.badgeOwedText, { color: colors.warningText }]}>
                                         Pagar: {FormatCurrency(sf.finalBalance)}
                                       </Text>
                                     </View>
@@ -1586,15 +1788,14 @@ export default function EventDetailDashboard() {
                                             flexDirection: 'row',
                                             alignItems: 'center',
                                             gap: 4,
-                                            ...(isDark ? getNeonGlow(colors.neonGreen, 'low') : {}),
                                           },
                                         ]}
                                         onPress={() => {
                                           handleSettleSubFamily(sf.subFamilyName, true);
                                         }}
                                       >
-                                        <SculptedIcon name="check" size={12} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
-                                        <Text style={[styles.sfQuickSettleBtnText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>Liquidar</Text>
+                                        <SculptedIcon name="check" size={12} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                                        <Text style={[styles.sfQuickSettleBtnText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Liquidar</Text>
                                       </TouchableOpacity>
                                     )}
 
@@ -1623,6 +1824,7 @@ export default function EventDetailDashboard() {
                           onToggleAttendance={handleToggleAttendance}
                           onToggleSettlement={handleToggleSettlement}
                           onSettleSubFamily={handleSettleSubFamily}
+                          onToggleParticipantRole={handleToggleParticipantRole}
                           onBackToList={() => setMobileDetailOpen(false)}
                           isMobile={true}
                         />
@@ -1675,7 +1877,6 @@ export default function EventDetailDashboard() {
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 6,
-                        ...(isDark ? getNeonGlow(colors.neonCyan, 'medium') : {}),
                       },
                     ]}
                     onPress={() => {
@@ -1685,8 +1886,8 @@ export default function EventDetailDashboard() {
                       setIsParticipantModalOpen(true);
                     }}
                   >
-                    <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
-                    <Text style={[styles.primaryButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>Agregar Integrante</Text>
+                    <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                    <Text style={[styles.primaryButtonText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Agregar Integrante</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1696,8 +1897,8 @@ export default function EventDetailDashboard() {
                 style={[
                   styles.searchBoxContainer,
                   {
-                    backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                    borderColor: isDark ? '#111317' : colors.border,
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
                   },
                 ]}
               >
@@ -1809,13 +2010,12 @@ export default function EventDetailDashboard() {
                                   flexDirection: 'row',
                                   alignItems: 'center',
                                   gap: 4,
-                                  ...(isDark ? getNeonGlow(colors.neonGreen, 'low') : {}),
                                 },
                               ]}
                               onPress={() => handleSettleSubFamily(familyName, true)}
                             >
-                              <SculptedIcon name="check" size={12} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
-                              <Text style={[styles.familySettleHeaderBtnText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>Liquidar</Text>
+                              <SculptedIcon name="check" size={12} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                              <Text style={[styles.familySettleHeaderBtnText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Liquidar</Text>
                             </TouchableOpacity>
                           )}
 
@@ -1860,28 +2060,51 @@ export default function EventDetailDashboard() {
                                       >
                                         {p.name}
                                       </Text>
-                                      <View
+                                      <TouchableOpacity
                                         style={[
                                           styles.categoryPill,
                                           {
-                                            backgroundColor: colors.surface,
-                                            borderColor: colors.border,
+                                            backgroundColor: p.category === 'nino' ? colors.purpleLight : colors.primaryLight,
+                                            borderColor: p.category === 'nino' ? colors.purpleBorder : colors.primaryBorder,
                                             flexDirection: 'row',
                                             alignItems: 'center',
                                             gap: 4,
+                                            paddingHorizontal: 7,
+                                            paddingVertical: 3,
+                                            borderRadius: Radii.sm,
+                                            borderWidth: 1,
+                                            ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
                                           },
                                         ]}
+                                        onPress={() => handleToggleParticipantRole(p.id)}
+                                        activeOpacity={0.7}
+                                        accessibilityLabel={`Cambiar categoría de ${p.name}, actualmente ${p.category === 'nino' ? 'Niño (0.5)' : 'Adulto (1.0)'}`}
+                                        accessibilityHint="Presiona para cambiar tarifa entre Adulto y Niño"
                                       >
                                         <SculptedIcon
                                           name={p.category === 'nino' ? 'child' : 'user'}
                                           size={11}
                                           variant="plain"
-                                          color={colors.textSecondary}
+                                          color={p.category === 'nino' ? (isDark ? colors.neonPurple : colors.purple) : colors.primary}
                                         />
-                                        <Text style={[styles.categoryPillText, { color: colors.textSecondary }]}>
+                                        <Text
+                                          style={[
+                                            styles.categoryPillText,
+                                            {
+                                              color: p.category === 'nino' ? (isDark ? colors.neonPurple : colors.purple) : colors.primary,
+                                              fontWeight: '600',
+                                            },
+                                          ]}
+                                        >
                                           {p.category === 'nino' ? 'Niño (0.5)' : 'Adulto (1.0)'}
                                         </Text>
-                                      </View>
+                                        <SculptedIcon
+                                          name="refresh"
+                                          size={9}
+                                          variant="plain"
+                                          color={p.category === 'nino' ? (isDark ? colors.neonPurple : colors.purple) : colors.primary}
+                                        />
+                                      </TouchableOpacity>
                                     </View>
                                     <Text style={[styles.memberQuotaSub, { color: colors.textSecondary }]}>
                                       Cuota:{' '}
@@ -2037,7 +2260,7 @@ export default function EventDetailDashboard() {
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 6,
-                        ...(isDark ? getNeonGlow(colors.neonCyan, 'medium') : {}),
+                        ...(isDark ? getNeonGlow(colors.neonGreen, 'low') : {}),
                       },
                     ]}
                     onPress={() => {
@@ -2048,8 +2271,8 @@ export default function EventDetailDashboard() {
                       setIsExpenseModalOpen(true);
                     }}
                   >
-                    <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
-                    <Text style={[styles.primaryButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>Registrar Gasto</Text>
+                    <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                    <Text style={[styles.primaryButtonText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Registrar Gasto</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -2085,7 +2308,7 @@ export default function EventDetailDashboard() {
                     const categoryIcon =
                       exp.category === 'Hospedaje'
                         ? 'bed'
-                        : exp.category === 'Bebidas'
+                        : exp.category === 'Bebidas' || exp.category === 'Comida'
                         ? 'food'
                         : exp.category === 'Transporte'
                         ? 'car'
@@ -2148,7 +2371,7 @@ export default function EventDetailDashboard() {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 6,
-            ...(isDark ? getNeonGlow(colors.neonCyan, 'high') : {}),
+            ...(isDark ? getNeonGlow(colors.neonGreen, 'medium') : {}),
           },
         ]}
         onPress={() => {
@@ -2160,8 +2383,8 @@ export default function EventDetailDashboard() {
         }}
         activeOpacity={0.85}
       >
-        <SculptedIcon name="plus" size={16} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
-        <Text style={[styles.fabText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>Gasto Rápido</Text>
+        <SculptedIcon name="plus" size={16} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+        <Text style={[styles.fabText, { color: isDark ? '#0D1117' : '#FFFFFF', fontWeight: '700' }]}>+ Gasto Rápido</Text>
       </TouchableOpacity>
 
       {/* Modal: Captura Rápida de Gastos */}
@@ -2173,225 +2396,670 @@ export default function EventDetailDashboard() {
       />
 
       {/* Modal: Agregar Participante */}
-      <Modal visible={isParticipantModalOpen} transparent animationType="fade">
-        <View style={styles.modalBackdrop}>
-          <GlassCard
-            variant="cyan"
-            glow={isDark}
-            style={[styles.modalCard, isTablet && styles.modalCardTablet]}
-            contentStyle={styles.modalCardContent}
+      <Modal
+        visible={isParticipantModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsParticipantModalOpen(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={[
+            styles.modalBackdrop,
+            { backgroundColor: isDark ? 'rgba(20, 18, 16, 0.75)' : 'rgba(20, 18, 16, 0.40)' },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.modalBackdropTouchable}
+            activeOpacity={1}
+            onPress={() => setIsParticipantModalOpen(false)}
+          />
+
+          <View
+            style={[
+              styles.modalCard,
+              isTablet && styles.modalCardTablet,
+              {
+                backgroundColor: colors.surface,
+                borderWidth: 0,
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: isDark ? 0.45 : 0.3,
+                shadowRadius: 18,
+                elevation: 10,
+              },
+            ]}
           >
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Agregar Integrante al Evento</Text>
-              <TouchableOpacity onPress={() => setIsParticipantModalOpen(false)}>
+            {/* Header del Modal */}
+            <View style={[styles.modalHeader, { borderBottomColor: colors.borderLight }]}>
+              <View style={styles.modalHeaderTitleGroup}>
+                <SculptedIcon
+                  name="user"
+                  size={18}
+                  containerSize={38}
+                  variant="sunken"
+                  glow={isDark}
+                  accentColor={colors.primary}
+                  color={colors.primary}
+                />
+                <View>
+                  <Text style={[styles.modalTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                    Agregar Integrante
+                  </Text>
+                  <Text style={[styles.modalSubtitle, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
+                    Nuevo integrante para el reparto de gastos
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setIsParticipantModalOpen(false)}
+                style={styles.modalCloseBtn}
+                activeOpacity={0.7}
+              >
                 <SculptedIcon name="close" size={16} variant="plain" color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.textPrimary }]}>Nombre completo</Text>
-              <TextInput
+            <ScrollView
+              style={styles.modalBodyScroll}
+              contentContainerStyle={styles.modalBodyScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Tarjeta de Previsualización en Vivo (Hero Card) */}
+              <View
                 style={[
-                  styles.formInput,
+                  styles.participantPreviewCard,
                   {
-                    backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                    borderColor: isDark ? '#111317' : colors.border,
-                    color: colors.textPrimary,
+                    backgroundColor: colors.surfaceSubtle,
+                    borderWidth: 1,
+                    borderColor: colors.border,
                   },
                 ]}
-                placeholder="Ej. Juan Santiago"
-                value={partName}
-                onChangeText={setPartName}
-                placeholderTextColor={colors.textMuted}
-              />
-            </View>
+              >
+                <View
+                  style={[
+                    styles.participantPreviewAvatar,
+                    {
+                      backgroundColor: colors.primaryLight,
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.participantPreviewAvatarText, { color: colors.primary, fontFamily: Fonts.bold }]}>
+                    {getInitials(partName)}
+                  </Text>
+                </View>
 
-            <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.textPrimary }]}>Subfamilia</Text>
-              <TextInput
-                style={[
-                  styles.formInput,
-                  {
-                    backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                    borderColor: isDark ? '#111317' : colors.border,
-                    color: colors.textPrimary,
-                  },
-                ]}
-                placeholder="Ej. Familia Santiago Bustamante"
-                value={partSubFamily}
-                onChangeText={setPartSubFamily}
-                placeholderTextColor={colors.textMuted}
-              />
-              {existingSubFamilies.length > 0 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subFamilySuggestions}>
-                  {existingSubFamilies.map((sf) => (
-                    <TouchableOpacity
-                      key={sf}
-                      style={[
-                        styles.subFamilyChip,
-                        {
-                          backgroundColor: partSubFamily === sf ? colors.primaryLight : colors.surfaceSubtle,
-                          borderColor: partSubFamily === sf ? colors.primaryBorder : colors.border,
-                        },
-                      ]}
-                      onPress={() => setPartSubFamily(sf)}
-                    >
-                      <Text
-                        style={[
-                          styles.subFamilyChipText,
-                          { color: partSubFamily === sf ? colors.primary : colors.textSecondary },
-                        ]}
-                      >
-                        {sf}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              )}
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.textPrimary }]}>Categoría</Text>
-              <View style={styles.categorySelectors}>
-                {[
-                  { key: 'adulto', label: 'Adulto (1.0)', weight: '1.0', icon: 'user' as const },
-                  { key: 'nino', label: 'Niño (0.5)', weight: '0.5', icon: 'child' as const },
-                ].map((item) => (
-                  <TouchableOpacity
-                    key={item.key}
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text
                     style={[
-                      styles.categoryOption,
+                      styles.participantPreviewName,
+                      { color: partName.trim() ? colors.textPrimary : colors.textMuted, fontFamily: Fonts.bold },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {partName.trim() || 'Nombre del integrante'}
+                  </Text>
+                  <View style={styles.participantPreviewMetaRow}>
+                    <SculptedIcon name="family" size={12} variant="plain" color={colors.textSecondary} />
+                    <Text style={[styles.participantPreviewSub, { color: colors.textSecondary, fontFamily: Fonts.regular }]} numberOfLines={1}>
+                      {partSubFamily.trim() || 'Familia General'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View
+                  style={[
+                    styles.participantPreviewCategoryBadge,
+                    {
+                      backgroundColor: partCategory === 'adulto' ? colors.primaryLight : colors.purpleLight,
+                      borderColor: partCategory === 'adulto' ? colors.primaryBorder : colors.purpleBorder,
+                    },
+                  ]}
+                >
+                  <SculptedIcon
+                    name={partCategory === 'adulto' ? 'user' : 'child'}
+                    size={11}
+                    variant="plain"
+                    color={partCategory === 'adulto' ? colors.primary : colors.purple}
+                  />
+                  <Text
+                    style={[
+                      styles.participantPreviewCategoryText,
                       {
-                        backgroundColor: partCategory === item.key ? colors.primaryLight : colors.surfaceSubtle,
-                        borderColor: partCategory === item.key ? colors.primaryBorder : colors.border,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 4,
+                        color: partCategory === 'adulto' ? colors.primary : colors.purple,
+                        fontFamily: Fonts.semiBold,
                       },
                     ]}
-                    onPress={() => {
-                      setPartCategory(item.key as CategoryType);
-                      setPartWeight(item.weight);
-                    }}
                   >
-                    <SculptedIcon
-                      name={item.icon}
-                      size={12}
-                      variant="plain"
-                      color={partCategory === item.key ? colors.primary : colors.textSecondary}
-                    />
-                    <Text
-                      style={[
-                        styles.categoryOptionText,
-                        { color: partCategory === item.key ? colors.primary : colors.textSecondary },
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                    {partCategory === 'adulto' ? 'Adulto 1.0' : 'Niño 0.5'}
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.modalFooter}>
+              {/* 1. Nombre Completo */}
+              <View style={styles.modalFieldGroup}>
+                <Text style={[styles.modalFieldLabel, { color: colors.textPrimary, fontFamily: Fonts.semiBold }]}>
+                  Nombre Completo
+                </Text>
+                <View
+                  style={[
+                    styles.modalInputWrapper,
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <SculptedIcon name="user" size={15} variant="plain" color={colors.textMuted} />
+                  <TextInput
+                    style={[styles.modalTextInput, { color: colors.textPrimary, fontFamily: Fonts.regular }]}
+                    placeholder="Ej. Juan Carlos Santiago"
+                    value={partName}
+                    onChangeText={setPartName}
+                    placeholderTextColor={colors.textMuted}
+                    autoFocus
+                  />
+                  {partName.length > 0 && (
+                    <TouchableOpacity onPress={() => setPartName('')}>
+                      <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {/* 2. Subfamilia o Grupo Familiar */}
+              <View style={styles.modalFieldGroup}>
+                <Text style={[styles.modalFieldLabel, { color: colors.textPrimary, fontFamily: Fonts.semiBold }]}>
+                  Subfamilia / Grupo Familiar
+                </Text>
+                <View
+                  style={[
+                    styles.modalInputWrapper,
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <SculptedIcon name="family" size={15} variant="plain" color={colors.textMuted} />
+                  <TextInput
+                    style={[styles.modalTextInput, { color: colors.textPrimary, fontFamily: Fonts.regular }]}
+                    placeholder="Ej. Familia Santiago Bustamante"
+                    value={partSubFamily}
+                    onChangeText={setPartSubFamily}
+                    placeholderTextColor={colors.textMuted}
+                  />
+                  {partSubFamily.length > 0 && (
+                    <TouchableOpacity onPress={() => setPartSubFamily('')}>
+                      <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Sugerencias rápidas de subfamilias existentes */}
+                {existingSubFamilies.length > 0 && (
+                  <View style={styles.modalSuggestionsWrapper}>
+                    <Text style={[styles.modalSuggestionsHint, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                      Sugerencias de familias en el evento:
+                    </Text>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.modalSuggestionsScroll}
+                    >
+                      {existingSubFamilies.map((sf) => {
+                        const isSelected = partSubFamily === sf;
+                        return (
+                          <TouchableOpacity
+                            key={sf}
+                            style={[
+                              styles.modalSubFamilyChip,
+                              {
+                                backgroundColor: isSelected
+                                  ? colors.primaryLight
+                                  : colors.surfaceSubtle,
+                                borderColor: isSelected
+                                  ? colors.primary
+                                  : colors.border,
+                              },
+                            ]}
+                            onPress={() => setPartSubFamily(sf)}
+                            activeOpacity={0.7}
+                          >
+                            <SculptedIcon
+                              name={isSelected ? 'check' : 'family'}
+                              size={11}
+                              variant="plain"
+                              color={isSelected ? colors.primary : colors.textSecondary}
+                            />
+                            <Text
+                              style={[
+                                styles.modalSubFamilyChipText,
+                                {
+                                  color: isSelected ? colors.primary : colors.textSecondary,
+                                  fontFamily: isSelected ? Fonts.bold : Fonts.medium,
+                                },
+                              ]}
+                            >
+                              {sf}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+
+              {/* 3. Categoría y Ponderación */}
+              <View style={styles.modalFieldGroup}>
+                <Text style={[styles.modalFieldLabel, { color: colors.textPrimary, fontFamily: Fonts.semiBold }]}>
+                  Categoría y Cuota
+                </Text>
+                <View style={styles.modalCategoryCardsRow}>
+                  {[
+                    {
+                      key: 'adulto',
+                      label: 'Adulto',
+                      desc: '1.0 • Cuota Completa',
+                      weight: '1.0',
+                      icon: 'user' as const,
+                    },
+                    {
+                      key: 'nino',
+                      label: 'Niño',
+                      desc: '0.5 • Media Cuota',
+                      weight: '0.5',
+                      icon: 'child' as const,
+                    },
+                  ].map((item) => {
+                    const isSelected = partCategory === item.key;
+                    return (
+                      <TouchableOpacity
+                        key={item.key}
+                        style={[
+                          styles.modalCategoryCard,
+                          {
+                            backgroundColor: isSelected
+                              ? colors.primaryLight
+                              : colors.surfaceSubtle,
+                            borderColor: isSelected
+                              ? colors.primary
+                              : colors.border,
+                          },
+                        ]}
+                        onPress={() => {
+                          setPartCategory(item.key as CategoryType);
+                          setPartWeight(item.weight);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.modalCategoryCardHeader}>
+                          <View
+                            style={[
+                              styles.modalCategoryIconCircle,
+                              {
+                                backgroundColor: isSelected
+                                  ? colors.primary
+                                  : colors.surfaceSubtle,
+                              },
+                            ]}
+                          >
+                            <SculptedIcon
+                              name={item.icon}
+                              size={14}
+                              variant="plain"
+                              color={isSelected ? (isDark ? '#0D1117' : '#FFFFFF') : colors.textSecondary}
+                            />
+                          </View>
+                          {isSelected && (
+                            <View style={[styles.modalCategoryCheckBadge, { backgroundColor: colors.primary }]}>
+                              <SculptedIcon name="check" size={10} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                            </View>
+                          )}
+                        </View>
+                        <Text
+                          style={[
+                            styles.modalCategoryCardTitle,
+                            {
+                              color: isSelected ? colors.primary : colors.textPrimary,
+                              fontFamily: isSelected ? Fonts.bold : Fonts.semiBold,
+                            },
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.modalCategoryCardDesc,
+                            {
+                              color: isSelected ? colors.primaryText : colors.textSecondary,
+                              fontFamily: Fonts.regular,
+                            },
+                          ]}
+                        >
+                          {item.desc}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Footer con Botones */}
+            <View style={[styles.modalFooter, { borderTopColor: colors.borderLight }]}>
               <TouchableOpacity
-                style={[styles.secondaryButton, { backgroundColor: colors.surfaceSubtle }]}
+                style={[styles.modalCancelBtn, { backgroundColor: colors.surfaceSubtle }]}
                 onPress={() => setIsParticipantModalOpen(false)}
+                activeOpacity={0.7}
               >
-                <Text style={[styles.secondaryButtonText, { color: colors.textSecondary }]}>Cancelar</Text>
+                <Text style={[styles.modalCancelBtnText, { color: colors.textSecondary, fontFamily: Fonts.medium }]}>
+                  Cancelar
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.primaryButton,
+                  styles.modalSaveBtn,
                   {
                     backgroundColor: colors.primary,
-                    ...(isDark ? getNeonGlow(colors.neonCyan, 'medium') : {}),
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.45 : 0.25,
+                    shadowRadius: 10,
+                    elevation: 5,
                   },
                 ]}
                 onPress={handleAddParticipant}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.primaryButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>Guardar</Text>
+                <SculptedIcon name="check" size={16} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                <Text style={[styles.modalSaveBtnText, { color: isDark ? '#0D1117' : '#FFFFFF', fontFamily: Fonts.bold }]}>
+                  Guardar Integrante
+                </Text>
               </TouchableOpacity>
             </View>
-          </GlassCard>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal: Registrar Gasto Completo */}
-      <Modal visible={isExpenseModalOpen} transparent animationType="fade">
-        <View style={styles.modalBackdrop}>
-          <GlassCard
-            variant="cyan"
-            glow={isDark}
-            style={[styles.modalCard, isTablet && styles.modalCardTablet]}
-            contentStyle={styles.modalCardContent}
+      <Modal
+        visible={isExpenseModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsExpenseModalOpen(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={[
+            styles.modalBackdrop,
+            { backgroundColor: isDark ? 'rgba(20, 18, 16, 0.75)' : 'rgba(20, 18, 16, 0.40)' },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.modalBackdropTouchable}
+            activeOpacity={1}
+            onPress={() => setIsExpenseModalOpen(false)}
+          />
+
+          <View
+            style={[
+              styles.modalCard,
+              isTablet && styles.modalCardTablet,
+              {
+                backgroundColor: colors.surface,
+                borderWidth: 0,
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: isDark ? 0.45 : 0.3,
+                shadowRadius: 18,
+                elevation: 10,
+              },
+            ]}
           >
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Registrar Nuevo Gasto</Text>
-              <TouchableOpacity onPress={() => setIsExpenseModalOpen(false)}>
+            {/* Header del Modal */}
+            <View style={[styles.modalHeader, { borderBottomColor: colors.borderLight }]}>
+              <View style={styles.modalHeaderTitleGroup}>
+                <SculptedIcon
+                  name="receipt"
+                  size={18}
+                  containerSize={38}
+                  variant="sunken"
+                  glow={isDark}
+                  accentColor={colors.primary}
+                  color={colors.primary}
+                />
+                <View>
+                  <Text style={[styles.modalTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                    Registrar Nuevo Gasto
+                  </Text>
+                  <Text style={[styles.modalSubtitle, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
+                    Ingresa compras o insumos para prorrateo general
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setIsExpenseModalOpen(false)}
+                style={styles.modalCloseBtn}
+                activeOpacity={0.7}
+              >
                 <SculptedIcon name="close" size={16} variant="plain" color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.textPrimary }]}>Concepto o Título</Text>
-              <TextInput
+            <ScrollView
+              style={styles.modalBodyScroll}
+              contentContainerStyle={styles.modalBodyScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {/* 1. Monto Numérico Gigante Inset */}
+              <View
                 style={[
-                  styles.formInput,
+                  styles.modalGiantAmountContainer,
                   {
-                    backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                    borderColor: isDark ? '#111317' : colors.border,
-                    color: colors.textPrimary,
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
                   },
                 ]}
-                placeholder="Ej. Supermercado día 1"
-                value={expTitle}
-                onChangeText={setExpTitle}
-                placeholderTextColor={colors.textMuted}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={[styles.formLabel, { color: colors.textPrimary }]}>Monto Pagado ($)</Text>
-              <TextInput
-                style={[
-                  styles.formInput,
-                  {
-                    backgroundColor: isDark ? '#16181D' : colors.surfaceSubtle,
-                    borderColor: isDark ? '#111317' : colors.border,
-                    color: colors.textPrimary,
-                  },
-                ]}
-                keyboardType="decimal-pad"
-                placeholder="0.00"
-                value={expAmount}
-                onChangeText={setExpAmount}
-                placeholderTextColor={colors.textMuted}
-              />
-            </View>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.secondaryButton, { backgroundColor: colors.surfaceSubtle }]}
-                onPress={() => setIsExpenseModalOpen(false)}
               >
-                <Text style={[styles.secondaryButtonText, { color: colors.textSecondary }]}>Cancelar</Text>
+                <Text style={[styles.modalCurrencySymbol, { color: colors.primary, fontFamily: Fonts.bold }]}>$</Text>
+                <TextInput
+                  style={[styles.modalGiantAmountInput, { color: colors.textPrimary, fontFamily: Fonts.bold }]}
+                  placeholder="0.00"
+                  placeholderTextColor={colors.textMuted}
+                  keyboardType="decimal-pad"
+                  value={expAmount}
+                  onChangeText={setExpAmount}
+                  autoFocus
+                />
+              </View>
+
+              {/* 2. Concepto o Título */}
+              <View style={styles.modalFieldGroup}>
+                <Text style={[styles.modalFieldLabel, { color: colors.textPrimary, fontFamily: Fonts.semiBold }]}>
+                  Concepto / ¿Qué se compró?
+                </Text>
+                <View
+                  style={[
+                    styles.modalInputWrapper,
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <SculptedIcon name="receipt" size={15} variant="plain" color={colors.textMuted} />
+                  <TextInput
+                    style={[styles.modalTextInput, { color: colors.textPrimary, fontFamily: Fonts.regular }]}
+                    placeholder="Ej. Supermercado día 1, Carnicería, Botanas..."
+                    value={expTitle}
+                    onChangeText={setExpTitle}
+                    placeholderTextColor={colors.textMuted}
+                  />
+                  {expTitle.length > 0 && (
+                    <TouchableOpacity onPress={() => setExpTitle('')}>
+                      <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {/* 3. Rubro / Categoría (5 Opciones) */}
+              <View style={styles.modalFieldGroup}>
+                <Text style={[styles.modalFieldLabel, { color: colors.textPrimary, fontFamily: Fonts.semiBold }]}>
+                  Rubro / Categoría
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.modalSuggestionsScroll}
+                >
+                  {EXPENSE_CATEGORIES.map((cat) => {
+                    const isSelected = expCategory === cat.id;
+                    return (
+                      <TouchableOpacity
+                        key={cat.id}
+                        style={[
+                          styles.modalSubFamilyChip,
+                          {
+                            backgroundColor: isSelected
+                              ? colors.primaryLight
+                              : colors.surfaceSubtle,
+                            borderColor: isSelected
+                              ? colors.primary
+                              : colors.border,
+                          },
+                        ]}
+                        onPress={() => setExpCategory(cat.id)}
+                        activeOpacity={0.7}
+                      >
+                        <SculptedIcon
+                          name={cat.icon}
+                          size={13}
+                          variant="plain"
+                          color={isSelected ? colors.primary : colors.textSecondary}
+                        />
+                        <Text
+                          style={[
+                            styles.modalSubFamilyChipText,
+                            {
+                              color: isSelected ? colors.primary : colors.textSecondary,
+                              fontFamily: isSelected ? Fonts.bold : Fonts.medium,
+                            },
+                          ]}
+                        >
+                          {cat.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
+              {/* 4. ¿Quién lo pagó? */}
+              <View style={styles.modalFieldGroup}>
+                <Text style={[styles.modalFieldLabel, { color: colors.textPrimary, fontFamily: Fonts.semiBold }]}>
+                  ¿Quién lo pagó de su bolsillo?
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.modalSuggestionsScroll}
+                >
+                  {event.participants.map((p) => {
+                    const activePayerId = expPaidBy || (event.participants[0]?.id ?? '');
+                    const isSelected = activePayerId === p.id;
+                    return (
+                      <TouchableOpacity
+                        key={p.id}
+                        style={[
+                          styles.modalSubFamilyChip,
+                          {
+                            backgroundColor: isSelected
+                              ? colors.primaryLight
+                              : colors.surfaceSubtle,
+                            borderColor: isSelected
+                              ? colors.primary
+                              : colors.border,
+                          },
+                        ]}
+                        onPress={() => setExpPaidBy(p.id)}
+                        activeOpacity={0.7}
+                      >
+                        <View
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: 10,
+                            backgroundColor: isSelected ? colors.primary : colors.surfaceSubtle,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 9,
+                              color: isSelected ? colors.primaryText : colors.textSecondary,
+                              fontFamily: Fonts.bold,
+                            }}
+                          >
+                            {getInitials(p.name)}
+                          </Text>
+                        </View>
+                        <Text
+                          style={[
+                            styles.modalSubFamilyChipText,
+                            {
+                              color: isSelected ? colors.primary : colors.textSecondary,
+                              fontFamily: isSelected ? Fonts.bold : Fonts.medium,
+                            },
+                          ]}
+                        >
+                          {p.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            </ScrollView>
+
+            {/* Footer con Botones */}
+            <View style={[styles.modalFooter, { borderTopColor: colors.borderLight }]}>
+              <TouchableOpacity
+                style={[styles.modalCancelBtn, { backgroundColor: colors.surfaceSubtle }]}
+                onPress={() => setIsExpenseModalOpen(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.modalCancelBtnText, { color: colors.textSecondary, fontFamily: Fonts.medium }]}>
+                  Cancelar
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.primaryButton,
+                  styles.modalSaveBtn,
                   {
                     backgroundColor: colors.primary,
-                    ...(isDark ? getNeonGlow(colors.neonCyan, 'medium') : {}),
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.45 : 0.25,
+                    shadowRadius: 10,
+                    elevation: 5,
                   },
                 ]}
                 onPress={handleAddExpense}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.primaryButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF' }]}>Guardar Gasto</Text>
+                <SculptedIcon name="check" size={16} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                <Text style={[styles.modalSaveBtnText, { color: isDark ? '#0D1117' : '#FFFFFF', fontFamily: Fonts.bold }]}>
+                  Guardar Gasto
+                </Text>
               </TouchableOpacity>
             </View>
-          </GlassCard>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modales Complementarios */}
@@ -2416,6 +3084,19 @@ export default function EventDetailDashboard() {
         mode="import"
         onImportSelected={handleImportFromDirectory}
       />
+
+      {/* Modal de confirmación estilizado para eliminaciones y acciones críticas */}
+      <ConfirmModal
+        visible={confirmConfig.visible}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        variant={confirmConfig.variant}
+        icon={confirmConfig.icon}
+        loading={confirmLoading}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig((prev) => ({ ...prev, visible: false }))}
+      />
     </View>
   );
 }
@@ -2437,10 +3118,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginHorizontal: 14,
+    marginTop: Platform.OS === 'ios' ? 48 : 12,
+    marginBottom: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: Radii.xl,
+    borderWidth: 1,
+    zIndex: 10,
+  },
+  topHeaderTablet: {
+    marginHorizontal: 24,
+    marginTop: 18,
+    marginBottom: 12,
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'ios' ? 52 : 42,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
+    paddingVertical: 14,
+    borderRadius: 24,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -2523,70 +3216,111 @@ const styles = StyleSheet.create({
   dashboardLayoutTablet: {
     flexDirection: 'row',
   },
-  tabBar: {
-    padding: 14,
-    borderBottomWidth: 1,
+  floatingCapsuleSidebar: {
+    padding: 10,
+    gap: 10,
+    alignItems: 'center',
+    borderWidth: 1.5,
+  },
+  capsuleMobileBottom: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    borderRadius: Radii.pill,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  capsuleTabletCollapsed: {
+    width: 68,
+    borderRadius: Radii.pill,
+    marginVertical: 18,
+    marginLeft: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 8,
+    alignSelf: 'flex-start',
+    zIndex: 10,
+  },
+  capsuleTabletExpanded: {
+    width: 230,
+    borderRadius: Radii.xxl,
+    marginVertical: 18,
+    marginLeft: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+    alignSelf: 'flex-start',
+    zIndex: 10,
+  },
+  capsuleToggleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  capsuleTabsGroup: {
     gap: 8,
+    width: '100%',
+    alignItems: 'center',
   },
-  tabBarTablet: {
-    borderBottomWidth: 0,
-    borderRightWidth: 1,
-    padding: 16,
-    width: '22%',
-    minWidth: 200,
-    maxWidth: 260,
+  capsuleTabsGroupMobile: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    gap: 4,
   },
-  tabBarTabletCollapsed: {
-    borderBottomWidth: 0,
-    borderRightWidth: 1,
-    padding: 12,
-    width: 72,
-  },
-  sidebarCollapseBtn: {
+  capsuleTabItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    padding: 4,
+  },
+  capsuleTabItemMobile: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+  },
+  capsuleTabItemCollapsed: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  capsuleTabItemExpanded: {
+    width: '100%',
     paddingVertical: 8,
     paddingHorizontal: 10,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    marginBottom: 8,
-    gap: 8,
+    gap: 10,
   },
-  sidebarCollapseBtnIcon: {
-    fontSize: 16,
-    fontWeight: '500',
+  capsuleTabActiveSquircle: {
+    borderRadius: 14,
   },
-  sidebarCollapseBtnText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  tabItem: {
-    flexDirection: 'row',
+  capsuleIconContainer: {
+    width: 38,
+    height: 38,
     alignItems: 'center',
-    padding: 12,
-    borderRadius: Radii.md,
-    gap: 12,
-  },
-  tabItemCollapsed: {
     justifyContent: 'center',
-    paddingHorizontal: 0,
-    alignItems: 'center',
-    height: 48,
   },
-  tabIcon: {
-    fontSize: 20,
-    textAlign: 'center',
-  },
-  tabTextWrapper: {
+  capsuleTextWrapper: {
     flex: 1,
   },
-  tabTitle: {
-    fontSize: 14,
-    fontWeight: '500',
+  capsuleTabTitle: {
+    fontSize: 13,
   },
-  tabDescription: {
+  capsuleTabSub: {
     fontSize: 11,
-    marginTop: 2,
+    marginTop: 1,
   },
   tabContent: {
     flex: 1,
@@ -2618,15 +3352,16 @@ const styles = StyleSheet.create({
     gap: 4,
     ...Platform.select({
       web: {
-        boxShadow:
-          '-2px -2px 6px rgba(255, 255, 255, 0.035), 3px 3px 8px rgba(0, 0, 0, 0.55)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.20)',
       } as any,
       default: {
         shadowColor: '#000000',
-        shadowOffset: { width: 2, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.25,
+        shadowRadius: 6,
+        elevation: 3,
       },
     }),
   },
@@ -2939,7 +3674,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
@@ -2951,25 +3688,26 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   secondaryHeaderButton: {
-    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: Radii.md,
+    borderWidth: 1,
   },
   secondaryHeaderButtonText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   primaryButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 11,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: Radii.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryButtonText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '700',
   },
   familiesContainer: {
     gap: 16,
@@ -3244,96 +3982,245 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(11, 15, 25, 0.75)',
+    backgroundColor: 'rgba(20, 18, 16, 0.50)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+      } as any,
+    }),
+  },
+  modalBackdropTouchable: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   modalCard: {
-    width: '100%',
-    maxWidth: 520,
+    width: '92%',
+    maxWidth: 480,
+    maxHeight: '90%',
+    borderRadius: Radii.xl,
+    overflow: 'visible',
+    borderWidth: 1,
   },
   modalCardTablet: {
-    maxWidth: 560,
-  },
-  modalCardContent: {
-    padding: 24,
+    maxWidth: 520,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  modalHeaderTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
   },
-  modalCloseText: {
-    fontSize: 18,
-    padding: 4,
+  modalSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
   },
-  formGroup: {
-    marginBottom: 16,
+  modalCloseBtn: {
+    padding: 6,
+    borderRadius: Radii.pill,
   },
-  formLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 6,
+  modalBodyScroll: {
+    maxHeight: 480,
   },
-  formInput: {
+  modalBodyScrollContent: {
+    padding: 20,
+    gap: 16,
+  },
+  participantPreviewCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: Radii.lg,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  participantPreviewAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  participantPreviewAvatarText: {
+    fontSize: 16,
+  },
+  participantPreviewName: {
+    fontSize: 15,
+  },
+  participantPreviewMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  participantPreviewSub: {
+    fontSize: 12,
+  },
+  participantPreviewCategoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radii.pill,
     borderWidth: 1,
+  },
+  participantPreviewCategoryText: {
+    fontSize: 11,
+  },
+  modalFieldGroup: {
+    gap: 6,
+  },
+  modalFieldLabel: {
+    fontSize: 13,
+  },
+  modalInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: Radii.md,
+    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 10,
+    gap: 10,
+    ...Platform.select({
+      web: {
+        boxShadow: 'inset 1px 1px 3px rgba(0, 0, 0, 0.25)',
+      } as any,
+    }),
+  },
+  modalTextInput: {
+    flex: 1,
     fontSize: 14,
   },
-  subFamilySuggestions: {
-    flexDirection: 'row',
-    marginTop: 8,
+  modalSuggestionsWrapper: {
+    marginTop: 6,
+    gap: 6,
   },
-  subFamilyChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    marginRight: 6,
-  },
-  subFamilyChipText: {
+  modalSuggestionsHint: {
     fontSize: 11,
-    fontWeight: '500',
   },
-  categorySelectors: {
+  modalSuggestionsScroll: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 6,
+    paddingVertical: 2,
   },
-  categoryOption: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: Radii.md,
-    borderWidth: 1,
+  modalSubFamilyChip: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
   },
-  categoryOptionText: {
-    fontSize: 13,
-    fontWeight: '500',
+  modalSubFamilyChipText: {
+    fontSize: 11,
+  },
+  modalCategoryCardsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalCategoryCard: {
+    flex: 1,
+    borderRadius: Radii.lg,
+    borderWidth: 1.5,
+    padding: 14,
+    gap: 6,
+  },
+  modalCategoryCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  modalCategoryIconCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCategoryCheckBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCategoryCardTitle: {
+    fontSize: 14,
+  },
+  modalCategoryCardDesc: {
+    fontSize: 11,
+  },
+  modalGiantAmountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: Radii.lg,
+    borderWidth: 1,
+    gap: 4,
+    ...Platform.select({
+      web: {
+        boxShadow: 'inset 2px 2px 6px rgba(0, 0, 0, 0.35)',
+      } as any,
+    }),
+  },
+  modalCurrencySymbol: {
+    fontSize: 28,
+  },
+  modalGiantAmountInput: {
+    fontSize: 28,
+    minWidth: 100,
+    textAlign: 'center',
+    padding: 0,
   },
   modalFooter: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 10,
-  },
-  secondaryButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 11,
-    borderRadius: Radii.md,
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    gap: 10,
   },
-  secondaryButtonText: {
+  modalCancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: Radii.md,
+  },
+  modalCancelBtnText: {
     fontSize: 13,
-    fontWeight: '500',
+  },
+  modalSaveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: Radii.md,
+  },
+  modalSaveBtnText: {
+    fontSize: 13,
   },
 });
 

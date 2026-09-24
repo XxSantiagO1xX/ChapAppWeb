@@ -9,3 +9,5 @@ npm-debug.log*
 *.mobileprovision
 *.orig.*
 web-build/
+ChapAppWeb/
+.env*

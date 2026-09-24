@@ -95,349 +95,139 @@ export const generateEventReportPlainText = (
   return text;
 };
 
+import { generateEventCutHtml, generatePosTicketHtml } from './pdfTemplates';
+export { generateEventCutHtml, generatePosTicketHtml };
+
 /**
- * Genera un documento HTML formal para impresión/PDF con las 4 columnas contables exactas y cuadre de caja.
+ * Genera un documento HTML formal Dark Neumorphism para impresión/PDF con las 4 columnas contables exactas y cuadre de caja.
  */
 export const generateEventReportHtml = (
+  event: EventConfig,
+  totals?: EventTotalsResult
+): string => {
+  return generateEventCutHtml(event, totals);
+};
+
+/**
+ * Escapa valores para CSV estándar.
+ */
+const escapeCsv = (val: string | number | null | undefined): string => {
+  if (val === null || val === undefined) return '""';
+  const str = String(val);
+  return `"${str.replace(/"/g, '""')}"`;
+};
+
+/**
+ * Genera un archivo CSV con codificación UTF-8 BOM compatible con Excel,
+ * conteniendo el resumen del evento, el desglose por participante y el consolidado por subfamilia.
+ */
+export const generateEventReportCsv = (
   event: EventConfig,
   totals?: EventTotalsResult
 ): string => {
   const t = totals ?? calculateEventTotals(event);
   const dateStr = new Date(event.createdAt || Date.now()).toLocaleDateString('es-MX', {
     year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   });
 
-  const participantsRows = t.participants
-    .map((p) => {
-      const isRefund = p.finalBalance < 0;
-      const isOwed = p.finalBalance > 0;
-      const balanceColor = isRefund ? '#059669' : isOwed ? '#D97706' : '#64748B';
-      const balanceBg = isRefund ? '#ECFDF5' : isOwed ? '#FFFBEB' : '#F1F5F9';
-      const balanceText = !p.isAttending
-        ? p.totalPaid > 0 ? `Reembolso ${FormatCurrency(p.totalPaid)}` : 'En tablas ($0.00)'
-        : isRefund
-        ? `Reembolsar ${FormatCurrency(Math.abs(p.finalBalance))}`
-        : isOwed
-        ? `A Pagar ${FormatCurrency(p.finalBalance)}`
-        : `En tablas ($0.00)`;
+  const lines: string[] = [];
 
-      const statusBadge = !p.isAttending && p.totalPaid === 0
-        ? `<span style="background: #F1F5F9; color: #64748B; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 11px;">✕ AUSENTE</span>`
-        : p.isSettled
-        ? `<span style="background: #D1FAE5; color: #065F46; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">✓ LIQUIDADO</span>`
-        : `<span style="background: #FEF3C7; color: #92400E; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">⏳ PENDIENTE</span>`;
+  // UTF-8 BOM para soporte de acentos en Microsoft Excel
+  const BOM = '\uFEFF';
 
-      return `
-        <tr style="border-bottom: 1px solid #E2E8F0;">
-          <td style="padding: 12px 14px; font-weight: 600; color: #0F172A;">
-            ${p.participantName}
-            <div style="font-size: 11px; color: #64748B; font-weight: 400; margin-top: 2px;">
-              ${p.subFamily} • ${p.category.toUpperCase()} • ${p.isAttending ? `${p.activeDaysCount} días` : 'No asistió'}
-            </div>
-          </td>
-          <!-- 1. Cuota Proporcional -->
-          <td style="padding: 12px 14px; text-align: right; color: #334155; font-weight: 500;">
-            ${FormatCurrency(p.proportionalShare)}
-          </td>
-          <!-- 2. Aporte de su Bolsillo -->
-          <td style="padding: 12px 14px; text-align: right; color: #334155; font-weight: 500;">
-            ${FormatCurrency(p.totalPaid)}
-          </td>
-          <!-- 3. Saldo Neto -->
-          <td style="padding: 12px 14px; text-align: right;">
-            <div style="display: inline-block; background: ${balanceBg}; color: ${balanceColor}; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 12px;">
-              ${balanceText}
-            </div>
-          </td>
-          <!-- 4. Estatus de Liquidación -->
-          <td style="padding: 12px 14px; text-align: center;">${statusBadge}</td>
-        </tr>
-      `;
-    })
-    .join('');
+  // 1. Resumen General del Evento
+  lines.push(`${escapeCsv('REPORTE CONTABLE Y CORTE DE LIQUIDACIÓN')}`);
+  lines.push(`${escapeCsv('Evento:')},${escapeCsv(event.title)},${escapeCsv('Año:')},${escapeCsv(event.year)},${escapeCsv('Fecha:')},${escapeCsv(dateStr)}`);
+  lines.push(`${escapeCsv('Total Gastado:')},${escapeCsv(t.totalExpenses)},${escapeCsv('Asistencia:')},${escapeCsv(`${t.totalAttendingCount} de ${t.totalParticipantsCount}`)},${escapeCsv('Costo x Unidad Base:')},${escapeCsv(t.costPerUnit)}`);
+  lines.push(`${escapeCsv('Total x Recaudar:')},${escapeCsv(t.totalToCollect)},${escapeCsv('Recaudado en Caja:')},${escapeCsv(t.totalCollected)},${escapeCsv('Reembolsos Pagados:')},${escapeCsv(t.totalRefunded)},${escapeCsv('Efectivo en Caja:')},${escapeCsv(t.cashInHand)}`);
+  lines.push('');
 
-  const subFamilyRows = t.subFamilies
-    .map((sf) => {
-      const isRefund = sf.finalBalance < 0;
-      const isOwed = sf.finalBalance > 0;
-      const balanceColor = isRefund ? '#059669' : isOwed ? '#D97706' : '#64748B';
-      const balanceBg = isRefund ? '#ECFDF5' : isOwed ? '#FFFBEB' : '#F1F5F9';
-      const balanceText = isRefund
-        ? `Reembolso ${FormatCurrency(Math.abs(sf.finalBalance))}`
-        : isOwed
-        ? `Paga ${FormatCurrency(sf.finalBalance)}`
-        : `En tablas ($0.00)`;
+  // 2. Desglose Contable por Participante (Las 4 Columnas)
+  lines.push(`${escapeCsv('--- DESGLOSE POR INTEGRANTE (4 COLUMNAS CONTABLES) ---')}`);
+  lines.push([
+    escapeCsv('Participante'),
+    escapeCsv('Subfamilia'),
+    escapeCsv('Categoría'),
+    escapeCsv('Asiste'),
+    escapeCsv('Días Asistidos'),
+    escapeCsv('Unidades Ponderadas'),
+    escapeCsv('1. Cuota Proporcional'),
+    escapeCsv('2. Aporte de Bolsillo (Compras)'),
+    escapeCsv('3. Saldo Neto'),
+    escapeCsv('Tipo de Saldo'),
+    escapeCsv('4. Estatus de Liquidación'),
+  ].join(','));
 
-      const statusBadge = sf.isFullySettled
-        ? `<span style="background: #D1FAE5; color: #065F46; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">✓ LIQUIDADA</span>`
-        : `<span style="background: #FEF3C7; color: #92400E; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">⏳ PENDIENTE</span>`;
+  for (const p of t.participants) {
+    const isRefund = p.finalBalance < 0;
+    const isOwed = p.finalBalance > 0;
+    const saldoTipo = !p.isAttending && p.totalPaid > 0
+      ? 'Reembolso por Ausencia'
+      : isRefund
+      ? 'Reembolso a Favor'
+      : isOwed
+      ? 'Debe Pagar Efectivo'
+      : 'Al Corriente ($0.00)';
+    const statusText = p.isSettled ? 'Liquidado' : 'Pendiente';
 
-      return `
-        <tr style="border-bottom: 1px solid #E2E8F0; background-color: #F8FAFC;">
-          <td style="padding: 12px 14px; font-weight: 700; color: #0F172A;">
-            🏡 ${sf.subFamilyName}
-            <div style="font-size: 11px; color: #64748B; font-weight: 400; margin-top: 2px;">
-              ${sf.attendingCount} de ${sf.membersCount} asistentes
-            </div>
-          </td>
-          <td style="padding: 12px 14px; text-align: right; color: #334155; font-weight: 600;">${FormatCurrency(sf.proportionalShare)}</td>
-          <td style="padding: 12px 14px; text-align: right; color: #334155; font-weight: 600;">${FormatCurrency(sf.totalPaid)}</td>
-          <td style="padding: 12px 14px; text-align: right;">
-            <div style="display: inline-block; background: ${balanceBg}; color: ${balanceColor}; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 12px;">
-              ${balanceText}
-            </div>
-          </td>
-          <td style="padding: 12px 14px; text-align: center;">${statusBadge}</td>
-        </tr>
-      `;
-    })
-    .join('');
+    lines.push([
+      escapeCsv(p.participantName),
+      escapeCsv(p.subFamily),
+      escapeCsv(p.category.toUpperCase()),
+      escapeCsv(p.isAttending ? 'SÍ' : 'NO'),
+      escapeCsv(p.activeDaysCount),
+      escapeCsv(p.weightedUnits),
+      escapeCsv(p.proportionalShare),
+      escapeCsv(p.totalPaid),
+      escapeCsv(p.finalBalance),
+      escapeCsv(saldoTipo),
+      escapeCsv(statusText),
+    ].join(','));
+  }
 
-  return `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Corte y Liquidación - ${event.title}</title>
-  <style>
-    @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 32px;
-      background-color: #F8FAFC;
-      color: #0F172A;
-    }
-    .ticket-container {
-      max-width: 920px;
-      margin: 0 auto;
-      background: #FFFFFF;
-      border-radius: 16px;
-      padding: 36px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-      border: 1px solid #E2E8F0;
-    }
-    .header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 2px solid #F1F5F9;
-      padding-bottom: 20px;
-      margin-bottom: 24px;
-    }
-    .title {
-      font-size: 24px;
-      font-weight: 800;
-      color: #0F172A;
-      margin: 0 0 6px 0;
-    }
-    .subtitle {
-      font-size: 13px;
-      color: #64748B;
-      margin: 0;
-    }
-    .badge-year {
-      background: #EFF6FF;
-      color: #2563EB;
-      font-weight: 800;
-      font-size: 16px;
-      padding: 6px 14px;
-      border-radius: 8px;
-      border: 1px solid #BFDBFE;
-    }
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-    .kpi-box {
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      padding: 16px;
-      border-radius: 12px;
-    }
-    .kpi-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #64748B;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .kpi-value {
-      font-size: 20px;
-      font-weight: 800;
-      color: #0F172A;
-    }
-    .kpi-value-primary {
-      font-size: 20px;
-      font-weight: 800;
-      color: #2563EB;
-    }
-    .cashbox-box {
-      background: #F0FDF4;
-      border: 1px solid #BBF7D0;
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .cashbox-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #166534;
-      margin-bottom: 4px;
-    }
-    .cashbox-sub {
-      font-size: 12px;
-      color: #15803D;
-    }
-    .cashbox-amount {
-      font-size: 22px;
-      font-weight: 800;
-      color: #166534;
-      text-align: right;
-    }
-    .table-section {
-      margin-bottom: 30px;
-    }
-    .section-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #0F172A;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    th {
-      background: #F8FAFC;
-      padding: 12px 14px;
-      text-align: left;
-      font-weight: 700;
-      color: #475569;
-      border-bottom: 2px solid #E2E8F0;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .footer {
-      border-top: 1px solid #E2E8F0;
-      padding-top: 20px;
-      font-size: 12px;
-      color: #94A3B8;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="ticket-container">
-    <div class="header-row">
-      <div>
-        <h1 class="title">Corte Oficial y Liquidación</h1>
-        <p class="subtitle">${event.title} • Fecha: ${dateStr}</p>
-      </div>
-      <div class="badge-year">${event.year}</div>
-    </div>
+  lines.push('');
 
-    <!-- KPIs Globales -->
-    <div class="kpi-grid">
-      <div class="kpi-box">
-        <div class="kpi-label">Total Gastado</div>
-        <div class="kpi-value">${FormatCurrency(t.totalExpenses)}</div>
-      </div>
-      <div class="kpi-box">
-        <div class="kpi-label">Asistencia Real</div>
-        <div class="kpi-value">${t.totalAttendingCount} / ${t.totalParticipantsCount}</div>
-      </div>
-      <div class="kpi-box">
-        <div class="kpi-label">Costo x Día (1.0)</div>
-        <div class="kpi-value-primary">${FormatCurrency(t.costPerUnit)}</div>
-      </div>
-      <div class="kpi-box" style="background: ${t.totalPendingToCollect === 0 ? '#ECFDF5' : '#FFFBEB'}; border-color: ${t.totalPendingToCollect === 0 ? '#A7F3D0' : '#FDE68A'};">
-        <div class="kpi-label" style="color: ${t.totalPendingToCollect === 0 ? '#065F46' : '#92400E'};">Pendiente x Cobrar</div>
-        <div class="kpi-value" style="color: ${t.totalPendingToCollect === 0 ? '#065F46' : '#92400E'};">${FormatCurrency(t.totalPendingToCollect)}</div>
-      </div>
-    </div>
+  // 3. Consolidado por Subfamilia
+  lines.push(`${escapeCsv('--- CONSOLIDADO POR SUBFAMILIA ---')}`);
+  lines.push([
+    escapeCsv('Subfamilia'),
+    escapeCsv('Miembros Asistentes'),
+    escapeCsv('Total Miembros'),
+    escapeCsv('Unidades de Costo'),
+    escapeCsv('1. Cuota Proporcional'),
+    escapeCsv('2. Compras de Bolsillo'),
+    escapeCsv('3. Saldo Neto Familiar'),
+    escapeCsv('Tipo de Saldo'),
+    escapeCsv('4. Estatus de Cuenta'),
+  ].join(','));
 
-    <!-- Cuadre de Caja Común -->
-    <div class="cashbox-box">
-      <div>
-        <div class="cashbox-title">🏦 Cuadre de Caja y Reembolsos</div>
-        <div class="cashbox-sub">
-          Recaudado de Deudores: ${FormatCurrency(t.totalCollected)} | Reembolsos Entregados a Compradores: ${FormatCurrency(t.totalRefunded)}
-        </div>
-      </div>
-      <div>
-        <div class="cashbox-amount">${FormatCurrency(t.cashInHand)}</div>
-        <div style="font-size: 11px; color: #15803D; text-align: right;">Efectivo en Mano Disponible</div>
-      </div>
-    </div>
+  for (const sf of t.subFamilies) {
+    const isRefund = sf.finalBalance < 0;
+    const isOwed = sf.finalBalance > 0;
+    const saldoTipo = isRefund
+      ? 'Reembolso a Devolver'
+      : isOwed
+      ? 'Debe Entregar Efectivo'
+      : 'Al Corriente ($0.00)';
+    const statusText = sf.isFullySettled ? 'Liquidada' : 'Pendiente';
 
-    <!-- 1. Desglose Transparente con las 4 Columnas Inalterables -->
-    <div class="table-section">
-      <div class="section-title">
-        <span>👥 Desglose Contable por Participante</span>
-        <span style="font-size: 12px; font-weight: 600; color: #64748B;">
-          ${t.isFullySettled ? '✅ 100% Liquidado' : '⏳ Cobros en curso'}
-        </span>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Participante</th>
-            <th style="text-align: right;">1. Cuota Proporcional</th>
-            <th style="text-align: right;">2. Aporte de su Bolsillo</th>
-            <th style="text-align: right;">3. Saldo Neto</th>
-            <th style="text-align: center;">4. Estatus</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${participantsRows}
-        </tbody>
-      </table>
-    </div>
+    lines.push([
+      escapeCsv(sf.subFamilyName),
+      escapeCsv(sf.attendingCount),
+      escapeCsv(sf.membersCount),
+      escapeCsv(sf.totalWeightedUnits),
+      escapeCsv(sf.proportionalShare),
+      escapeCsv(sf.totalPaid),
+      escapeCsv(sf.finalBalance),
+      escapeCsv(saldoTipo),
+      escapeCsv(statusText),
+    ].join(','));
+  }
 
-    <!-- 2. Resumen Consolidado por Subfamilia -->
-    <div class="table-section">
-      <div class="section-title">🏡 Consolidado por Subfamilia</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Subfamilia</th>
-            <th style="text-align: right;">1. Cuota Proporcional</th>
-            <th style="text-align: right;">2. Aporte de su Bolsillo</th>
-            <th style="text-align: right;">3. Saldo Neto</th>
-            <th style="text-align: center;">4. Estatus</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${subFamilyRows}
-        </tbody>
-      </table>
-    </div>
+  lines.push('');
+  lines.push(`${escapeCsv('Generado automáticamente por ChapApp')} - ${escapeCsv(new Date().toISOString())}`);
 
-    <div class="footer">
-      <div>ChapApp • Sistema de Gestión de Gastos y Eventos Familiares</div>
-      <div>Cuadre Contable: ${t.isCashBalanced ? '⚖️ Balance a Cero Cuadrado' : '⚠️ Pendiente'}</div>
-    </div>
-  </div>
-</body>
-</html>
-  `;
+  return BOM + lines.join('\r\n');
 };

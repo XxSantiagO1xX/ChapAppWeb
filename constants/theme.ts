@@ -1,31 +1,32 @@
 /**
  * Paletas de diseño y tokens de tema para ChapApp.
- * Soporta Modo Claro (Acrylic Frost / Naturaleza) y Modo Oscuro (Sci-Fi HUD / Cabaña Nocturna con Acentos Neón).
+ * Implementación de Glassmorphism UI Ultra-Moderno para Modo Oscuro y Modo Claro.
+ * Inspirado en dashboards ejecutivos de alta gama (Imágenes conceptuales).
  */
 
 export type ThemeMode = 'light' | 'dark';
 
 export interface ThemePalette {
   mode: ThemeMode;
-  // Fondos y Superficies
+  // Fondos y Superficies de Cristal
   background: string;
   surface: string;
   surfaceSubtle: string;
   surfaceHighlight: string;
   cardBackground: string;
 
-  // Bordes
+  // Bordes de Cristal
   border: string;
   borderLight: string;
   borderFocus: string;
 
-  // Tipografía
+  // Tipografía de Alta Legibilidad
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
   textInverse: string;
 
-  // Acentos y Marca (Verde Pino / Azul Profundo en Claro, Cian / Verde Neón en Oscuro)
+  // Acentos y Marca
   primary: string;
   primaryHover: string;
   primaryLight: string;
@@ -62,7 +63,7 @@ export interface ThemePalette {
   coralBorder: string;
   coralText: string;
 
-  // Neón específico para Modo Oscuro
+  // Acentos Vibrantes de Cristal
   neonGreen: string;
   neonCyan: string;
   neonCoral: string;
@@ -77,147 +78,147 @@ export interface ThemePalette {
 
 export const LightPalette: ThemePalette = {
   mode: 'light',
-  background: '#EBECF0',        // Base Neumórfico Claro
-  surface: '#EBECF0',           // Superficie Neumórfica
-  surfaceSubtle: '#E2E4E9',     // Inset / Sunken
-  surfaceHighlight: '#D8DBE2',  // Resaltado
-  cardBackground: '#EBECF0',
+  background: '#F8FAFC',        // Base luminosa y limpia con toque sutil de malla iridiscente
+  surface: 'rgba(255, 255, 255, 0.72)', // Auténtico vidrio esmerilado blanco translúcido
+  surfaceSubtle: 'rgba(241, 245, 249, 0.60)', // Inset esmerilado suave / sunken limpio
+  surfaceHighlight: 'rgba(255, 255, 255, 0.88)', // Superficie brillante elevada
+  cardBackground: 'rgba(255, 255, 255, 0.72)',
 
-  border: 'rgba(0, 0, 0, 0.05)',
-  borderLight: 'rgba(0, 0, 0, 0.02)',
-  borderFocus: '#15803D',
+  border: 'rgba(255, 255, 255, 0.65)', // Borde de cristal fino y luminoso
+  borderLight: 'rgba(255, 255, 255, 0.40)',
+  borderFocus: '#0284C7',
 
-  textPrimary: '#1E2024',
-  textSecondary: '#6B7280',
-  textMuted: '#9CA3AF',
+  textPrimary: '#0F172A',       // Azul marino / carbón profundo de alta legibilidad
+  textSecondary: '#475569',     // Gris pizarra medio
+  textMuted: '#94A3B8',         // Gris atenuado
   textInverse: '#FFFFFF',
 
-  primary: '#15803D',
-  primaryHover: '#166534',
-  primaryLight: 'rgba(21, 128, 61, 0.12)',
-  primaryBorder: 'rgba(21, 128, 61, 0.3)',
-  primaryText: '#15803D',
+  primary: '#0284C7',           // Azul cian / zafiro
+  primaryHover: '#0369A1',
+  primaryLight: 'rgba(2, 132, 199, 0.10)',
+  primaryBorder: 'rgba(2, 132, 199, 0.30)',
+  primaryText: '#0284C7',
 
-  success: '#16A34A',
-  successLight: 'rgba(22, 163, 74, 0.12)',
-  successBorder: 'rgba(22, 163, 74, 0.3)',
-  successText: '#16A34A',
+  success: '#10B981',           // Esmeralda fresco
+  successLight: 'rgba(16, 185, 129, 0.12)',
+  successBorder: 'rgba(16, 185, 129, 0.30)',
+  successText: '#059669',
 
-  warning: '#D97706',
-  warningLight: 'rgba(217, 119, 6, 0.12)',
-  warningBorder: 'rgba(217, 119, 6, 0.3)',
+  warning: '#F59E0B',           // Ámbar brillante
+  warningLight: 'rgba(245, 158, 11, 0.12)',
+  warningBorder: 'rgba(245, 158, 11, 0.30)',
   warningText: '#D97706',
 
-  danger: '#DC2626',
-  dangerLight: 'rgba(220, 38, 38, 0.12)',
-  dangerBorder: 'rgba(220, 38, 38, 0.3)',
-  dangerText: '#DC2626',
+  danger: '#F43F5E',            // Coral rosa / rubí
+  dangerLight: 'rgba(244, 63, 94, 0.12)',
+  dangerBorder: 'rgba(244, 63, 94, 0.30)',
+  dangerText: '#E11D48',
 
-  purple: '#7C3AED',
-  purpleLight: 'rgba(124, 58, 237, 0.12)',
-  purpleBorder: 'rgba(124, 58, 237, 0.3)',
+  purple: '#8B5CF6',            // Violeta moderno
+  purpleLight: 'rgba(139, 92, 246, 0.12)',
+  purpleBorder: 'rgba(139, 92, 246, 0.30)',
 
-  teal: '#0F766E',
-  tealLight: 'rgba(15, 118, 110, 0.12)',
-  tealBorder: 'rgba(15, 118, 110, 0.3)',
-  tealText: '#0F766E',
+  teal: '#06B6D4',
+  tealLight: 'rgba(6, 182, 212, 0.12)',
+  tealBorder: 'rgba(6, 182, 212, 0.30)',
+  tealText: '#0891B2',
 
-  coral: '#E11D48',
-  coralLight: 'rgba(225, 29, 72, 0.12)',
-  coralBorder: 'rgba(225, 29, 72, 0.3)',
+  coral: '#F43F5E',
+  coralLight: 'rgba(244, 63, 94, 0.12)',
+  coralBorder: 'rgba(244, 63, 94, 0.30)',
   coralText: '#E11D48',
 
-  neonGreen: '#16A34A',
-  neonCyan: '#0284C7',
-  neonCoral: '#E11D48',
-  neonAmber: '#D97706',
-  neonPurple: '#7C3AED',
+  neonGreen: '#10B981',
+  neonCyan: '#06B6D4',
+  neonCoral: '#F43F5E',
+  neonAmber: '#F59E0B',
+  neonPurple: '#8B5CF6',
 
   blurTint: 'light',
-  glassBackground: '#EBECF0',
-  glassBorder: 'transparent',
+  glassBackground: 'rgba(255, 255, 255, 0.72)',
+  glassBorder: 'rgba(255, 255, 255, 0.65)',
 };
 
 export const DarkPalette: ThemePalette = {
   mode: 'dark',
-  background: '#22242A',        // Gris oscuro mate exacto
-  surface: '#22242A',           // 100% sólido mate
-  surfaceSubtle: '#1A1C22',     // Inset / Sunken / Canal esculpido
-  surfaceHighlight: '#2A2C34',  // Relieve suave
-  cardBackground: '#22242A',
+  background: '#0D1117',        // Canvas medianoche moderno (Glassmorphism dark de Imagen 1)
+  surface: 'rgba(19, 25, 36, 0.75)', // Tarjeta de cristal oscuro translúcido
+  surfaceSubtle: 'rgba(13, 17, 23, 0.65)',
+  surfaceHighlight: 'rgba(26, 36, 52, 0.85)',
+  cardBackground: '#131924',
 
-  border: 'rgba(255, 255, 255, 0.04)',
-  borderLight: 'rgba(255, 255, 255, 0.02)',
-  borderFocus: '#00E5FF',
+  border: 'rgba(255, 255, 255, 0.08)',
+  borderLight: 'rgba(255, 255, 255, 0.04)',
+  borderFocus: '#00F0FF',
 
-  textPrimary: '#E4E6EB',       // Gris muy claro de alto contraste
-  textSecondary: '#8A8D93',     // Gris medio para etiquetas
-  textMuted: '#60646C',         // Gris apagado
-  textInverse: '#22242A',
+  textPrimary: '#FFFFFF',       // Blanco puro nítido
+  textSecondary: '#94A3B8',     // Pizarra luminoso
+  textMuted: '#64748B',         // Gris atenuado visible
+  textInverse: '#0D1117',
 
-  // Acentos Vivos Neumórficos
-  primary: '#00E5FF',           // Cian Eléctrico
-  primaryHover: '#00B8D4',
-  primaryLight: 'rgba(0, 229, 255, 0.12)',
-  primaryBorder: 'rgba(0, 229, 255, 0.35)',
-  primaryText: '#00E5FF',
+  // Acentos Vivos de Cristal Neón
+  primary: '#00F0FF',           // Cian Eléctrico Luminous
+  primaryHover: '#38BDF8',
+  primaryLight: 'rgba(0, 240, 255, 0.12)',
+  primaryBorder: 'rgba(0, 240, 255, 0.35)',
+  primaryText: '#00F0FF',
 
-  success: '#00E676',           // Verde Neón
-  successLight: 'rgba(0, 230, 118, 0.12)',
-  successBorder: 'rgba(0, 230, 118, 0.35)',
-  successText: '#00E676',
+  success: '#00E599',           // Verde Menta Neón
+  successLight: 'rgba(0, 229, 153, 0.12)',
+  successBorder: 'rgba(0, 229, 153, 0.35)',
+  successText: '#00E599',
 
-  warning: '#FFAB00',           // Ámbar Intenso
-  warningLight: 'rgba(255, 171, 0, 0.12)',
-  warningBorder: 'rgba(255, 171, 0, 0.35)',
-  warningText: '#FFAB00',
+  warning: '#FBBF24',           // Ámbar Topacio
+  warningLight: 'rgba(251, 191, 36, 0.12)',
+  warningBorder: 'rgba(251, 191, 36, 0.35)',
+  warningText: '#FBBF24',
 
-  danger: '#FF1744',            // Coral / Magenta Eléctrico
-  dangerLight: 'rgba(255, 23, 68, 0.14)',
-  dangerBorder: 'rgba(255, 23, 68, 0.35)',
-  dangerText: '#FF1744',
+  danger: '#F43F5E',            // Coral Neón
+  dangerLight: 'rgba(244, 63, 94, 0.14)',
+  dangerBorder: 'rgba(244, 63, 94, 0.35)',
+  dangerText: '#FB7185',
 
-  purple: '#D500F9',            // Púrpura Eléctrico
-  purpleLight: 'rgba(213, 0, 249, 0.12)',
-  purpleBorder: 'rgba(213, 0, 249, 0.35)',
+  purple: '#A855F7',            // Magenta / Púrpura Eléctrico
+  purpleLight: 'rgba(168, 85, 247, 0.14)',
+  purpleBorder: 'rgba(168, 85, 247, 0.35)',
 
-  teal: '#00E5FF',
-  tealLight: 'rgba(0, 229, 255, 0.12)',
-  tealBorder: 'rgba(0, 229, 255, 0.35)',
-  tealText: '#00E5FF',
+  teal: '#00F0FF',
+  tealLight: 'rgba(0, 240, 255, 0.12)',
+  tealBorder: 'rgba(0, 240, 255, 0.35)',
+  tealText: '#00F0FF',
 
-  coral: '#FF1744',
-  coralLight: 'rgba(255, 23, 68, 0.14)',
-  coralBorder: 'rgba(255, 23, 68, 0.35)',
-  coralText: '#FF1744',
+  coral: '#F43F5E',
+  coralLight: 'rgba(244, 63, 94, 0.14)',
+  coralBorder: 'rgba(244, 63, 94, 0.35)',
+  coralText: '#FB7185',
 
-  neonGreen: '#00E676',
-  neonCyan: '#00E5FF',
-  neonCoral: '#FF1744',
-  neonAmber: '#FFAB00',
-  neonPurple: '#D500F9',
+  neonGreen: '#00E599',
+  neonCyan: '#00F0FF',
+  neonCoral: '#F43F5E',
+  neonAmber: '#FBBF24',
+  neonPurple: '#A855F7',
 
   blurTint: 'dark',
-  glassBackground: '#22242A',   // 100% Sólido sin transparencias
-  glassBorder: 'transparent',
+  glassBackground: 'rgba(19, 25, 36, 0.75)',
+  glassBorder: 'rgba(255, 255, 255, 0.08)',
 };
 
 export const LaserGradients = {
   dark: {
-    cyan: ['rgba(0, 229, 255, 0.25)', 'transparent'] as const,
-    lime: ['rgba(0, 230, 118, 0.25)', 'transparent'] as const,
-    coral: ['rgba(255, 23, 68, 0.25)', 'transparent'] as const,
-    amber: ['rgba(255, 171, 0, 0.25)', 'transparent'] as const,
-    purple: ['rgba(213, 0, 249, 0.25)', 'transparent'] as const,
+    cyan: ['rgba(0, 240, 255, 0.25)', 'transparent'] as const,
+    lime: ['rgba(0, 229, 153, 0.25)', 'transparent'] as const,
+    coral: ['rgba(244, 63, 94, 0.25)', 'transparent'] as const,
+    amber: ['rgba(251, 191, 36, 0.25)', 'transparent'] as const,
+    purple: ['rgba(168, 85, 247, 0.25)', 'transparent'] as const,
     subtle: ['rgba(255, 255, 255, 0.05)', 'transparent'] as const,
   },
   light: {
-    cyan: ['rgba(2, 132, 199, 0.2)', 'transparent'] as const,
-    lime: ['rgba(22, 163, 74, 0.2)', 'transparent'] as const,
-    coral: ['rgba(225, 29, 72, 0.2)', 'transparent'] as const,
-    amber: ['rgba(217, 119, 6, 0.2)', 'transparent'] as const,
-    purple: ['rgba(124, 58, 237, 0.2)', 'transparent'] as const,
-    subtle: ['rgba(0, 0, 0, 0.04)', 'transparent'] as const,
+    cyan: ['rgba(2, 132, 199, 0.18)', 'transparent'] as const,
+    lime: ['rgba(16, 185, 129, 0.18)', 'transparent'] as const,
+    coral: ['rgba(244, 63, 94, 0.18)', 'transparent'] as const,
+    amber: ['rgba(245, 158, 11, 0.18)', 'transparent'] as const,
+    purple: ['rgba(139, 92, 246, 0.18)', 'transparent'] as const,
+    subtle: ['rgba(0, 0, 0, 0.03)', 'transparent'] as const,
   },
 };
 
@@ -225,8 +226,8 @@ export const LaserGradients = {
 export const Colors = LightPalette;
 
 export const createNeonGlow = (color: string, intensity: 'low' | 'medium' | 'high' = 'medium') => {
-  const radius = intensity === 'high' ? 12 : intensity === 'medium' ? 8 : 4;
-  const opacity = intensity === 'high' ? 0.35 : intensity === 'medium' ? 0.25 : 0.15;
+  const radius = intensity === 'high' ? 14 : intensity === 'medium' ? 8 : 4;
+  const opacity = intensity === 'high' ? 0.35 : intensity === 'medium' ? 0.22 : 0.12;
   return {
     shadowColor: color,
     shadowOffset: { width: 0, height: 0 },
@@ -238,68 +239,55 @@ export const createNeonGlow = (color: string, intensity: 'low' | 'medium' | 'hig
 
 export const Shadows = {
   card: {
-    shadowColor: '#A6ABBD',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
   },
   cardDark: {
     shadowColor: '#000000',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.40,
+    shadowRadius: 20,
+    elevation: 5,
   },
   cardHover: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 0.6,
-    shadowRadius: 14,
-    elevation: 6,
+    shadowColor: '#00F0FF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 4,
   },
 };
 
-export const NeumorphicShadows = {
+export const GlassShadows = {
   dark: {
-    // Web dual box shadow (light top-left, deep dark bottom-right)
-    web: '-6px -6px 14px rgba(255, 255, 255, 0.035), 6px 6px 14px rgba(0, 0, 0, 0.45)',
-    insetWeb: 'inset 3px 3px 6px rgba(0, 0, 0, 0.45), inset -3px -3px 6px rgba(255, 255, 255, 0.03)',
-    // Native shadow dual stack
-    topLight: {
-      shadowColor: 'rgba(255, 255, 255, 0.06)',
-      shadowOffset: { width: -4, height: -4 },
-      shadowOpacity: 0.5,
-      shadowRadius: 8,
-    },
-    bottomDark: {
+    web: '0 8px 32px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.08)',
+    insetWeb: 'inset 0 2px 6px 0 rgba(0, 0, 0, 0.4), inset 0 -1px 0 0 rgba(255, 255, 255, 0.05)',
+    native: {
       shadowColor: '#000000',
-      shadowOffset: { width: 4, height: 4 },
-      shadowOpacity: 0.5,
-      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.35,
+      shadowRadius: 12,
       elevation: 4,
     },
   },
   light: {
-    // Web dual box shadow (white light top-left, soft shadow bottom-right)
-    web: '-6px -6px 14px #FFFFFF, 6px 6px 14px rgba(166, 171, 189, 0.65)',
-    insetWeb: 'inset 3px 3px 6px rgba(166, 171, 189, 0.6), inset -3px -3px 6px #FFFFFF',
-    // Native shadow dual stack
-    topLight: {
-      shadowColor: '#FFFFFF',
-      shadowOffset: { width: -4, height: -4 },
-      shadowOpacity: 0.9,
-      shadowRadius: 8,
-    },
-    bottomDark: {
-      shadowColor: '#A6ABBD',
-      shadowOffset: { width: 4, height: 4 },
-      shadowOpacity: 0.5,
-      shadowRadius: 8,
-      elevation: 4,
+    web: '0 8px 32px 0 rgba(31, 38, 135, 0.08), inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.02)',
+    insetWeb: 'inset 0 2px 4px 0 rgba(15, 23, 42, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.85)',
+    native: {
+      shadowColor: '#0F172A',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.06,
+      shadowRadius: 10,
+      elevation: 3,
     },
   },
 };
+
+// Aliases para retrocompatibilidad
+export const NeumorphicShadows = GlassShadows;
 
 export const Fonts = {
   regular: 'Inter_400Regular',
@@ -327,4 +315,3 @@ export const FormatCurrency = (amount: number): string => {
     maximumFractionDigits: 2,
   }).format(amount);
 };
-
