@@ -28,7 +28,9 @@
       "router": {},
       "eas": {
         "projectId": "de14a499-2a63-409f-8cc6-ce24a12e49e9"
-      }
+      },
+      "EXPO_PUBLIC_SUPABASE_URL": "https://xpdvtsrdcrfljceafuuy.supabase.co",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_tG7pPEaA-_d1I7V8TKiaGg_6tyuC2vt"
     },
     "owner": "azuu"
   }

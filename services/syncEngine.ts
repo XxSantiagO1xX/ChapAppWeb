@@ -141,6 +141,7 @@ class RealtimeSyncEngine {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'events' },
           (payload: any) => {
+            console.log('[Supabase Realtime CDC] 📢 Cambio en tabla events:', payload.eventType, payload.new?.id || payload.old?.id);
             const eventId = payload.new?.id || payload.old?.id;
             this.handleIncomingPayload({
               eventId,
@@ -153,6 +154,7 @@ class RealtimeSyncEngine {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'participants' },
           (payload: any) => {
+            console.log('[Supabase Realtime CDC] 📢 Cambio en tabla participants:', payload.eventType, payload.new?.id || payload.old?.id);
             const eventId = payload.new?.event_id || payload.old?.event_id;
             this.handleIncomingPayload({
               eventId,
@@ -165,6 +167,7 @@ class RealtimeSyncEngine {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'expenses' },
           (payload: any) => {
+            console.log('[Supabase Realtime CDC] 📢 Cambio en tabla expenses:', payload.eventType, payload.new?.id || payload.old?.id);
             const eventId = payload.new?.event_id || payload.old?.event_id;
             this.handleIncomingPayload({
               eventId,
@@ -177,21 +180,28 @@ class RealtimeSyncEngine {
       // 2. Escuchar mensajes P2P WebSocket en tiempo real (Broadcast < 50ms)
       channel.on('broadcast', { event: 'db_sync' }, (res: any) => {
         if (res && res.payload) {
+          console.log('[Supabase Realtime Broadcast] ⚡ Mensaje recibido cross-device:', res.payload.entityType, res.payload.action);
           this.handleIncomingPayload(res.payload);
         }
       });
 
       // 3. Suscribirse y monitorear estado del WebSocket
-      channel.subscribe((status: string) => {
+      channel.subscribe((status: string, err?: Error) => {
+        console.log(`[Supabase Realtime] 📡 Estado de conexión: "${status}"`, err ? err.message : '');
         if (status === 'SUBSCRIBED') {
+          console.log('[Supabase Realtime] ✅ Suscrito exitosamente al canal global de Supabase.');
           this.channelStatus = 'SUBSCRIBED';
           this.lastSyncTime = new Date().toISOString();
           this.lastError = null;
         } else if (status === 'CLOSED') {
+          console.warn('[Supabase Realtime] ⚠️ Canal cerrado. Programando reconexión...');
           this.channelStatus = 'CLOSED';
           this.scheduleReconnect();
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          const errMsg = err?.message || `Error en canal Supabase Realtime: ${status}`;
+          console.error('[Supabase Realtime] ❌ Error en canal:', errMsg);
           this.channelStatus = 'ERROR';
+          this.lastError = errMsg;
           this.scheduleReconnect();
         }
         this.notifyStatusListeners();
@@ -199,8 +209,9 @@ class RealtimeSyncEngine {
 
       this.realtimeChannel = channel;
     } catch (err: any) {
-      console.warn('[SyncEngine] Error inicializando canal Realtime:', err);
+      console.error('[SyncEngine] ❌ Excepción al inicializar canal Realtime:', err);
       this.channelStatus = 'ERROR';
+      this.lastError = err?.message || 'Error inicializando Realtime';
       this.notifyStatusListeners();
       this.scheduleReconnect();
     }

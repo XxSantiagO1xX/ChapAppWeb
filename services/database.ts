@@ -57,6 +57,27 @@ const inferSubFamily = (name: string, fallback = 'Familia General'): string => {
 };
 
 /**
+ * Diagnóstico centralizado de errores de Supabase (RLS, CORS, Claves Foráneas, Conexión).
+ */
+export const logSupabaseError = (context: string, error: any): void => {
+  if (!error) return;
+  const msg = error.message || String(error);
+  const code = error.code || '';
+  const details = error.details || '';
+  const hint = error.hint || '';
+
+  if (code === '42501' || msg.toLowerCase().includes('row-level security') || msg.toLowerCase().includes('permission denied')) {
+    console.error(`🚨 [Supabase RLS Error] ${context}: Permiso denegado por Row Level Security (RLS). Revisa las políticas en el panel de Supabase. Código: ${code}. Mensaje: ${msg}`);
+  } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.toLowerCase().includes('network')) {
+    console.error(`🌐 [Supabase Network/CORS Error] ${context}: Fallo de red/CORS al conectar con Supabase. Mensaje: ${msg}`);
+  } else if (code === '23503' || msg.toLowerCase().includes('foreign key constraint')) {
+    console.error(`🔗 [Supabase FK Error] ${context}: Violación de clave foránea. Mensaje: ${msg}. Detalles: ${details}`);
+  } else {
+    console.error(`❌ [Supabase DB Error] ${context}: [${code}] ${msg} ${details ? `(${details})` : ''} ${hint ? `[Pista: ${hint}]` : ''}`);
+  }
+};
+
+/**
  * Inicialización y comprobación directa de Supabase Cloud.
  */
 export const initDB = async (): Promise<void> => {
@@ -67,12 +88,12 @@ export const initDB = async (): Promise<void> => {
   try {
     const { error } = await supabase.from('events').select('id').limit(1);
     if (error) {
-      console.warn('[Supabase DB] Error al conectar con tabla events:', error.message);
+      logSupabaseError('initDB (Handshake tabla events)', error);
     } else {
-      console.log('[Supabase DB] Conexión establecida con Supabase Cloud.');
+      console.log('[Supabase DB] ✅ Conexión establecida con Supabase Cloud.');
     }
   } catch (err: any) {
-    console.warn('[Supabase DB] Error en handshake con Supabase:', err.message);
+    logSupabaseError('initDB (Excepción de conexión)', err);
   }
 };
 
@@ -204,14 +225,15 @@ export const getAllEvents = async (): Promise<EventConfig[]> => {
       .order('year', { ascending: false })
       .order('created_at', { ascending: false });
 
-    if (error || !data) {
-      console.warn('[Supabase DB] Error en getAllEvents:', error?.message);
+    if (error) {
+      logSupabaseError('getAllEvents', error);
       return [];
     }
 
+    if (!data) return [];
     return data.map(formatEventRow);
   } catch (err: any) {
-    console.error('[Supabase DB] Excepción en getAllEvents:', err);
+    logSupabaseError('getAllEvents (Excepción)', err);
     return [];
   }
 };
@@ -233,13 +255,15 @@ export const getEventById = async (id: string): Promise<EventConfig | null> => {
     }
 
     const { data, error } = await query.maybeSingle();
-    if (error || !data) {
+    if (error) {
+      logSupabaseError(`getEventById (${id})`, error);
       return null;
     }
 
+    if (!data) return null;
     return formatEventRow(data);
   } catch (err: any) {
-    console.error(`[Supabase DB] Error en getEventById (${id}):`, err);
+    logSupabaseError(`getEventById (${id}) [Excepción]`, err);
     return null;
   }
 };
@@ -279,7 +303,7 @@ export const createEvent = async (params: {
       });
 
       if (eventError) {
-        console.error('[Supabase DB] Error al crear evento:', eventError.message);
+        logSupabaseError('createEvent (insert events)', eventError);
       }
 
       // 2. Insertar participantes si existen
@@ -298,7 +322,10 @@ export const createEvent = async (params: {
             name: p.name,
           }),
         }));
-        await supabase.from('participants').insert(partsPayload);
+        const { error: partsError } = await supabase.from('participants').insert(partsPayload);
+        if (partsError) {
+          logSupabaseError('createEvent (insert participants)', partsError);
+        }
       }
 
       // 3. Insertar gastos si existen
@@ -312,10 +339,13 @@ export const createEvent = async (params: {
           paid_by: e.paidBy && isUUID(e.paidBy) ? e.paidBy : null,
           split_between: e.splitBetween || [],
         }));
-        await supabase.from('expenses').insert(expsPayload);
+        const { error: expsError } = await supabase.from('expenses').insert(expsPayload);
+        if (expsError) {
+          logSupabaseError('createEvent (insert expenses)', expsError);
+        }
       }
     } catch (err: any) {
-      console.error('[Supabase DB] Excepción en createEvent:', err);
+      logSupabaseError('createEvent (Excepción)', err);
     }
   }
 
@@ -342,7 +372,7 @@ export const createEvent = async (params: {
 export const updateEvent = async (event: EventConfig): Promise<void> => {
   if (isSupabaseConfigured) {
     try {
-      await supabase
+      const { error } = await supabase
         .from('events')
         .update({
           title: event.title,
@@ -351,8 +381,12 @@ export const updateEvent = async (event: EventConfig): Promise<void> => {
           is_archived: event.isArchived,
         })
         .eq('id', event.id);
+
+      if (error) {
+        logSupabaseError(`updateEvent (${event.id})`, error);
+      }
     } catch (err: any) {
-      console.error('[Supabase DB] Error en updateEvent:', err);
+      logSupabaseError(`updateEvent (${event.id}) [Excepción]`, err);
     }
   }
 
@@ -368,8 +402,13 @@ export const archiveEvent = async (
 ): Promise<EventConfig | null> => {
   if (isSupabaseConfigured) {
     try {
-      await supabase.from('events').update({ is_archived: targetState }).eq('id', id);
-    } catch (err) {}
+      const { error } = await supabase.from('events').update({ is_archived: targetState }).eq('id', id);
+      if (error) {
+        logSupabaseError(`archiveEvent (${id})`, error);
+      }
+    } catch (err: any) {
+      logSupabaseError(`archiveEvent (${id}) [Excepción]`, err);
+    }
   }
   syncEngine.broadcastChange({ entityType: 'event', action: 'update', eventId: id });
   return await getEventById(id);
@@ -383,14 +422,18 @@ export const deleteEvent = async (id: string): Promise<void> => {
   if (isSupabaseConfigured) {
     try {
       // Eliminar gastos y participantes asociados para respetar claves foráneas en Supabase
-      await supabase.from('expenses').delete().eq('event_id', id);
-      await supabase.from('participants').delete().eq('event_id', id);
+      const { error: expErr } = await supabase.from('expenses').delete().eq('event_id', id);
+      if (expErr) logSupabaseError(`deleteEvent -> delete expenses (${id})`, expErr);
+
+      const { error: partErr } = await supabase.from('participants').delete().eq('event_id', id);
+      if (partErr) logSupabaseError(`deleteEvent -> delete participants (${id})`, partErr);
+
       const { error } = await supabase.from('events').delete().eq('id', id);
       if (error) {
-        console.warn('[Supabase DB] Error al eliminar evento:', error.message);
+        logSupabaseError(`deleteEvent (${id})`, error);
       }
     } catch (err: any) {
-      console.error('[Supabase DB] Excepción al eliminar evento:', err?.message);
+      logSupabaseError(`deleteEvent (${id}) [Excepción]`, err);
     }
   }
   syncEngine.broadcastChange({ entityType: 'event', action: 'delete', eventId: id });
@@ -465,7 +508,7 @@ export const importDirectoryParticipantsToEvent = async (
 
       const { error } = await supabase.from('participants').insert(payload);
       if (error) {
-        console.warn('[Supabase DB] Error al insertar participantes importados:', error.message);
+        logSupabaseError('importDirectoryParticipantsToEvent (insert participants)', error);
       }
     }
 
@@ -480,7 +523,7 @@ export const importDirectoryParticipantsToEvent = async (
     const updatedEvent = await getEventById(eventId);
     return updatedEvent || currentEvent;
   } catch (error: any) {
-    console.error('[Supabase DB] Error en importDirectoryParticipantsToEvent:', error);
+    logSupabaseError('importDirectoryParticipantsToEvent (Excepción)', error);
     return await getEventById(eventId).catch(() => null);
   }
 };
@@ -523,7 +566,7 @@ export const addParticipant = async (
 
     const { error } = await supabase.from('participants').insert(payload);
     if (error) {
-      console.error('[Supabase DB] Error al agregar participante:', error);
+      logSupabaseError(`addParticipant (${participant.name})`, error);
       throw new Error(`Error en Supabase al agregar participante: ${error.message}`);
     }
   }
@@ -545,7 +588,7 @@ export const updateParticipant = async (eventId: string, participant: Participan
       .eq('id', participant.id);
 
     if (error) {
-      console.error('[Supabase DB] Error al actualizar participante:', error);
+      logSupabaseError(`updateParticipant (${participant.id})`, error);
       throw new Error(`Error en Supabase al actualizar participante: ${error.message}`);
     }
   }
@@ -557,13 +600,15 @@ export const removeParticipant = async (eventId: string, participantId: string):
   if (isSupabaseConfigured) {
     try {
       // Limpiar referencia de pagador en gastos para evitar violaciones de clave foránea en Postgres
-      await supabase.from('expenses').update({ payer_participant_id: null }).eq('payer_participant_id', participantId);
+      const { error: expFkErr } = await supabase.from('expenses').update({ payer_participant_id: null }).eq('payer_participant_id', participantId);
+      if (expFkErr) logSupabaseError(`removeParticipant -> clean expense FK (${participantId})`, expFkErr);
+
       const { error } = await supabase.from('participants').delete().eq('id', participantId);
       if (error) {
-        console.warn('[Supabase DB] Advertencia al eliminar participante:', error.message);
+        logSupabaseError(`removeParticipant (${participantId})`, error);
       }
     } catch (err: any) {
-      console.warn('[Supabase DB] Excepción en removeParticipant:', err?.message);
+      logSupabaseError(`removeParticipant (${participantId}) [Excepción]`, err);
     }
   }
 
@@ -597,13 +642,15 @@ export const deleteSubFamily = async (
 
     if (isSupabaseConfigured && toDeleteIds.length > 0) {
       try {
-        await supabase.from('expenses').update({ payer_participant_id: null }).in('payer_participant_id', toDeleteIds);
+        const { error: expFkErr } = await supabase.from('expenses').update({ payer_participant_id: null }).in('payer_participant_id', toDeleteIds);
+        if (expFkErr) logSupabaseError(`deleteSubFamily -> clean expenses FK (${subFamilyName})`, expFkErr);
+
         const { error } = await supabase.from('participants').delete().in('id', toDeleteIds);
         if (error) {
-          console.warn('[Supabase DB] Advertencia al eliminar subfamilia:', error.message);
+          logSupabaseError(`deleteSubFamily -> delete participants (${subFamilyName})`, error);
         }
       } catch (e: any) {
-        console.warn('[Supabase DB] Excepción al eliminar participantes de subfamilia:', e?.message);
+        logSupabaseError(`deleteSubFamily (${subFamilyName}) [Excepción]`, e);
       }
     }
 
@@ -621,6 +668,7 @@ export const deleteSubFamily = async (
     }
     return refreshed;
   } catch (err) {
+    logSupabaseError(`deleteSubFamily outer (${subFamilyName})`, err);
     return await getEventById(eventId);
   }
 };
@@ -654,7 +702,7 @@ export const toggleParticipantSettlement = async (
         .eq('id', participantId);
 
       if (error) {
-        console.error('[Supabase DB] Error al alternar liquidación de participante:', error);
+        logSupabaseError(`toggleParticipantSettlement (${participantId})`, error);
         throw new Error(`Error en Supabase al liquidar: ${error.message}`);
       }
     }
@@ -668,7 +716,7 @@ export const toggleParticipantSettlement = async (
 
     return await getEventById(eventId);
   } catch (err: any) {
-    console.error('[Supabase DB] Excepción en toggleParticipantSettlement:', err);
+    logSupabaseError(`toggleParticipantSettlement (${participantId}) [Excepción]`, err);
     return await getEventById(eventId);
   }
 };
@@ -698,7 +746,7 @@ export const toggleParticipantAttendance = async (
         .eq('id', participantId);
 
       if (error) {
-        console.error('[Supabase DB] Error al alternar asistencia:', error);
+        logSupabaseError(`toggleParticipantAttendance (${participantId})`, error);
       }
     }
 
@@ -711,7 +759,7 @@ export const toggleParticipantAttendance = async (
 
     return await getEventById(eventId);
   } catch (err: any) {
-    console.error('[Supabase DB] Excepción en toggleParticipantAttendance:', err);
+    logSupabaseError(`toggleParticipantAttendance (${participantId}) [Excepción]`, err);
     return await getEventById(eventId);
   }
 };
@@ -741,7 +789,7 @@ export const updateParticipantCategory = async (
         .eq('id', participantId);
 
       if (error) {
-        console.error('[Supabase DB] Error al actualizar categoría/tarifa de participante:', error);
+        logSupabaseError(`updateParticipantCategory (${participantId})`, error);
       }
     }
 
@@ -754,7 +802,7 @@ export const updateParticipantCategory = async (
 
     return await getEventById(eventId);
   } catch (err: any) {
-    console.error('[Supabase DB] Excepción en updateParticipantCategory:', err);
+    logSupabaseError(`updateParticipantCategory (${participantId}) [Excepción]`, err);
     return await getEventById(eventId);
   }
 };
@@ -776,7 +824,7 @@ export const toggleSubFamilyAttendance = async (
     if (isSupabaseConfigured && toUpdate.length > 0) {
       for (const p of toUpdate) {
         const isAttending = typeof targetAttending === 'boolean' ? targetAttending : !p.isAttending;
-        await supabase
+        const { error } = await supabase
           .from('participants')
           .update({
             active_days: serializeParticipantActiveDays({
@@ -785,6 +833,10 @@ export const toggleSubFamilyAttendance = async (
             }),
           })
           .eq('id', p.id);
+
+        if (error) {
+          logSupabaseError(`toggleSubFamilyAttendance (${p.name})`, error);
+        }
       }
     }
 
@@ -796,6 +848,7 @@ export const toggleSubFamilyAttendance = async (
 
     return await getEventById(eventId);
   } catch (err) {
+    logSupabaseError(`toggleSubFamilyAttendance (${subFamilyName}) [Excepción]`, err);
     return await getEventById(eventId);
   }
 };
@@ -827,7 +880,7 @@ export const settleSubFamily = async (
           .eq('id', p.id);
 
         if (error) {
-          console.error(`[Supabase DB] Error al liquidar participante ${p.name}:`, error);
+          logSupabaseError(`settleSubFamily (${p.name})`, error);
         }
       }
     }
@@ -841,7 +894,7 @@ export const settleSubFamily = async (
     const updatedEvent = await getEventById(eventId);
     return updatedEvent;
   } catch (err: any) {
-    console.error('[Supabase DB] Excepción en settleSubFamily:', err);
+    logSupabaseError(`settleSubFamily (${subFamilyName}) [Excepción]`, err);
     return await getEventById(eventId);
   }
 };
@@ -864,17 +917,22 @@ export const updateParticipantDays = async (
     };
 
     if (isSupabaseConfigured) {
-      await supabase
+      const { error } = await supabase
         .from('participants')
         .update({
           active_days: serializeParticipantActiveDays(updatedParticipant),
         })
         .eq('id', participantId);
+
+      if (error) {
+        logSupabaseError(`updateParticipantDays (${participantId})`, error);
+      }
     }
 
     syncEngine.broadcastChange({ entityType: 'participant', action: 'update', eventId, participantId });
     return await getEventById(eventId);
   } catch (err) {
+    logSupabaseError(`updateParticipantDays (${participantId}) [Excepción]`, err);
     return await getEventById(eventId);
   }
 };
@@ -883,7 +941,7 @@ export const batchUpdateParticipants = async (eventId: string, participants: Par
   if (isSupabaseConfigured) {
     try {
       for (const p of participants) {
-        await supabase
+        const { error } = await supabase
           .from('participants')
           .update({
             name: (p.name || '').trim(),
@@ -892,8 +950,14 @@ export const batchUpdateParticipants = async (eventId: string, participants: Par
             active_days: serializeParticipantActiveDays(p),
           })
           .eq('id', p.id);
+
+        if (error) {
+          logSupabaseError(`batchUpdateParticipants (${p.name})`, error);
+        }
       }
-    } catch (err) {}
+    } catch (err) {
+      logSupabaseError('batchUpdateParticipants (Excepción)', err);
+    }
   }
 
   syncEngine.broadcastChange({ entityType: 'participant', action: 'update', eventId });
@@ -944,7 +1008,7 @@ export const addExpense = async (
       .single();
 
     if (error) {
-      console.error('[Supabase DB] Error al registrar gasto en Supabase:', error);
+      logSupabaseError(`addExpense (${title})`, error);
       throw new Error(`Error en Supabase al guardar gasto: ${error.message}`);
     }
 
@@ -974,7 +1038,7 @@ export const updateExpense = async (eventId: string, expense: Expense): Promise<
       .eq('id', expense.id);
 
     if (error) {
-      console.error('[Supabase DB] Error al actualizar gasto:', error);
+      logSupabaseError(`updateExpense (${expense.id})`, error);
       throw new Error(`Error en Supabase al actualizar gasto: ${error.message}`);
     }
   }
@@ -986,7 +1050,7 @@ export const deleteExpense = async (eventId: string, expenseId: string): Promise
   if (isSupabaseConfigured) {
     const { error } = await supabase.from('expenses').delete().eq('id', expenseId);
     if (error) {
-      console.error('[Supabase DB] Error al eliminar gasto:', error);
+      logSupabaseError(`deleteExpense (${expenseId})`, error);
       throw new Error(`Error en Supabase al eliminar gasto: ${error.message}`);
     }
   }
@@ -1034,7 +1098,7 @@ export const batchAddExpenses = async (eventId: string, newExpenses: Expense[]):
   if (isSupabaseConfigured && payloadToInsert.length > 0) {
     const { data, error } = await supabase.from('expenses').insert(payloadToInsert).select();
     if (error) {
-      console.error('[Supabase DB] Error al insertar lote de gastos:', error);
+      logSupabaseError('batchAddExpenses', error);
       throw new Error(`Error en Supabase al importar gastos: ${error.message}`);
     }
     if (data && Array.isArray(data)) {
