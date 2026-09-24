@@ -22,6 +22,7 @@ import {
   addDirectoryParticipant,
   deleteDirectoryParticipant,
   subscribeToDirectoryRealtime,
+  globalDirectorySyncFromRemote,
 } from '../services/database';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
@@ -66,8 +67,12 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const loadDirectory = async () => {
-    const data = await getGlobalDirectory();
-    setDirectory([...data]);
+    try {
+      const data = await getGlobalDirectory();
+      setDirectory([...data]);
+    } catch (e) {
+      console.error('[GlobalDirectoryModal] Error cargando directorio:', e);
+    }
   };
 
   useEffect(() => {
@@ -75,28 +80,38 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
       loadDirectory();
       setSelectedIds(new Set());
       setShowAddForm(false);
-      const unsubscribe = subscribeToDirectoryRealtime(() => {
-        loadDirectory();
+
+      const unsubscribe = subscribeToDirectoryRealtime(async (payload) => {
+        if (payload?.data && Array.isArray(payload.data)) {
+          await globalDirectorySyncFromRemote(payload.data);
+        }
+        await loadDirectory();
       });
 
       let dirChannel: any = null;
       if (isSupabaseConfigured) {
         dirChannel = supabase
           .channel('chapapp_directory_realtime')
-          .on('broadcast', { event: 'db_sync' }, (res: any) => {
+          .on('broadcast', { event: 'db_sync' }, async (res: any) => {
             if (res.payload?.entityType === 'directory' || res.payload?.entityType === 'participant') {
               console.log('[Directorio Realtime] ⚡ Actualización recibida vía broadcast:', res.payload);
-              loadDirectory();
+              if (res.payload?.data && Array.isArray(res.payload.data)) {
+                await globalDirectorySyncFromRemote(res.payload.data);
+              }
+              await loadDirectory();
             }
           })
           .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'participants' },
-            () => {
-              loadDirectory();
+            async () => {
+              console.log('[Directorio Realtime] 📢 Cambio en tabla participants detectado');
+              await loadDirectory();
             }
           )
-          .subscribe();
+          .subscribe((status: string) => {
+            console.log(`[Directorio Realtime] 📡 Estado canal: "${status}"`);
+          });
       }
 
       return () => {

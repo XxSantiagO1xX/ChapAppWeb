@@ -51,7 +51,7 @@ class RealtimeSyncEngine {
   // Bus de oyentes internos (In-Memory Pub/Sub)
   private eventListeners: Map<string, Set<() => void>> = new Map();
   private eventsListListeners: Set<() => void> = new Set();
-  private directoryListeners: Set<() => void> = new Set();
+  private directoryListeners: Set<(payload?: RealtimeChangePayload) => void> = new Set();
   private statusListeners: Set<(status: SyncEngineStatus) => void> = new Set();
 
   constructor() {
@@ -296,7 +296,7 @@ class RealtimeSyncEngine {
     if (entityType === 'directory') {
       this.directoryListeners.forEach((listener) => {
         try {
-          listener();
+          listener(payload);
         } catch (err) {
           console.error('[SyncEngine] Error en listener de directorio:', err);
         }
@@ -397,7 +397,7 @@ class RealtimeSyncEngine {
     };
   }
 
-  public subscribeToDirectory(onUpdate: () => void): () => void {
+  public subscribeToDirectory(onUpdate: (payload?: RealtimeChangePayload) => void): () => void {
     this.directoryListeners.add(onUpdate);
 
     if (this.channelStatus !== 'SUBSCRIBED' && isSupabaseConfigured) {

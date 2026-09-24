@@ -1115,17 +1115,27 @@ export const batchAddExpenses = async (eventId: string, newExpenses: Expense[]):
 };
 
 /**
- * 10. Directorio Global con Persistencia Local (AsyncStorage) y Sincronización en Tiempo Real.
+ * 10. Directorio Global con Persistencia Híbrida (Supabase Cloud + AsyncStorage) y Sincronización en Tiempo Real.
  */
 const DIRECTORY_STORAGE_KEY = '@chapapp_global_directory_v1';
+const DIRECTORY_DELETED_KEY = '@chapapp_global_directory_deleted_v1';
 let directoryInitialized = false;
 let globalDirectoryState: DirectoryParticipant[] = [...SEED_DIRECTORY];
+let deletedDirectoryIds: Set<string> = new Set();
 
 const persistGlobalDirectory = async (data: DirectoryParticipant[]): Promise<void> => {
   try {
     await AsyncStorage.setItem(DIRECTORY_STORAGE_KEY, JSON.stringify(data));
   } catch (e) {
     console.error('[AsyncStorage] Error al persistir el directorio global:', e);
+  }
+};
+
+const persistDeletedIds = async (ids: Set<string>): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(DIRECTORY_DELETED_KEY, JSON.stringify(Array.from(ids)));
+  } catch (e) {
+    console.error('[AsyncStorage] Error al persistir eliminados de directorio:', e);
   }
 };
 
@@ -1141,6 +1151,14 @@ const ensureDirectoryLoaded = async (): Promise<DirectoryParticipant[]> => {
       } else {
         // Primera ejecución: guardar la semilla inicial
         await persistGlobalDirectory(SEED_DIRECTORY);
+      }
+
+      const storedDeleted = await AsyncStorage.getItem(DIRECTORY_DELETED_KEY);
+      if (storedDeleted) {
+        const parsedDel = JSON.parse(storedDeleted);
+        if (Array.isArray(parsedDel)) {
+          deletedDirectoryIds = new Set(parsedDel);
+        }
       }
     } catch (e) {
       console.warn('[AsyncStorage] Error al cargar el directorio global, usando valor en memoria:', e);
@@ -1159,19 +1177,73 @@ export const globalDirectorySyncFromRemote = async (data: DirectoryParticipant[]
 };
 
 export const getGlobalDirectory = async (): Promise<DirectoryParticipant[]> => {
-  const list = await ensureDirectoryLoaded();
-  return [...list];
+  const localList = await ensureDirectoryLoaded();
+
+  if (isSupabaseConfigured) {
+    try {
+      // Consultar participantes registrados en Supabase Cloud para descubrimiento automático
+      const { data: cloudParts, error } = await supabase
+        .from('participants')
+        .select('id, name, category, weight, active_days');
+
+      if (!error && Array.isArray(cloudParts) && cloudParts.length > 0) {
+        const directoryMap = new Map<string, DirectoryParticipant>();
+
+        // 1. Cargar entradas actuales locales y semillas
+        localList.forEach((d) => {
+          if (!deletedDirectoryIds.has(d.id) && !deletedDirectoryIds.has(d.name.trim().toLowerCase())) {
+            directoryMap.set(d.name.trim().toLowerCase(), d);
+          }
+        });
+
+        // 2. Descubrir y fusionar participantes de la nube
+        cloudParts.forEach((cp: any) => {
+          const parsed = parseParticipantRow(cp);
+          if (parsed && parsed.name && parsed.name.trim()) {
+            const normalizedName = parsed.name.trim().toLowerCase();
+            if (!deletedDirectoryIds.has(parsed.id) && !deletedDirectoryIds.has(normalizedName)) {
+              const existing = directoryMap.get(normalizedName);
+              if (!existing) {
+                directoryMap.set(normalizedName, {
+                  id: parsed.id,
+                  name: parsed.name.trim(),
+                  category: parsed.category,
+                  weight: parsed.weight,
+                  subFamily: parsed.subFamily || inferSubFamily(parsed.name),
+                  familyGroup: parsed.subFamily || inferSubFamily(parsed.name),
+                });
+              }
+            }
+          }
+        });
+
+        const merged = Array.from(directoryMap.values());
+        globalDirectoryState = merged;
+        await persistGlobalDirectory(merged);
+        return merged;
+      }
+    } catch (e) {
+      console.warn('[GlobalDirectory] Error consultando participantes de Supabase:', e);
+    }
+  }
+
+  return [...localList];
 };
 
 export const addDirectoryParticipant = async (
   contact: Omit<DirectoryParticipant, 'id'> & { id?: string }
 ): Promise<DirectoryParticipant> => {
   await ensureDirectoryLoaded();
+  const normalizedName = (contact.name || '').trim().toLowerCase();
+  deletedDirectoryIds.delete(contact.id || '');
+  deletedDirectoryIds.delete(normalizedName);
+  await persistDeletedIds(deletedDirectoryIds);
+
   const newContact: DirectoryParticipant = {
     ...contact,
     id: contact.id || generateId('dir'),
   };
-  globalDirectoryState = [newContact, ...globalDirectoryState.filter((c) => String(c.id) !== String(newContact.id))];
+  globalDirectoryState = [newContact, ...globalDirectoryState.filter((c) => String(c.id) !== String(newContact.id) && c.name.trim().toLowerCase() !== normalizedName)];
   await persistGlobalDirectory(globalDirectoryState);
   syncEngine.broadcastChange({ entityType: 'directory', action: 'create', data: globalDirectoryState });
   return newContact;
@@ -1179,6 +1251,13 @@ export const addDirectoryParticipant = async (
 
 export const deleteDirectoryParticipant = async (id: string): Promise<void> => {
   await ensureDirectoryLoaded();
+  const target = globalDirectoryState.find((c) => String(c.id) === String(id));
+  deletedDirectoryIds.add(id);
+  if (target?.name) {
+    deletedDirectoryIds.add(target.name.trim().toLowerCase());
+  }
+  await persistDeletedIds(deletedDirectoryIds);
+
   globalDirectoryState = globalDirectoryState.filter((c) => String(c.id) !== String(id));
   await persistGlobalDirectory(globalDirectoryState);
   syncEngine.broadcastChange({ entityType: 'directory', action: 'delete', data: globalDirectoryState });
@@ -1204,6 +1283,13 @@ export const batchAddDirectoryParticipants = async (contacts: DirectoryParticipa
   syncEngine.broadcastChange({ entityType: 'directory', action: 'create', data: globalDirectoryState });
 };
 
+// Escucha reactiva interna para sincronizar el estado global del directorio ante mensajes de SyncEngine
+syncEngine.subscribeToDirectory((payload) => {
+  if (payload && Array.isArray(payload.data)) {
+    globalDirectorySyncFromRemote(payload.data);
+  }
+});
+
 /**
  * Suscripciones reactivas en tiempo real.
  */
@@ -1215,6 +1301,6 @@ export const subscribeToEventsListRealtime = (callback: () => void): (() => void
   return syncEngine.subscribeToEventsList(callback);
 };
 
-export const subscribeToDirectoryRealtime = (callback: () => void): (() => void) => {
+export const subscribeToDirectoryRealtime = (callback: (payload?: any) => void): (() => void) => {
   return syncEngine.subscribeToDirectory(callback);
 };
