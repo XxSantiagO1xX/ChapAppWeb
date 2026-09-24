@@ -7,6 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build": "expo export -p web",
+    "build:web": "expo export -p web",
     "build:ios:preview": "eas build --platform ios --profile preview",
     "build:ios:dev": "eas build --platform ios --profile development",
     "build:ios:prod": "eas build --platform ios --profile production"
