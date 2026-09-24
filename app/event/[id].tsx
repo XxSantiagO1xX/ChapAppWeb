@@ -268,6 +268,7 @@ export default function EventDetailDashboard() {
   const saveEventState = async (updated: EventConfig) => {
     setEvent(updated);
     await updateEvent(updated);
+    await loadEvent(false);
   };
 
   // Alternar colapsado de subfamilia
@@ -286,6 +287,7 @@ export default function EventDetailDashboard() {
     if (updated) {
       setEvent(updated);
     }
+    await loadEvent(false);
   };
 
   // Alternar asistencia individual
@@ -305,6 +307,7 @@ export default function EventDetailDashboard() {
       if (updated) {
         setEvent(updated);
       }
+      await loadEvent(false);
     } catch (err: any) {
       console.error('[ToggleAttendance] Error:', err);
       setEvent(previousEvent);
@@ -336,12 +339,13 @@ export default function EventDetailDashboard() {
     // 1. Actualización de estado local reactiva e inmediata (recalcula automáticamente todas las métricas)
     setEvent({ ...event, participants: updatedParticipants });
 
-    // 2. Persistencia en base de datos
+    // 2. Persistencia en base de datos y refetch de sincronización
     try {
       const updated = await updateParticipantCategory(event.id, participantId, newCategory, newWeight);
       if (updated) {
         setEvent(updated);
       }
+      await loadEvent(false);
     } catch (err: any) {
       console.error('[ToggleParticipantRole] Error:', err);
       setEvent(previousEvent);
@@ -368,6 +372,7 @@ export default function EventDetailDashboard() {
       if (updated) {
         setEvent(updated);
       }
+      await loadEvent(false);
     } catch (err: any) {
       console.error('[ToggleFamilyAttendance] Error:', err);
       setEvent(previousEvent);
@@ -392,6 +397,7 @@ export default function EventDetailDashboard() {
       if (updated) {
         setEvent(updated);
       }
+      await loadEvent(false);
     } catch (err: any) {
       console.error('[ToggleSettlement] Error:', err);
       setEvent(previousEvent);
@@ -418,6 +424,7 @@ export default function EventDetailDashboard() {
       if (updated) {
         setEvent(updated);
       }
+      await loadEvent(false);
     } catch (err: any) {
       console.error('[SettleSubFamily] Error:', err);
       setEvent(previousEvent);
@@ -448,6 +455,7 @@ export default function EventDetailDashboard() {
       setEvent(updated);
       Alert.alert('Éxito', `Se importaron ${selectedContacts.length} participantes del directorio.`);
     }
+    await loadEvent(false);
   };
 
   // Importar gastos por CSV
@@ -457,14 +465,7 @@ export default function EventDetailDashboard() {
       setLoading(true);
       const insertedExpenses = await batchAddExpenses(event.id, newExpenses);
       if (insertedExpenses.length > 0) {
-        setEvent((prev) => {
-          if (!prev) return null;
-          const insertedIds = new Set(insertedExpenses.map((e) => e.id));
-          return {
-            ...prev,
-            expenses: [...insertedExpenses, ...prev.expenses.filter((e) => !insertedIds.has(e.id))],
-          };
-        });
+        await loadEvent(false);
         Alert.alert('¡Éxito!', `Se importaron ${insertedExpenses.length} gastos correctamente.`);
       }
     } catch (err: any) {
@@ -493,13 +494,7 @@ export default function EventDetailDashboard() {
         splitBetween: [],
       });
 
-      setEvent((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          expenses: [savedExpense, ...prev.expenses.filter((e) => e.id !== savedExpense.id)],
-        };
-      });
+      await loadEvent(false);
 
       Alert.alert('¡Gasto Guardado!', `Se registró "${savedExpense.title}" por ${FormatCurrency(savedExpense.amount)}.`);
     } catch (err: any) {
@@ -531,6 +526,7 @@ export default function EventDetailDashboard() {
       if (updated) {
         setEvent(updated);
       }
+      await loadEvent(false);
     } catch (err: any) {
       console.error('[ToggleDay] Error al actualizar días:', err);
     }
@@ -556,6 +552,7 @@ export default function EventDetailDashboard() {
       if (updated) {
         setEvent(updated);
       }
+      await loadEvent(false);
     } catch (err: any) {
       console.error('[ToggleAllDays] Error al actualizar días:', err);
     }
@@ -572,7 +569,7 @@ export default function EventDetailDashboard() {
     const weightNum = parseFloat(partWeight) || (partCategory === 'nino' ? 0.5 : 1.0);
     try {
       setLoading(true);
-      const newParticipant = await addParticipant(event.id, {
+      await addParticipant(event.id, {
         name: partName.trim(),
         category: partCategory,
         weight: weightNum,
@@ -582,13 +579,7 @@ export default function EventDetailDashboard() {
         isSettled: false,
       });
 
-      setEvent((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          participants: [...prev.participants, newParticipant],
-        };
-      });
+      await loadEvent(false);
 
       setIsParticipantModalOpen(false);
       setPartName('');
@@ -638,6 +629,7 @@ export default function EventDetailDashboard() {
               setSelectedSubFamily(updated.participants[0].subFamily || 'Familia General');
             }
           }
+          await loadEvent(false);
           setConfirmConfig((prev) => ({ ...prev, visible: false }));
         } catch (err: any) {
           console.error('[DeleteSubFamily] Error:', err);
@@ -676,6 +668,7 @@ export default function EventDetailDashboard() {
           if (updated) {
             setEvent(updated);
           }
+          await loadEvent(false);
           setConfirmConfig((prev) => ({ ...prev, visible: false }));
         } catch (err: any) {
           console.error('[DeleteParticipant] Error:', err);
@@ -710,13 +703,7 @@ export default function EventDetailDashboard() {
         splitBetween: [],
       });
 
-      setEvent((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          expenses: [savedExpense, ...prev.expenses.filter((e) => e.id !== savedExpense.id)],
-        };
-      });
+      await loadEvent(false);
 
       setIsExpenseModalOpen(false);
       setExpTitle('');
@@ -765,6 +752,7 @@ export default function EventDetailDashboard() {
           if (updated) {
             setEvent(updated);
           }
+          await loadEvent(false);
         } catch (err: any) {
           console.error('[DeleteExpense] Error al eliminar gasto:', err);
           // Revertir en caso de fallo

@@ -229,16 +229,14 @@ class RealtimeSyncEngine {
   private notifySubscribers(payload: RealtimeChangePayload): void {
     const { eventId, entityType } = payload;
 
-    // 1. Notificar observadores del listado global de eventos
-    if (entityType === 'event' || !eventId) {
-      this.eventsListListeners.forEach((listener) => {
-        try {
-          listener();
-        } catch (err) {
-          console.error('[SyncEngine] Error en listener de eventos:', err);
-        }
-      });
-    }
+    // 1. Notificar observadores del listado global de eventos (refrescar métricas y listado ante cualquier cambio)
+    this.eventsListListeners.forEach((listener) => {
+      try {
+        listener();
+      } catch (err) {
+        console.error('[SyncEngine] Error en listener de eventos:', err);
+      }
+    });
 
     // 2. Notificar observadores del evento específico
     if (eventId) {
@@ -303,7 +301,7 @@ class RealtimeSyncEngine {
 
     // 3. Transmitir por WebSocket de Supabase hacia los demás dispositivos
     try {
-      if (this.realtimeChannel && isSupabaseConfigured && this.channelStatus === 'SUBSCRIBED') {
+      if (this.realtimeChannel && isSupabaseConfigured) {
         this.realtimeChannel.send({
           type: 'broadcast',
           event: 'db_sync',

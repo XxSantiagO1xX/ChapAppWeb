@@ -379,14 +379,19 @@ export const unarchiveEvent = async (id: string): Promise<EventConfig | null> =>
   return await archiveEvent(id, false);
 };
 
-/**
- * 6. Eliminar evento de Supabase.
- */
 export const deleteEvent = async (id: string): Promise<void> => {
   if (isSupabaseConfigured) {
     try {
-      await supabase.from('events').delete().eq('id', id);
-    } catch (err) {}
+      // Eliminar gastos y participantes asociados para respetar claves foráneas en Supabase
+      await supabase.from('expenses').delete().eq('event_id', id);
+      await supabase.from('participants').delete().eq('event_id', id);
+      const { error } = await supabase.from('events').delete().eq('id', id);
+      if (error) {
+        console.warn('[Supabase DB] Error al eliminar evento:', error.message);
+      }
+    } catch (err: any) {
+      console.error('[Supabase DB] Excepción al eliminar evento:', err?.message);
+    }
   }
   syncEngine.broadcastChange({ entityType: 'event', action: 'delete', eventId: id });
 };
@@ -1081,6 +1086,14 @@ const ensureDirectoryLoaded = async (): Promise<DirectoryParticipant[]> => {
   return globalDirectoryState;
 };
 
+export const globalDirectorySyncFromRemote = async (data: DirectoryParticipant[]): Promise<void> => {
+  if (Array.isArray(data)) {
+    globalDirectoryState = data;
+    directoryInitialized = true;
+    await persistGlobalDirectory(data);
+  }
+};
+
 export const getGlobalDirectory = async (): Promise<DirectoryParticipant[]> => {
   const list = await ensureDirectoryLoaded();
   return [...list];
@@ -1096,7 +1109,7 @@ export const addDirectoryParticipant = async (
   };
   globalDirectoryState = [newContact, ...globalDirectoryState.filter((c) => String(c.id) !== String(newContact.id))];
   await persistGlobalDirectory(globalDirectoryState);
-  syncEngine.broadcastChange({ entityType: 'directory', action: 'create', data: newContact });
+  syncEngine.broadcastChange({ entityType: 'directory', action: 'create', data: globalDirectoryState });
   return newContact;
 };
 
@@ -1104,7 +1117,7 @@ export const deleteDirectoryParticipant = async (id: string): Promise<void> => {
   await ensureDirectoryLoaded();
   globalDirectoryState = globalDirectoryState.filter((c) => String(c.id) !== String(id));
   await persistGlobalDirectory(globalDirectoryState);
-  syncEngine.broadcastChange({ entityType: 'directory', action: 'delete', data: { id } });
+  syncEngine.broadcastChange({ entityType: 'directory', action: 'delete', data: globalDirectoryState });
 };
 
 export const batchAddDirectoryParticipants = async (contacts: DirectoryParticipant[]): Promise<void> => {
@@ -1124,7 +1137,7 @@ export const batchAddDirectoryParticipants = async (contacts: DirectoryParticipa
   });
   globalDirectoryState = Array.from(existingMap.values());
   await persistGlobalDirectory(globalDirectoryState);
-  syncEngine.broadcastChange({ entityType: 'directory', action: 'create' });
+  syncEngine.broadcastChange({ entityType: 'directory', action: 'create', data: globalDirectoryState });
 };
 
 /**
