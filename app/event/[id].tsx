@@ -59,6 +59,7 @@ import {
   initDB,
   subscribeToEventRealtime,
 } from '../../services/database';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { calculateEventTotals } from '../../utils/calculations';
 import { EventCutModal } from '../../components/EventCutModal';
 import { FinancialCharts } from '../../components/FinancialCharts';
@@ -185,8 +186,56 @@ export default function EventDetailDashboard() {
       );
     }
 
+    // Suscripción Realtime directa y dedicada a la tabla participants y expenses
+    let directChannel: any = null;
+    if (isSupabaseConfigured) {
+      const channelName = `screen_event_${id}_${Date.now()}`;
+      directChannel = supabase
+        .channel(channelName, {
+          config: {
+            broadcast: { self: false },
+          },
+        })
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'participants' },
+          (payload: any) => {
+            console.log('[Realtime Integrantes] 📢 Cambio en tabla participants detectado:', payload.eventType, payload.new?.id || payload.old?.id);
+            loadEvent(false);
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'expenses' },
+          (payload: any) => {
+            console.log('[Realtime Gastos] 📢 Cambio en tabla expenses detectado:', payload.eventType, payload.new?.id || payload.old?.id);
+            loadEvent(false);
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'events' },
+          (payload: any) => {
+            console.log('[Realtime Evento] 📢 Cambio en tabla events detectado:', payload.eventType, payload.new?.id || payload.old?.id);
+            loadEvent(false);
+          }
+        )
+        .on('broadcast', { event: 'db_sync' }, (res: any) => {
+          if (res && res.payload) {
+            console.log('[Realtime Broadcast] ⚡ db_sync recibido:', res.payload);
+            loadEvent(false);
+          }
+        })
+        .subscribe((status: string, err?: Error) => {
+          console.log(`[Realtime Integrantes] 📡 Estado canal evento ${id}: "${status}"`, err ? err.message : '');
+        });
+    }
+
     return () => {
       unsubs.forEach((u) => u());
+      if (directChannel) {
+        supabase.removeChannel(directChannel);
+      }
     };
   }, [id, event?.id, loadEvent]);
 

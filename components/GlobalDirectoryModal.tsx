@@ -23,6 +23,7 @@ import {
   deleteDirectoryParticipant,
   subscribeToDirectoryRealtime,
 } from '../services/database';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface GlobalDirectoryModalProps {
   visible: boolean;
@@ -77,8 +78,25 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
       const unsubscribe = subscribeToDirectoryRealtime(() => {
         loadDirectory();
       });
+
+      let dirChannel: any = null;
+      if (isSupabaseConfigured) {
+        dirChannel = supabase
+          .channel(`directory_realtime_${Date.now()}`)
+          .on('broadcast', { event: 'db_sync' }, (res: any) => {
+            if (res.payload?.entityType === 'directory') {
+              console.log('[Directorio Realtime] ⚡ Actualización recibida vía broadcast:', res.payload);
+              loadDirectory();
+            }
+          })
+          .subscribe();
+      }
+
       return () => {
         unsubscribe();
+        if (dirChannel) {
+          supabase.removeChannel(dirChannel);
+        }
       };
     }
   }, [visible]);
