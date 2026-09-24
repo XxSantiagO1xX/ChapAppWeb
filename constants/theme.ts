@@ -79,10 +79,10 @@ export interface ThemePalette {
 export const LightPalette: ThemePalette = {
   mode: 'light',
   background: '#F8FAFC',        // Base luminosa y limpia con toque sutil de malla iridiscente
-  surface: 'rgba(255, 255, 255, 0.72)', // Auténtico vidrio esmerilado blanco translúcido
-  surfaceSubtle: 'rgba(241, 245, 249, 0.60)', // Inset esmerilado suave / sunken limpio
-  surfaceHighlight: 'rgba(255, 255, 255, 0.88)', // Superficie brillante elevada
-  cardBackground: 'rgba(255, 255, 255, 0.72)',
+  surface: 'rgba(255, 255, 255, 0.48)', // Auténtico vidrio esmerilado blanco translúcido
+  surfaceSubtle: 'rgba(255, 255, 255, 0.35)', // Inset esmerilado suave / sunken limpio
+  surfaceHighlight: 'rgba(255, 255, 255, 0.70)', // Superficie brillante elevada
+  cardBackground: 'rgba(255, 255, 255, 0.48)',
 
   border: 'rgba(255, 255, 255, 0.65)', // Borde de cristal fino y luminoso
   borderLight: 'rgba(255, 255, 255, 0.40)',
@@ -135,20 +135,20 @@ export const LightPalette: ThemePalette = {
   neonPurple: '#8B5CF6',
 
   blurTint: 'light',
-  glassBackground: 'rgba(255, 255, 255, 0.72)',
+  glassBackground: 'rgba(255, 255, 255, 0.48)',
   glassBorder: 'rgba(255, 255, 255, 0.65)',
 };
 
 export const DarkPalette: ThemePalette = {
   mode: 'dark',
-  background: '#0D1117',        // Canvas medianoche moderno (Glassmorphism dark de Imagen 1)
-  surface: 'rgba(19, 25, 36, 0.75)', // Tarjeta de cristal oscuro translúcido
-  surfaceSubtle: 'rgba(13, 17, 23, 0.65)',
-  surfaceHighlight: 'rgba(26, 36, 52, 0.85)',
-  cardBackground: '#131924',
+  background: '#0D1117',        // Canvas medianoche moderno (Glassmorphism dark)
+  surface: 'rgba(18, 26, 42, 0.45)', // Tarjeta de cristal oscuro translúcido auténtico
+  surfaceSubtle: 'rgba(255, 255, 255, 0.05)',
+  surfaceHighlight: 'rgba(255, 255, 255, 0.12)',
+  cardBackground: 'rgba(18, 26, 42, 0.45)',
 
-  border: 'rgba(255, 255, 255, 0.08)',
-  borderLight: 'rgba(255, 255, 255, 0.04)',
+  border: 'rgba(255, 255, 255, 0.12)',
+  borderLight: 'rgba(255, 255, 255, 0.06)',
   borderFocus: '#00F0FF',
 
   textPrimary: '#FFFFFF',       // Blanco puro nítido
@@ -199,8 +199,8 @@ export const DarkPalette: ThemePalette = {
   neonPurple: '#A855F7',
 
   blurTint: 'dark',
-  glassBackground: 'rgba(19, 25, 36, 0.75)',
-  glassBorder: 'rgba(255, 255, 255, 0.08)',
+  glassBackground: 'rgba(18, 26, 42, 0.45)',
+  glassBorder: 'rgba(255, 255, 255, 0.12)',
 };
 
 export const LaserGradients = {
@@ -263,8 +263,8 @@ export const Shadows = {
 
 export const GlassShadows = {
   dark: {
-    web: '0 8px 32px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.08)',
-    insetWeb: 'inset 0 2px 6px 0 rgba(0, 0, 0, 0.4), inset 0 -1px 0 0 rgba(255, 255, 255, 0.05)',
+    web: '0 8px 32px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 0 rgba(0, 0, 0, 0.20)',
+    insetWeb: 'inset 0 2px 6px 0 rgba(0, 0, 0, 0.45), inset 0 -1px 0 0 rgba(255, 255, 255, 0.06)',
     native: {
       shadowColor: '#000000',
       shadowOffset: { width: 0, height: 6 },

@@ -796,13 +796,13 @@ export default function EventDetailDashboard() {
               Platform.OS === 'web'
                 ? isTablet ? 20 : 12
                 : Math.max(insets.top, 12) + (isTablet ? 8 : 4),
-            backgroundColor: isDark ? 'rgba(19, 25, 36, 0.76)' : 'rgba(255, 255, 255, 0.82)',
+            backgroundColor: isDark ? 'rgba(13, 20, 32, 0.60)' : 'rgba(255, 255, 255, 0.65)',
             borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.90)',
-            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.98)',
+            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.98)',
             ...(Platform.OS === 'web'
               ? ({
-                  backdropFilter: 'blur(24px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                   boxShadow: isDark
                     ? '0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14)'
                     : '0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
@@ -945,15 +945,15 @@ export default function EventDetailDashboard() {
                 ? (isSidebarCollapsed ? styles.capsuleTabletCollapsed : styles.capsuleTabletExpanded)
                 : [styles.capsuleMobileBottom, { bottom: Math.max(insets.bottom, 12) }],
               {
-                backgroundColor: isDark ? 'rgba(19, 25, 36, 0.85)' : 'rgba(255, 255, 255, 0.90)',
+                backgroundColor: isDark ? 'rgba(13, 20, 32, 0.65)' : 'rgba(255, 255, 255, 0.70)',
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
-                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.98)',
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.98)',
                 ...(Platform.OS === 'web'
                   ? ({
-                      backdropFilter: 'blur(24px) saturate(180%)',
-                      WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                      backdropFilter: 'blur(20px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                       boxShadow: isDark
-                        ? '0 12px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12)'
+                        ? '0 12px 36px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.16)'
                         : '0 10px 30px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
                     } as any)
                   : {
@@ -1174,8 +1174,8 @@ export default function EventDetailDashboard() {
                     style={[
                       styles.heroMetricItem,
                       {
-                        backgroundColor: colors.surfaceSubtle,
-                        borderColor: colors.border,
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.35)',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(255, 255, 255, 0.65)',
                         borderWidth: 1,
                       },
                     ]}
@@ -1207,8 +1207,8 @@ export default function EventDetailDashboard() {
                     style={[
                       styles.heroMetricItem,
                       {
-                        backgroundColor: colors.successLight,
-                        borderColor: colors.successBorder,
+                        backgroundColor: isDark ? 'rgba(0, 229, 153, 0.08)' : 'rgba(16, 185, 129, 0.10)',
+                        borderColor: isDark ? 'rgba(0, 229, 153, 0.25)' : 'rgba(16, 185, 129, 0.25)',
                         borderWidth: 1,
                       },
                     ]}
@@ -1234,7 +1234,7 @@ export default function EventDetailDashboard() {
                       style={[
                         styles.kpiPillSuccess,
                         {
-                          backgroundColor: colors.surfaceSubtle,
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.45)',
                           borderColor: colors.successBorder,
                           borderWidth: 1,
                         },
@@ -1251,8 +1251,8 @@ export default function EventDetailDashboard() {
                     style={[
                       styles.heroMetricItem,
                       {
-                        backgroundColor: totals.totalPendingToCollect > 0 ? colors.coralLight : colors.surfaceSubtle,
-                        borderColor: totals.totalPendingToCollect > 0 ? colors.coralBorder : colors.border,
+                        backgroundColor: totals.totalPendingToCollect > 0 ? (isDark ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.10)') : (isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.35)'),
+                        borderColor: totals.totalPendingToCollect > 0 ? (isDark ? 'rgba(244, 63, 94, 0.25)' : 'rgba(244, 63, 94, 0.25)') : (isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(255, 255, 255, 0.65)'),
                         borderWidth: 1,
                       },
                     ]}
@@ -1318,8 +1318,8 @@ export default function EventDetailDashboard() {
                     style={[
                       styles.heroMetricItem,
                       {
-                        backgroundColor: colors.tealLight,
-                        borderColor: colors.tealBorder,
+                        backgroundColor: isDark ? 'rgba(0, 240, 255, 0.08)' : 'rgba(6, 182, 212, 0.10)',
+                        borderColor: isDark ? 'rgba(0, 240, 255, 0.25)' : 'rgba(6, 182, 212, 0.25)',
                         borderWidth: 1,
                       },
                     ]}
@@ -3352,16 +3352,14 @@ const styles = StyleSheet.create({
     gap: 4,
     ...Platform.select({
       web: {
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.20)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
       } as any,
       default: {
         shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.10,
+        shadowRadius: 4,
+        elevation: 2,
       },
     }),
   },

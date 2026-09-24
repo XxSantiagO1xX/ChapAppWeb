@@ -112,59 +112,59 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     // Permite que el arte 3D del fondo se trasluzca con refracción y bisel de luz
     // =========================================================================
     if (variant === 'cyan') {
-      surfaceColor = isDark ? 'rgba(8, 26, 40, 0.70)' : 'rgba(240, 249, 255, 0.72)';
-      borderTopColor = isDark ? 'rgba(0, 240, 255, 0.45)' : 'rgba(2, 132, 199, 0.40)';
-      borderBottomColor = isDark ? 'rgba(0, 240, 255, 0.10)' : 'rgba(2, 132, 199, 0.18)';
-      borderSideColor = isDark ? 'rgba(0, 240, 255, 0.20)' : 'rgba(2, 132, 199, 0.22)';
-      borderColor = isDark ? 'rgba(0, 240, 255, 0.20)' : 'rgba(2, 132, 199, 0.22)';
+      surfaceColor = isDark ? 'rgba(6, 28, 44, 0.45)' : 'rgba(240, 249, 255, 0.50)';
+      borderTopColor = isDark ? 'rgba(0, 240, 255, 0.60)' : 'rgba(2, 132, 199, 0.50)';
+      borderBottomColor = isDark ? 'rgba(0, 240, 255, 0.10)' : 'rgba(2, 132, 199, 0.15)';
+      borderSideColor = isDark ? 'rgba(0, 240, 255, 0.22)' : 'rgba(2, 132, 199, 0.25)';
+      borderColor = isDark ? 'rgba(0, 240, 255, 0.22)' : 'rgba(2, 132, 199, 0.25)';
       glowColor = colors.neonCyan;
-      specularShineColor = isDark ? 'rgba(0, 240, 255, 0.35)' : 'rgba(2, 132, 199, 0.30)';
+      specularShineColor = isDark ? 'rgba(0, 240, 255, 0.50)' : 'rgba(2, 132, 199, 0.40)';
     } else if (variant === 'lime') {
-      surfaceColor = isDark ? 'rgba(8, 30, 20, 0.70)' : 'rgba(240, 253, 244, 0.72)';
-      borderTopColor = isDark ? 'rgba(0, 229, 153, 0.45)' : 'rgba(16, 185, 129, 0.40)';
-      borderBottomColor = isDark ? 'rgba(0, 229, 153, 0.10)' : 'rgba(16, 185, 129, 0.18)';
-      borderSideColor = isDark ? 'rgba(0, 229, 153, 0.20)' : 'rgba(16, 185, 129, 0.22)';
-      borderColor = isDark ? 'rgba(0, 229, 153, 0.20)' : 'rgba(16, 185, 129, 0.22)';
+      surfaceColor = isDark ? 'rgba(6, 32, 20, 0.45)' : 'rgba(240, 253, 244, 0.50)';
+      borderTopColor = isDark ? 'rgba(0, 229, 153, 0.60)' : 'rgba(16, 185, 129, 0.50)';
+      borderBottomColor = isDark ? 'rgba(0, 229, 153, 0.10)' : 'rgba(16, 185, 129, 0.15)';
+      borderSideColor = isDark ? 'rgba(0, 229, 153, 0.22)' : 'rgba(16, 185, 129, 0.25)';
+      borderColor = isDark ? 'rgba(0, 229, 153, 0.22)' : 'rgba(16, 185, 129, 0.25)';
       glowColor = colors.neonGreen;
-      specularShineColor = isDark ? 'rgba(0, 229, 153, 0.35)' : 'rgba(16, 185, 129, 0.30)';
+      specularShineColor = isDark ? 'rgba(0, 229, 153, 0.50)' : 'rgba(16, 185, 129, 0.40)';
     } else if (variant === 'coral') {
-      surfaceColor = isDark ? 'rgba(32, 14, 22, 0.70)' : 'rgba(255, 241, 242, 0.72)';
-      borderTopColor = isDark ? 'rgba(244, 63, 94, 0.45)' : 'rgba(244, 63, 94, 0.40)';
-      borderBottomColor = isDark ? 'rgba(244, 63, 94, 0.10)' : 'rgba(244, 63, 94, 0.18)';
-      borderSideColor = isDark ? 'rgba(244, 63, 94, 0.20)' : 'rgba(244, 63, 94, 0.22)';
-      borderColor = isDark ? 'rgba(244, 63, 94, 0.20)' : 'rgba(244, 63, 94, 0.22)';
+      surfaceColor = isDark ? 'rgba(36, 12, 22, 0.45)' : 'rgba(255, 241, 242, 0.50)';
+      borderTopColor = isDark ? 'rgba(244, 63, 94, 0.60)' : 'rgba(244, 63, 94, 0.50)';
+      borderBottomColor = isDark ? 'rgba(244, 63, 94, 0.10)' : 'rgba(244, 63, 94, 0.15)';
+      borderSideColor = isDark ? 'rgba(244, 63, 94, 0.22)' : 'rgba(244, 63, 94, 0.25)';
+      borderColor = isDark ? 'rgba(244, 63, 94, 0.22)' : 'rgba(244, 63, 94, 0.25)';
       glowColor = colors.neonCoral;
-      specularShineColor = isDark ? 'rgba(244, 63, 94, 0.35)' : 'rgba(244, 63, 94, 0.30)';
+      specularShineColor = isDark ? 'rgba(244, 63, 94, 0.50)' : 'rgba(244, 63, 94, 0.40)';
     } else if (variant === 'amber') {
-      surfaceColor = isDark ? 'rgba(30, 22, 10, 0.70)' : 'rgba(254, 249, 235, 0.72)';
-      borderTopColor = isDark ? 'rgba(251, 191, 36, 0.45)' : 'rgba(245, 158, 11, 0.40)';
-      borderBottomColor = isDark ? 'rgba(251, 191, 36, 0.10)' : 'rgba(245, 158, 11, 0.18)';
-      borderSideColor = isDark ? 'rgba(251, 191, 36, 0.20)' : 'rgba(245, 158, 11, 0.22)';
-      borderColor = isDark ? 'rgba(251, 191, 36, 0.20)' : 'rgba(245, 158, 11, 0.22)';
+      surfaceColor = isDark ? 'rgba(34, 22, 8, 0.45)' : 'rgba(254, 249, 235, 0.50)';
+      borderTopColor = isDark ? 'rgba(251, 191, 36, 0.60)' : 'rgba(245, 158, 11, 0.50)';
+      borderBottomColor = isDark ? 'rgba(251, 191, 36, 0.10)' : 'rgba(245, 158, 11, 0.15)';
+      borderSideColor = isDark ? 'rgba(251, 191, 36, 0.22)' : 'rgba(245, 158, 11, 0.25)';
+      borderColor = isDark ? 'rgba(251, 191, 36, 0.22)' : 'rgba(245, 158, 11, 0.25)';
       glowColor = colors.neonAmber;
-      specularShineColor = isDark ? 'rgba(251, 191, 36, 0.35)' : 'rgba(245, 158, 11, 0.30)';
+      specularShineColor = isDark ? 'rgba(251, 191, 36, 0.50)' : 'rgba(245, 158, 11, 0.40)';
     } else if (variant === 'purple') {
-      surfaceColor = isDark ? 'rgba(24, 14, 36, 0.70)' : 'rgba(250, 245, 255, 0.72)';
-      borderTopColor = isDark ? 'rgba(168, 85, 247, 0.45)' : 'rgba(139, 92, 246, 0.40)';
-      borderBottomColor = isDark ? 'rgba(168, 85, 247, 0.10)' : 'rgba(139, 92, 246, 0.18)';
-      borderSideColor = isDark ? 'rgba(168, 85, 247, 0.20)' : 'rgba(139, 92, 246, 0.22)';
-      borderColor = isDark ? 'rgba(168, 85, 247, 0.20)' : 'rgba(139, 92, 246, 0.22)';
+      surfaceColor = isDark ? 'rgba(24, 12, 36, 0.45)' : 'rgba(250, 245, 255, 0.50)';
+      borderTopColor = isDark ? 'rgba(168, 85, 247, 0.60)' : 'rgba(139, 92, 246, 0.50)';
+      borderBottomColor = isDark ? 'rgba(168, 85, 247, 0.10)' : 'rgba(139, 92, 246, 0.15)';
+      borderSideColor = isDark ? 'rgba(168, 85, 247, 0.22)' : 'rgba(139, 92, 246, 0.25)';
+      borderColor = isDark ? 'rgba(168, 85, 247, 0.22)' : 'rgba(139, 92, 246, 0.25)';
       glowColor = colors.neonPurple;
-      specularShineColor = isDark ? 'rgba(168, 85, 247, 0.35)' : 'rgba(139, 92, 246, 0.30)';
+      specularShineColor = isDark ? 'rgba(168, 85, 247, 0.50)' : 'rgba(139, 92, 246, 0.40)';
     } else if (variant === 'subtle') {
-      surfaceColor = isDark ? 'rgba(13, 17, 23, 0.55)' : 'rgba(241, 245, 249, 0.60)';
-      borderTopColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.85)';
-      borderBottomColor = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(226, 232, 240, 0.50)';
-      borderSideColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(226, 232, 240, 0.50)';
-      borderColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(226, 232, 240, 0.60)';
+      surfaceColor = isDark ? 'rgba(13, 17, 23, 0.35)' : 'rgba(241, 245, 249, 0.40)';
+      borderTopColor = isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(255, 255, 255, 0.90)';
+      borderBottomColor = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(226, 232, 240, 0.40)';
+      borderSideColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.40)';
+      borderColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.50)';
     } else {
       // default: Superficie cristalina pura con refracción y bisel superior
-      surfaceColor = isDark ? 'rgba(16, 23, 36, 0.68)' : 'rgba(255, 255, 255, 0.72)';
-      borderTopColor = isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.95)';
-      borderBottomColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(226, 232, 240, 0.65)';
-      borderSideColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.65)';
-      borderColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.65)';
-      specularShineColor = isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(255, 255, 255, 0.90)';
+      surfaceColor = isDark ? 'rgba(14, 22, 36, 0.45)' : 'rgba(255, 255, 255, 0.48)';
+      borderTopColor = isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.95)';
+      borderBottomColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(226, 232, 240, 0.50)';
+      borderSideColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.60)';
+      borderColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.60)';
+      specularShineColor = isDark ? 'rgba(255, 255, 255, 0.30)' : 'rgba(255, 255, 255, 0.95)';
     }
   }
 
