@@ -619,6 +619,18 @@ export default function EventDetailDashboard() {
       onConfirm: async () => {
         setConfirmLoading(true);
         try {
+          const targetSf = subFamilyName.trim().toLowerCase();
+          // Actualización optimista inmediata en la UI
+          setEvent((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              participants: prev.participants.filter(
+                (p) => (p.subFamily || 'Familia General').trim().toLowerCase() !== targetSf
+              ),
+            };
+          });
+
           const updated = await deleteSubFamily(event.id, subFamilyName);
           if (updated) {
             setEvent(updated);
@@ -651,6 +663,15 @@ export default function EventDetailDashboard() {
       onConfirm: async () => {
         setConfirmLoading(true);
         try {
+          // Actualización optimista inmediata en la UI
+          setEvent((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              participants: prev.participants.filter((p) => String(p.id) !== String(partId)),
+            };
+          });
+
           const updated = await deleteParticipant(event.id, partId);
           if (updated) {
             setEvent(updated);
@@ -2022,9 +2043,11 @@ export default function EventDetailDashboard() {
                           <TouchableOpacity
                             style={[styles.familyDeleteHeaderBtn, { backgroundColor: colors.dangerLight }]}
                             onPress={() => handleDeleteSubFamily(familyName)}
+                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                            activeOpacity={0.7}
                             accessibilityLabel={`Eliminar ${familyName}`}
                           >
-                            <SculptedIcon name="trash" size={13} variant="plain" color={colors.dangerText} />
+                            <SculptedIcon name="trash" size={14} variant="plain" color={colors.dangerText} />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -2155,9 +2178,11 @@ export default function EventDetailDashboard() {
                                     <TouchableOpacity
                                       style={[styles.deleteMemberIcon, { backgroundColor: colors.dangerLight }]}
                                       onPress={() => handleDeleteParticipant(p.id, p.name)}
+                                      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                                      activeOpacity={0.7}
                                       accessibilityLabel={`Eliminar ${p.name}`}
                                     >
-                                      <SculptedIcon name="trash" size={12} variant="plain" color={colors.dangerText} />
+                                      <SculptedIcon name="trash" size={13} variant="plain" color={colors.dangerText} />
                                     </TouchableOpacity>
                                   </View>
                                 </View>
@@ -3838,8 +3863,12 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   deleteMemberIcon: {
-    padding: 6,
+    padding: 8,
     borderRadius: Radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 32,
+    minHeight: 32,
   },
   categoryPill: {
     alignSelf: 'flex-start',

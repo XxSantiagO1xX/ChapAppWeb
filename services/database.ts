@@ -551,8 +551,15 @@ export const updateParticipant = async (eventId: string, participant: Participan
 export const removeParticipant = async (eventId: string, participantId: string): Promise<void> => {
   if (isSupabaseConfigured) {
     try {
-      await supabase.from('participants').delete().eq('id', participantId);
-    } catch (err) {}
+      // Limpiar referencia de pagador en gastos para evitar violaciones de clave foránea en Postgres
+      await supabase.from('expenses').update({ payer_participant_id: null }).eq('payer_participant_id', participantId);
+      const { error } = await supabase.from('participants').delete().eq('id', participantId);
+      if (error) {
+        console.warn('[Supabase DB] Advertencia al eliminar participante:', error.message);
+      }
+    } catch (err: any) {
+      console.warn('[Supabase DB] Excepción en removeParticipant:', err?.message);
+    }
   }
 
   syncEngine.broadcastChange({ entityType: 'participant', action: 'delete', eventId, participantId });
@@ -563,7 +570,11 @@ export const deleteParticipant = async (
   participantId: string
 ): Promise<EventConfig | null> => {
   await removeParticipant(eventId, participantId);
-  return await getEventById(eventId);
+  const refreshed = await getEventById(eventId);
+  if (refreshed) {
+    refreshed.participants = refreshed.participants.filter((p) => String(p.id) !== String(participantId));
+  }
+  return refreshed;
 };
 
 export const deleteSubFamily = async (
@@ -580,7 +591,15 @@ export const deleteSubFamily = async (
       .map((p) => p.id);
 
     if (isSupabaseConfigured && toDeleteIds.length > 0) {
-      await supabase.from('participants').delete().in('id', toDeleteIds);
+      try {
+        await supabase.from('expenses').update({ payer_participant_id: null }).in('payer_participant_id', toDeleteIds);
+        const { error } = await supabase.from('participants').delete().in('id', toDeleteIds);
+        if (error) {
+          console.warn('[Supabase DB] Advertencia al eliminar subfamilia:', error.message);
+        }
+      } catch (e: any) {
+        console.warn('[Supabase DB] Excepción al eliminar participantes de subfamilia:', e?.message);
+      }
     }
 
     syncEngine.broadcastChange({
@@ -589,7 +608,13 @@ export const deleteSubFamily = async (
       eventId,
     });
 
-    return await getEventById(eventId);
+    const refreshed = await getEventById(eventId);
+    if (refreshed) {
+      refreshed.participants = refreshed.participants.filter(
+        (p) => (p.subFamily || 'Familia General').trim().toLowerCase() !== targetSf
+      );
+    }
+    return refreshed;
   } catch (err) {
     return await getEventById(eventId);
   }
