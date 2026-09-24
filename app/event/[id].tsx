@@ -186,10 +186,10 @@ export default function EventDetailDashboard() {
       );
     }
 
-    // Suscripción Realtime directa y dedicada a la tabla participants y expenses
+    // Suscripción Realtime dedicada y determinista para este evento
     let directChannel: any = null;
     if (isSupabaseConfigured) {
-      const channelName = `screen_event_${id}_${Date.now()}`;
+      const channelName = `event_screen_${id.trim()}`;
       directChannel = supabase
         .channel(channelName, {
           config: {
@@ -223,6 +223,12 @@ export default function EventDetailDashboard() {
         .on('broadcast', { event: 'db_sync' }, (res: any) => {
           if (res && res.payload) {
             console.log('[Realtime Broadcast] ⚡ db_sync recibido:', res.payload);
+            loadEvent(false);
+          }
+        })
+        .on('broadcast', { event: 'participant_change' }, (res: any) => {
+          if (res && res.payload) {
+            console.log('[Realtime Broadcast] ⚡ participant_change recibido:', res.payload);
             loadEvent(false);
           }
         })

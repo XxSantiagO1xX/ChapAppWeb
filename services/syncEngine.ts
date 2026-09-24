@@ -148,6 +148,7 @@ class RealtimeSyncEngine {
               entityType: 'event',
               action: 'update',
             });
+            this.refreshAllActiveSubscribers();
           }
         )
         .on(
@@ -159,8 +160,9 @@ class RealtimeSyncEngine {
             this.handleIncomingPayload({
               eventId,
               entityType: 'participant',
-              action: 'update',
+              action: (payload.eventType?.toLowerCase() as SyncAction) || 'update',
             });
+            this.refreshAllActiveSubscribers();
           }
         )
         .on(
@@ -172,15 +174,23 @@ class RealtimeSyncEngine {
             this.handleIncomingPayload({
               eventId,
               entityType: 'expense',
-              action: 'update',
+              action: (payload.eventType?.toLowerCase() as SyncAction) || 'update',
             });
+            this.refreshAllActiveSubscribers();
           }
         );
 
       // 2. Escuchar mensajes P2P WebSocket en tiempo real (Broadcast < 50ms)
       channel.on('broadcast', { event: 'db_sync' }, (res: any) => {
         if (res && res.payload) {
-          console.log('[Supabase Realtime Broadcast] ⚡ Mensaje recibido cross-device:', res.payload.entityType, res.payload.action);
+          console.log('[Supabase Realtime Broadcast] ⚡ db_sync cross-device:', res.payload.entityType, res.payload.action);
+          this.handleIncomingPayload(res.payload);
+        }
+      });
+
+      channel.on('broadcast', { event: 'participant_change' }, (res: any) => {
+        if (res && res.payload) {
+          console.log('[Supabase Realtime Broadcast] ⚡ participant_change cross-device:', res.payload.action);
           this.handleIncomingPayload(res.payload);
         }
       });
@@ -249,7 +259,7 @@ class RealtimeSyncEngine {
       }
     });
 
-    // 2. Notificar observadores del evento específico
+    // 2. Notificar observadores del evento específico por match de ID / clave
     if (eventId) {
       this.eventListeners.forEach((listeners, registeredKey) => {
         if (
@@ -265,17 +275,24 @@ class RealtimeSyncEngine {
           });
         }
       });
-    } else if (entityType === 'participant' || entityType === 'expense' || entityType === 'payment') {
+    }
+
+    // 3. Notificar SIEMPRE a todas las pantallas de eventos activas ante cualquier cambio de participantes, gastos o pagos
+    // Esto garantiza que si la pantalla se abrió con un Slug, UUID o ID de ruta, o si en DELETE no viene event_id,
+    // el estado de integrantes se actualice de inmediato en todos los dispositivos conectados.
+    if (entityType === 'participant' || entityType === 'expense' || entityType === 'payment') {
       this.eventListeners.forEach((listeners) => {
         listeners.forEach((listener) => {
           try {
             listener();
-          } catch {}
+          } catch (err) {
+            console.error('[SyncEngine] Error notificando listener activo:', err);
+          }
         });
       });
     }
 
-    // 3. Notificar observadores del Directorio Global
+    // 4. Notificar observadores del Directorio Global
     if (entityType === 'directory') {
       this.directoryListeners.forEach((listener) => {
         try {
@@ -318,6 +335,14 @@ class RealtimeSyncEngine {
           event: 'db_sync',
           payload: fullPayload,
         });
+
+        if (fullPayload.entityType === 'participant') {
+          this.realtimeChannel.send({
+            type: 'broadcast',
+            event: 'participant_change',
+            payload: fullPayload,
+          });
+        }
       }
     } catch (err) {
       console.warn('[SyncEngine] Error enviando broadcast Realtime:', err);

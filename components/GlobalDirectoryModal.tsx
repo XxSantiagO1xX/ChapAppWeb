@@ -82,13 +82,20 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
       let dirChannel: any = null;
       if (isSupabaseConfigured) {
         dirChannel = supabase
-          .channel(`directory_realtime_${Date.now()}`)
+          .channel('chapapp_directory_realtime')
           .on('broadcast', { event: 'db_sync' }, (res: any) => {
-            if (res.payload?.entityType === 'directory') {
+            if (res.payload?.entityType === 'directory' || res.payload?.entityType === 'participant') {
               console.log('[Directorio Realtime] ⚡ Actualización recibida vía broadcast:', res.payload);
               loadDirectory();
             }
           })
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'participants' },
+            () => {
+              loadDirectory();
+            }
+          )
           .subscribe();
       }
 
