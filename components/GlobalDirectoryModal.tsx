@@ -312,6 +312,25 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                 {showAddForm ? 'Cancelar' : 'Nuevo Integrante'}
               </Text>
             </TouchableOpacity>
+
+            {mode === 'import' && selectedIds.size > 0 && (
+              <TouchableOpacity
+                style={[
+                  styles.quickImportBtn,
+                  {
+                    backgroundColor: colors.primary,
+                  },
+                  isDark ? getNeonGlow(colors.neonGreen, 'low') : {},
+                ]}
+                onPress={handleImport}
+                activeOpacity={0.8}
+              >
+                <SculptedIcon name="plus" size={13} variant="plain" color="#FFFFFF" />
+                <Text style={styles.quickImportBtnText}>
+                  Agregar ({selectedIds.size})
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Formulario desplegable para agregar nuevo contacto */}
@@ -579,14 +598,26 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                     isDark && selectedIds.size > 0 ? getNeonGlow(colors.neonGreen, 'medium') : {},
                     selectedIds.size === 0 && {
                       backgroundColor: colors.surfaceHighlight,
-                      opacity: 0.6,
+                      opacity: 0.5,
                     },
                   ]}
                   onPress={handleImport}
                   disabled={selectedIds.size === 0}
+                  activeOpacity={0.8}
                 >
-                  <Text style={[styles.importBtnText, { color: '#FFFFFF', fontWeight: '700' }]}>
-                    Importar Seleccionados ({selectedIds.size})
+                  <SculptedIcon
+                    name="plus"
+                    size={14}
+                    variant="plain"
+                    color={selectedIds.size === 0 ? colors.textMuted : '#FFFFFF'}
+                  />
+                  <Text
+                    style={[
+                      styles.importBtnText,
+                      { color: selectedIds.size === 0 ? colors.textMuted : '#FFFFFF', fontWeight: '700' },
+                    ]}
+                  >
+                    Agregar al Evento ({selectedIds.size})
                   </Text>
                 </TouchableOpacity>
               )}
@@ -696,10 +727,12 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     height: '85%',
-    maxHeight: '92%',
+    maxHeight: 750,
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
+    display: 'flex',
+    flexDirection: 'column',
     ...Platform.select({
       web: {
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.37)',
@@ -714,8 +747,9 @@ const styles = StyleSheet.create({
     }),
   },
   containerTablet: {
-    maxWidth: 680,
-    height: '80%',
+    maxWidth: 720,
+    height: '85%',
+    maxHeight: 750,
   },
   header: {
     flexDirection: 'row',
@@ -724,6 +758,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 18,
     borderBottomWidth: 1,
+    flexShrink: 0,
   },
   headerTitleRow: {
     flexDirection: 'row',
@@ -759,7 +794,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    gap: 12,
+    gap: 10,
+    flexShrink: 0,
   },
   searchBox: {
     flex: 1,
@@ -788,10 +824,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
   },
+  quickImportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  quickImportBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
   formContainer: {
     padding: 16,
     borderBottomWidth: 1,
     gap: 10,
+    flexShrink: 0,
   },
   formHeading: {
     fontSize: 13,
@@ -841,7 +891,8 @@ const styles = StyleSheet.create({
   },
   scrollWrapper: {
     flex: 1,
-    minHeight: 400,
+    minHeight: 0,
+    overflow: 'hidden',
   },
   scroll: {
     flex: 1,
@@ -849,7 +900,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 24,
-    paddingBottom: 20,
+    paddingBottom: 24,
     gap: 16,
   },
   emptyView: {
@@ -926,8 +977,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderTopWidth: 1,
+    flexShrink: 0,
+    gap: 12,
   },
   selectAllBtn: {
     paddingVertical: 8,
@@ -947,13 +1001,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   importBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 10,
   },
   importBtnText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '700',
   },
   confirmOverlay: {
     position: 'absolute',
