@@ -259,13 +259,13 @@ export default function HomeScreen() {
               Platform.OS === 'web'
                 ? isTablet ? 20 : 12
                 : Math.max(insets.top, 12) + (isTablet ? 8 : 4),
-            backgroundColor: isDark ? 'rgba(19, 25, 36, 0.76)' : 'rgba(255, 255, 255, 0.82)',
+            backgroundColor: isDark ? 'rgba(13, 20, 32, 0.60)' : 'rgba(255, 255, 255, 0.65)',
             borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.90)',
-            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.98)',
+            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.98)',
             ...(Platform.OS === 'web'
               ? ({
-                  backdropFilter: 'blur(24px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                   boxShadow: isDark
                     ? '0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14)'
                     : '0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
@@ -459,9 +459,19 @@ export default function HomeScreen() {
               isTablet && styles.sidebarTablet,
               !isTablet && styles.sidebarMobileExpanded,
               {
-                backgroundColor: colors.surface,
-                borderRightColor: colors.border,
-                borderBottomColor: colors.border,
+                backgroundColor: isDark ? 'rgba(13, 20, 32, 0.50)' : 'rgba(255, 255, 255, 0.55)',
+                borderRightColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.80)',
+                borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.80)',
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(255, 255, 255, 0.95)',
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(20px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                      boxShadow: isDark
+                        ? '4px 0 24px rgba(0, 0, 0, 0.35)'
+                        : '4px 0 24px rgba(31, 38, 135, 0.05)',
+                    } as any)
+                  : {}),
               },
             ]}
           >
@@ -489,15 +499,15 @@ export default function HomeScreen() {
                   ? [
                       styles.tabButtonActive,
                       {
-                        backgroundColor: colors.primaryLight,
-                        borderColor: colors.primaryBorder,
+                        backgroundColor: isDark ? 'rgba(0, 240, 255, 0.14)' : 'rgba(2, 132, 199, 0.12)',
+                        borderColor: isDark ? 'rgba(0, 240, 255, 0.40)' : 'rgba(2, 132, 199, 0.35)',
                       },
                     ]
                   : [
                       styles.tabButtonInactive,
                       {
-                        backgroundColor: colors.surfaceSubtle,
-                        borderColor: colors.border,
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.40)',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
                       },
                     ],
               ]}
@@ -530,7 +540,7 @@ export default function HomeScreen() {
                   style={[
                     styles.tabBadge,
                     {
-                      backgroundColor: filterTab === 'active' ? colors.primaryLight : colors.surfaceSubtle,
+                      backgroundColor: filterTab === 'active' ? colors.primaryLight : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.50)'),
                       borderColor: filterTab === 'active' ? colors.primaryBorder : 'transparent',
                     },
                   ]}
@@ -558,15 +568,15 @@ export default function HomeScreen() {
                   ? [
                       styles.tabButtonActive,
                       {
-                        backgroundColor: colors.primaryLight,
-                        borderColor: colors.primaryBorder,
+                        backgroundColor: isDark ? 'rgba(0, 240, 255, 0.14)' : 'rgba(2, 132, 199, 0.12)',
+                        borderColor: isDark ? 'rgba(0, 240, 255, 0.40)' : 'rgba(2, 132, 199, 0.35)',
                       },
                     ]
                   : [
                       styles.tabButtonInactive,
                       {
-                        backgroundColor: colors.surfaceSubtle,
-                        borderColor: colors.border,
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.40)',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
                       },
                     ],
               ]}
@@ -597,7 +607,7 @@ export default function HomeScreen() {
                   style={[
                     styles.tabBadge,
                     {
-                      backgroundColor: filterTab === 'archived' ? colors.primaryLight : colors.surfaceSubtle,
+                      backgroundColor: filterTab === 'archived' ? colors.primaryLight : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.50)'),
                       borderColor: filterTab === 'archived' ? colors.primaryBorder : 'transparent',
                     },
                   ]}
@@ -625,15 +635,15 @@ export default function HomeScreen() {
                   ? [
                       styles.tabButtonActive,
                       {
-                        backgroundColor: colors.primaryLight,
-                        borderColor: colors.primaryBorder,
+                        backgroundColor: isDark ? 'rgba(0, 240, 255, 0.14)' : 'rgba(2, 132, 199, 0.12)',
+                        borderColor: isDark ? 'rgba(0, 240, 255, 0.40)' : 'rgba(2, 132, 199, 0.35)',
                       },
                     ]
                   : [
                       styles.tabButtonInactive,
                       {
-                        backgroundColor: colors.surfaceSubtle,
-                        borderColor: colors.border,
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.40)',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
                       },
                     ],
               ]}
@@ -664,7 +674,7 @@ export default function HomeScreen() {
                   style={[
                     styles.tabBadge,
                     {
-                      backgroundColor: filterTab === 'all' ? colors.primaryLight : colors.surfaceSubtle,
+                      backgroundColor: filterTab === 'all' ? colors.primaryLight : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.50)'),
                       borderColor: filterTab === 'all' ? colors.primaryBorder : 'transparent',
                     },
                   ]}
@@ -690,12 +700,10 @@ export default function HomeScreen() {
             style={[
               styles.searchBox,
               {
-                backgroundColor: colors.surfaceSubtle,
-                borderColor: colors.border,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.40)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
                 ...(Platform.OS === 'web'
                   ? ({
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
                       boxShadow: isDark
                         ? 'inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.04)'
                         : 'inset 0 2px 4px rgba(31, 38, 135, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.6)',
@@ -763,16 +771,17 @@ export default function HomeScreen() {
               style={[
                 styles.executiveSummaryBar,
                 {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
+                  backgroundColor: isDark ? 'rgba(14, 22, 36, 0.45)' : 'rgba(255, 255, 255, 0.48)',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.65)',
+                  borderTopColor: isDark ? 'rgba(255, 255, 255, 0.30)' : 'rgba(255, 255, 255, 0.95)',
                   borderWidth: 1,
                   ...(Platform.OS === 'web'
                     ? ({
-                        backdropFilter: 'blur(16px)',
-                        WebkitBackdropFilter: 'blur(16px)',
+                        backdropFilter: 'blur(20px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                         boxShadow: isDark
-                          ? '0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
-                          : '0 8px 24px rgba(31, 38, 135, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                          ? '0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18)'
+                          : '0 8px 24px rgba(31, 38, 135, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
                       } as any)
                     : {
                         shadowColor: isDark ? '#000000' : '#1F2687',
@@ -1062,17 +1071,8 @@ export default function HomeScreen() {
                       style={[
                         styles.metricsTray,
                         {
-                          backgroundColor: colors.surfaceSubtle,
-                          borderColor: colors.border,
-                          ...(Platform.OS === 'web'
-                            ? ({
-                                backdropFilter: 'blur(8px)',
-                                WebkitBackdropFilter: 'blur(8px)',
-                                boxShadow: isDark
-                                  ? 'inset 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.04)'
-                                  : 'inset 0 1px 3px rgba(31, 38, 135, 0.05), inset 0 -1px 0 rgba(255, 255, 255, 0.6)',
-                              } as any)
-                            : {}),
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.35)',
+                          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
                         },
                       ]}
                     >
@@ -1139,18 +1139,12 @@ export default function HomeScreen() {
                 );
               })}
 
-              {/* Tarjeta Complementaria para Crear Nuevo Evento en el Grid */}
+              {/* Tarjeta Complementaria para Crear Nuevo Evento en el Grid en Cristal */}
               {filterTab !== 'archived' && (
-                <TouchableOpacity
-                  style={[
-                    styles.createEventCardCompanion,
-                    isTablet && styles.eventCardTablet,
-                    {
-                      backgroundColor: colors.surfaceSubtle,
-                      borderColor: colors.border,
-                      borderWidth: 1.5,
-                    },
-                  ]}
+                <GlassCard
+                  variant="subtle"
+                  style={[styles.createEventCardCompanion, isTablet && styles.eventCardTablet]}
+                  contentStyle={styles.createEventCardInner}
                   onPress={() => {
                     setNewYear(new Date().getFullYear().toString());
                     setNewTitle(`Vacaciones ${new Date().getFullYear()}`);
@@ -1159,24 +1153,22 @@ export default function HomeScreen() {
                   }}
                   activeOpacity={0.8}
                 >
-                  <View style={styles.createEventCardInner}>
-                    <SculptedIcon
-                      name="plus"
-                      size={24}
-                      containerSize={52}
-                      variant="sunken"
-                      glow={false}
-                      accentColor={colors.primary}
-                      color={colors.primary}
-                    />
-                    <Text style={[styles.createEventCardTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
-                      Crear Nuevo Evento
-                    </Text>
-                    <Text style={[styles.createEventCardSubtitle, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
-                      Registrar finanzas para un nuevo año
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                  <SculptedIcon
+                    name="plus"
+                    size={24}
+                    containerSize={52}
+                    variant="sunken"
+                    glow={false}
+                    accentColor={colors.primary}
+                    color={colors.primary}
+                  />
+                  <Text style={[styles.createEventCardTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                    Crear Nuevo Evento
+                  </Text>
+                  <Text style={[styles.createEventCardSubtitle, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
+                    Registrar finanzas para un nuevo año
+                  </Text>
+                </GlassCard>
               )}
             </ScrollView>
           )}
@@ -1834,8 +1826,6 @@ const styles = StyleSheet.create({
   },
   createEventCardCompanion: {
     borderRadius: Radii.lg,
-    borderWidth: 2,
-    borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: 220,

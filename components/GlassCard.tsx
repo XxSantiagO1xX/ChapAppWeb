@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../context/ThemeContext';
 import { Radii, GlassShadows } from '../constants/theme';
 
@@ -41,12 +42,12 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 
   // Variables de color, bisel y capas
   let borderColor = colors.border;
-  let borderTopColor = isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.95)';
-  let borderBottomColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(226, 232, 240, 0.65)';
-  let borderSideColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.65)';
-  let surfaceColor = isDark ? 'rgba(16, 23, 36, 0.68)' : 'rgba(255, 255, 255, 0.72)';
+  let borderTopColor = isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.95)';
+  let borderBottomColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(226, 232, 240, 0.50)';
+  let borderSideColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.60)';
+  let surfaceColor = isDark ? 'rgba(14, 22, 36, 0.45)' : 'rgba(255, 255, 255, 0.48)';
   let glowColor = colors.primary;
-  let specularShineColor = isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(255, 255, 255, 0.90)';
+  let specularShineColor = isDark ? 'rgba(255, 255, 255, 0.30)' : 'rgba(255, 255, 255, 0.95)';
 
   if (frosted) {
     // =========================================================================
@@ -182,6 +183,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     const webCardStyle: any = {
       backdropFilter: blurValue,
       WebkitBackdropFilter: blurValue,
+      transform: 'translateZ(0)',
       backgroundColor: surfaceColor,
       borderWidth,
       borderTopColor,
@@ -208,7 +210,10 @@ export const GlassCard: React.FC<GlassCardProps> = ({
       </View>
     );
   } else {
-    // Native (iPadOS / iOS / Android): Translucent glass surface with native shadow & specular edge
+    // Native (iPadOS / iOS / Android): Auténtico efecto Glassmorphism con BlurView nativo de iOS/iPadOS
+    const blurTint = isDark ? 'dark' : 'light';
+    const blurIntensity = frosted ? 85 : 45;
+
     cardContent = (
       <View
         style={[
@@ -216,16 +221,30 @@ export const GlassCard: React.FC<GlassCardProps> = ({
           glassShadow.native,
           {
             borderRadius,
-            backgroundColor: surfaceColor,
             borderWidth,
             borderTopColor,
             borderBottomColor,
             borderLeftColor: borderSideColor,
             borderRightColor: borderSideColor,
+            overflow: 'hidden',
           },
           style,
         ]}
       >
+        <BlurView
+          intensity={blurIntensity}
+          tint={blurTint}
+          style={StyleSheet.absoluteFill}
+        />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: surfaceColor,
+              borderRadius,
+            },
+          ]}
+        />
         {/* Línea de Brillo Especular Cenital */}
         <View
           pointerEvents="none"
