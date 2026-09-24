@@ -15,6 +15,7 @@ import { Radii } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { GlassCard } from './GlassCard';
 import { SculptedIcon } from './SculptedIcon';
+import { ConfirmModal } from './ConfirmModal';
 import type { DirectoryParticipant, CategoryType } from '../types';
 import {
   getGlobalDirectory,
@@ -50,6 +51,18 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
   const [newCategory, setNewCategory] = useState<CategoryType>('adulto');
   const [newWeight, setNewWeight] = useState('1.0');
   const [newSubFamily, setNewSubFamily] = useState('Familia Santiago Bustamante');
+
+  // Estado del modal de confirmación de eliminación
+  const [confirmDelete, setConfirmDelete] = useState<{
+    visible: boolean;
+    id: string;
+    name: string;
+  }>({
+    visible: false,
+    id: '',
+    name: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadDirectory = async () => {
     const data = await getGlobalDirectory();
@@ -140,17 +153,30 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
   };
 
   const handleDeleteContact = (id: string, name: string) => {
-    Alert.alert('Eliminar del Directorio', `¿Eliminar a "${name}" del directorio global?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteDirectoryParticipant(id);
-          await loadDirectory();
-        },
-      },
-    ]);
+    setConfirmDelete({
+      visible: true,
+      id,
+      name,
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete.id) return;
+    try {
+      setIsDeleting(true);
+      await deleteDirectoryParticipant(confirmDelete.id);
+      await loadDirectory();
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(confirmDelete.id);
+        return next;
+      });
+      setConfirmDelete({ visible: false, id: '', name: '' });
+    } catch (err) {
+      console.error('Error al eliminar participante del directorio:', err);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleImport = () => {
@@ -399,7 +425,7 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                           const isSelected = selectedIds.has(member.id);
 
                           return (
-                            <TouchableOpacity
+                            <View
                               key={member.id}
                               style={[
                                 styles.memberRow,
@@ -412,52 +438,63 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
                                   backgroundColor: colors.primaryLight,
                                 },
                               ]}
-                              onPress={() => {
-                                if (mode === 'import') toggleSelect(member.id);
-                              }}
-                              activeOpacity={0.7}
                             >
-                              {mode === 'import' && (
-                                <View
-                                  style={[
-                                    styles.checkbox,
-                                    {
-                                      backgroundColor: colors.surfaceSubtle,
-                                      borderColor: colors.border,
-                                    },
-                                    isSelected && {
-                                      backgroundColor: colors.primary,
-                                      borderColor: colors.primary,
-                                    },
-                                  ]}
-                                >
-                                  {isSelected && <Text style={styles.checkboxCheck}>✓</Text>}
-                                </View>
-                              )}
+                              <TouchableOpacity
+                                style={styles.memberInfoArea}
+                                onPress={() => {
+                                  if (mode === 'import') toggleSelect(member.id);
+                                }}
+                                activeOpacity={0.7}
+                              >
+                                {mode === 'import' && (
+                                  <View
+                                    style={[
+                                      styles.checkbox,
+                                      {
+                                        backgroundColor: colors.surfaceSubtle,
+                                        borderColor: colors.border,
+                                      },
+                                      isSelected && {
+                                        backgroundColor: colors.primary,
+                                        borderColor: colors.primary,
+                                      },
+                                    ]}
+                                  >
+                                    {isSelected && <Text style={styles.checkboxCheck}>✓</Text>}
+                                  </View>
+                                )}
 
-                              <View style={{ flex: 1 }}>
-                                <Text style={[styles.memberName, { color: colors.textPrimary, fontWeight: '700' }]}>{member.name}</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                                  <SculptedIcon
-                                    name={member.category === 'nino' ? 'child' : 'user'}
-                                    size={12}
-                                    variant="plain"
-                                    color={colors.textSecondary}
-                                  />
-                                  <Text style={[styles.memberSub, { color: colors.textSecondary }]}>
-                                    {member.category === 'nino' ? 'Niño' : 'Adulto'} • Peso:{' '}
-                                    {member.weight}
-                                  </Text>
+                                <View style={{ flex: 1 }}>
+                                  <Text style={[styles.memberName, { color: colors.textPrimary, fontWeight: '700' }]}>{member.name}</Text>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                                    <SculptedIcon
+                                      name={member.category === 'nino' ? 'child' : 'user'}
+                                      size={12}
+                                      variant="plain"
+                                      color={colors.textSecondary}
+                                    />
+                                    <Text style={[styles.memberSub, { color: colors.textSecondary }]}>
+                                      {member.category === 'nino' ? 'Niño' : 'Adulto'} • Peso:{' '}
+                                      {member.weight}
+                                    </Text>
+                                  </View>
                                 </View>
-                              </View>
+                              </TouchableOpacity>
 
                               <TouchableOpacity
-                                style={styles.deleteMemberBtn}
+                                style={[
+                                  styles.deleteMemberBtn,
+                                  {
+                                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.12)' : 'rgba(239, 68, 68, 0.08)',
+                                  },
+                                ]}
                                 onPress={() => handleDeleteContact(member.id, member.name)}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                activeOpacity={0.6}
                               >
-                                <SculptedIcon name="trash" size={14} variant="plain" color={colors.dangerText} />
+                                <SculptedIcon name="trash" size={15} variant="plain" color={colors.dangerText} />
                               </TouchableOpacity>
-                            </TouchableOpacity>
+                            </View>
                           );
                         })}
                       </View>
@@ -512,6 +549,20 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
               )}
             </View>
           </View>
+
+          {/* Modal de Confirmación para Eliminar Integrante */}
+          <ConfirmModal
+            visible={confirmDelete.visible}
+            title="Eliminar del Directorio"
+            message={`¿Estás seguro de que deseas eliminar a "${confirmDelete.name}" del directorio global de subfamilias?`}
+            confirmText="Eliminar"
+            cancelText="Cancelar"
+            variant="danger"
+            icon="trash"
+            loading={isDeleting}
+            onConfirm={handleConfirmDelete}
+            onCancel={() => setConfirmDelete({ visible: false, id: '', name: '' })}
+          />
         </View>
       </View>
     </Modal>
@@ -728,6 +779,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: 10,
   },
+  memberInfoArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   checkbox: {
     width: 20,
     height: 20,
@@ -750,7 +807,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   deleteMemberBtn: {
-    padding: 6,
+    padding: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   footer: {
     flexDirection: 'row',

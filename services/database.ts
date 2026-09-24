@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { syncEngine } from './syncEngine';
 import type { EventConfig, Participant, Expense, DirectoryParticipant, CategoryType } from '../types';
@@ -1020,35 +1021,84 @@ export const batchAddExpenses = async (eventId: string, newExpenses: Expense[]):
 };
 
 /**
- * 10. Directorio Global.
+ * 10. Directorio Global con Persistencia Local (AsyncStorage) y Sincronización en Tiempo Real.
  */
+const DIRECTORY_STORAGE_KEY = '@chapapp_global_directory_v1';
+let directoryInitialized = false;
 let globalDirectoryState: DirectoryParticipant[] = [...SEED_DIRECTORY];
 
-export const getGlobalDirectory = async (): Promise<DirectoryParticipant[]> => {
+const persistGlobalDirectory = async (data: DirectoryParticipant[]): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(DIRECTORY_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error('[AsyncStorage] Error al persistir el directorio global:', e);
+  }
+};
+
+const ensureDirectoryLoaded = async (): Promise<DirectoryParticipant[]> => {
+  if (!directoryInitialized) {
+    try {
+      const stored = await AsyncStorage.getItem(DIRECTORY_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          globalDirectoryState = parsed;
+        }
+      } else {
+        // Primera ejecución: guardar la semilla inicial
+        await persistGlobalDirectory(SEED_DIRECTORY);
+      }
+    } catch (e) {
+      console.warn('[AsyncStorage] Error al cargar el directorio global, usando valor en memoria:', e);
+    }
+    directoryInitialized = true;
+  }
   return globalDirectoryState;
+};
+
+export const getGlobalDirectory = async (): Promise<DirectoryParticipant[]> => {
+  return await ensureDirectoryLoaded();
 };
 
 export const addDirectoryParticipant = async (
   contact: Omit<DirectoryParticipant, 'id'> & { id?: string }
 ): Promise<DirectoryParticipant> => {
+  await ensureDirectoryLoaded();
   const newContact: DirectoryParticipant = {
     ...contact,
     id: contact.id || generateId('dir'),
   };
   globalDirectoryState = [newContact, ...globalDirectoryState.filter((c) => c.id !== newContact.id)];
+  await persistGlobalDirectory(globalDirectoryState);
   syncEngine.broadcastChange({ entityType: 'directory', action: 'create', data: newContact });
   return newContact;
 };
 
 export const deleteDirectoryParticipant = async (id: string): Promise<void> => {
+  await ensureDirectoryLoaded();
   globalDirectoryState = globalDirectoryState.filter((c) => c.id !== id);
+  await persistGlobalDirectory(globalDirectoryState);
   syncEngine.broadcastChange({ entityType: 'directory', action: 'delete', data: { id } });
 };
 
 export const batchAddDirectoryParticipants = async (contacts: DirectoryParticipant[]): Promise<void> => {
-  for (const c of contacts) {
-    await addDirectoryParticipant(c);
-  }
+  await ensureDirectoryLoaded();
+  const existingMap = new Map<string, DirectoryParticipant>();
+  contacts.forEach((c) => {
+    const item: DirectoryParticipant = {
+      ...c,
+      id: c.id || generateId('dir'),
+    };
+    existingMap.set(item.id, item);
+  });
+  globalDirectoryState.forEach((c) => {
+    if (!existingMap.has(c.id)) {
+      existingMap.set(c.id, c);
+    }
+  });
+  globalDirectoryState = Array.from(existingMap.values());
+  await persistGlobalDirectory(globalDirectoryState);
+  syncEngine.broadcastChange({ entityType: 'directory', action: 'create' });
 };
 
 /**
