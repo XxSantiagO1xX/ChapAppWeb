@@ -4,11 +4,15 @@
     "slug": "chap-app",
     "version": "1.0.0",
     "orientation": "default",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "scheme": "chapapp",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ariel.chapapp"
+      "bundleIdentifier": "com.ariel.chapapp",
+      "infoPlist": {
+        "UIRequiresFullScreen": false,
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.ariel.chapapp"
