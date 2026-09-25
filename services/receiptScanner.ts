@@ -107,66 +107,88 @@ const resolveBase64 = async (imageUri: string, providedBase64?: string | null): 
 
 /**
  * Procesa la imagen usando Google Gemini Vision (Flash).
+ * Prueba en cascada los modelos vigentes de Google GenAI (gemini-2.5-flash, gemini-2.0-flash, etc.).
  */
 const processWithGemini = async (base64Data: string, apiKey: string): Promise<ExtractedReceiptData> => {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const candidateModels = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-flash-latest',
+  ];
 
-  const requestBody = {
-    contents: [
-      {
-        parts: [
-          { text: SYSTEM_PROMPT },
+  let lastError: Error | null = null;
+
+  for (const model of candidateModels) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+      const requestBody = {
+        contents: [
           {
-            inline_data: {
-              mime_type: 'image/jpeg',
-              data: base64Data,
-            },
+            parts: [
+              { text: SYSTEM_PROMPT },
+              {
+                inline_data: {
+                  mime_type: 'image/jpeg',
+                  data: base64Data,
+                },
+              },
+            ],
           },
         ],
-      },
-    ],
-    generationConfig: {
-      response_mime_type: 'application/json',
-      temperature: 0.1,
-    },
-  };
+        generationConfig: {
+          response_mime_type: 'application/json',
+          temperature: 0.1,
+        },
+      };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const message = errorData?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
-    throw new Error(`Gemini Vision Error: ${message}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const message = errorData?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+        console.warn(`[Gemini Scanner] Modelo ${model} no disponible o falló:`, message);
+        lastError = new Error(`Gemini Vision Error (${model}): ${message}`);
+        continue;
+      }
+
+      const data = await response.json();
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!rawText) {
+        lastError = new Error(`Gemini (${model}) no devolvió texto en la respuesta.`);
+        continue;
+      }
+
+      const parsed = parseJsonResponse(rawText);
+
+      // Normalizar categoría
+      let category = 'Comida';
+      if (parsed.category) {
+        const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(parsed.category).toLowerCase());
+        if (matched) category = matched;
+      }
+
+      return {
+        title: String(parsed.title || 'Gasto General').slice(0, 50),
+        amount: typeof parsed.amount === 'number' ? Math.max(0, parsed.amount) : parseFloat(parsed.amount) || 0,
+        category,
+        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.9,
+      };
+    } catch (err: any) {
+      console.warn(`[Gemini Scanner] Excepción con modelo ${model}:`, err?.message);
+      lastError = err;
+    }
   }
 
-  const data = await response.json();
-  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!rawText) {
-    throw new Error('Gemini no devolvió texto en la respuesta.');
-  }
-
-  const parsed = parseJsonResponse(rawText);
-
-  // Normalizar categoría
-  let category = 'Comida';
-  if (parsed.category) {
-    const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(parsed.category).toLowerCase());
-    if (matched) category = matched;
-  }
-
-  return {
-    title: String(parsed.title || 'Gasto General').slice(0, 50),
-    amount: typeof parsed.amount === 'number' ? Math.max(0, parsed.amount) : parseFloat(parsed.amount) || 0,
-    category,
-    confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.9,
-  };
+  throw lastError || new Error('No se pudo procesar el ticket con ninguno de los modelos vigentes de Gemini.');
 };
 
 /**
