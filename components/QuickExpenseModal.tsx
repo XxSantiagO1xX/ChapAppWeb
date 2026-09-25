@@ -105,7 +105,7 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
   const [amount, setAmount] = useState('');
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Comida');
-  const [paidBy, setPaidBy] = useState('');
+  const [paidBy, setPaidBy] = useState<string | null>(null);
   const [payerSearch, setPayerSearch] = useState('');
 
   // Estados de escaneo y procesamiento IA
@@ -113,8 +113,8 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
   const [scannedImageUri, setScannedImageUri] = useState<string | null>(null);
   const [aiSuccessMessage, setAiSuccessMessage] = useState<string | null>(null);
 
-  // Inicializar pagador si no hay uno seleccionado
-  const activePaidBy = paidBy || (participants.length > 0 ? participants[0].id : '');
+  // Inicializar pagador: si paidBy es null, por defecto el primer participante (o '' si no hay)
+  const activePaidBy = paidBy !== null ? paidBy : (participants.length > 0 ? participants[0].id : '');
 
   // Filtrado predictivo de pagador
   const filteredParticipants = useMemo(() => {
@@ -128,7 +128,8 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
   }, [participants, payerSearch]);
 
   const selectedParticipant = useMemo(() => {
-    return participants.find((p) => p.id === activePaidBy);
+    if (!activePaidBy) return null;
+    return participants.find((p) => p.id === activePaidBy) || null;
   }, [participants, activePaidBy]);
 
   // Procesar imagen con IA
@@ -147,7 +148,11 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
       }
       setAiSuccessMessage('✓ ¡Ticket analizado con éxito! Revisa o ajusta los datos.');
     } catch (error) {
-      Alert.alert('Error al escanear', 'No se pudieron extraer los datos del ticket.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Error al escanear: No se pudieron extraer los datos del ticket.');
+      } else {
+        Alert.alert('Error al escanear', 'No se pudieron extraer los datos del ticket.');
+      }
     } finally {
       setIsScanning(false);
     }
@@ -158,10 +163,14 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
-          'Permiso denegado',
-          'Se necesita acceso a la cámara para fotografiar el ticket.'
-        );
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.alert('Permiso denegado: Se necesita acceso a la cámara para fotografiar el ticket.');
+        } else {
+          Alert.alert(
+            'Permiso denegado',
+            'Se necesita acceso a la cámara para fotografiar el ticket.'
+          );
+        }
         return;
       }
 
@@ -175,7 +184,11 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
         await processReceiptImage(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo abrir la cámara.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Error: No se pudo abrir la cámara.');
+      } else {
+        Alert.alert('Error', 'No se pudo abrir la cámara.');
+      }
     }
   };
 
@@ -184,10 +197,14 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
-          'Permiso denegado',
-          'Se necesita acceso a la galería para seleccionar la foto del ticket.'
-        );
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.alert('Permiso denegado: Se necesita acceso a la galería para seleccionar la foto del ticket.');
+        } else {
+          Alert.alert(
+            'Permiso denegado',
+            'Se necesita acceso a la galería para seleccionar la foto del ticket.'
+          );
+        }
         return;
       }
 
@@ -201,12 +218,21 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
         await processReceiptImage(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo abrir la galería.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Error: No se pudo abrir la galería.');
+      } else {
+        Alert.alert('Error', 'No se pudo abrir la galería.');
+      }
     }
   };
 
   // Diálogo selector de Escaneo (Cámara vs Galería)
   const handleScanTicket = () => {
+    if (Platform.OS === 'web') {
+      handleLaunchGallery();
+      return;
+    }
+
     Alert.alert(
       '📸 Escanear Ticket de Compra',
       'Elige cómo deseas capturar la foto de tu comprobante o factura:',
@@ -258,6 +284,7 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
     setAmount('');
     setTitle('');
     setCategory('Comida');
+    setPaidBy(null);
     setPayerSearch('');
     setScannedImageUri(null);
     setAiSuccessMessage(null);
@@ -268,19 +295,20 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType={isTablet ? 'fade' : 'slide'}
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' && !isTablet ? 'padding' : undefined}
         style={[
           styles.backdrop,
+          isTablet && styles.backdropTablet,
           {
-            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(15, 23, 42, 0.52)',
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.78)' : 'rgba(15, 23, 42, 0.55)',
             ...(Platform.OS === 'web'
               ? ({
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
                 } as any)
               : {}),
           },
@@ -297,27 +325,36 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
             styles.bottomSheet,
             isTablet && styles.bottomSheetTablet,
             {
-              backgroundColor: isDark ? 'rgba(19, 25, 36, 0.92)' : 'rgba(255, 255, 255, 0.95)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.95)',
+              backgroundColor: isDark ? 'rgba(19, 25, 36, 0.96)' : 'rgba(255, 255, 255, 0.98)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.95)',
               borderWidth: 1.5,
               ...(Platform.OS === 'web'
                 ? ({
                     backdropFilter: 'blur(36px) saturate(200%)',
                     WebkitBackdropFilter: 'blur(36px) saturate(200%)',
                     boxShadow: isDark
-                      ? '0 -12px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                      : '0 -12px 48px rgba(15, 23, 42, 0.20), 0 0 0 1px rgba(226, 232, 240, 0.90), inset 0 1px 0 rgba(255, 255, 255, 1)',
+                      ? '0 24px 64px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                      : '0 24px 64px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(226, 232, 240, 0.90), inset 0 1px 0 rgba(255, 255, 255, 1)',
                   } as any)
                 : {}),
             },
           ]}
         >
-          {/* Barra superior del BottomSheet */}
+          {/* Barra superior del Modal */}
           <View style={styles.sheetHeader}>
-            <View style={[styles.dragHandle, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(148, 163, 184, 0.5)' }]} />
+            {!isTablet && (
+              <View
+                style={[
+                  styles.dragHandle,
+                  { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(148, 163, 184, 0.5)' },
+                ]}
+              />
+            )}
             <View style={styles.headerRow}>
-              <View>
-                <Text style={[styles.sheetTitle, { color: colors.textPrimary, fontWeight: '700' }]}>Captura Rápida de Gasto</Text>
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={[styles.sheetTitle, { color: colors.textPrimary, fontWeight: '700' }]}>
+                  Captura Rápida de Gasto
+                </Text>
                 <Text style={[styles.sheetSub, { color: colors.textSecondary }]}>
                   Registra compras manuales o con escáner de IA
                 </Text>
@@ -331,15 +368,24 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                     borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.90)',
                     borderWidth: 1,
                     borderRadius: 16,
+                    ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
                   },
                 ]}
+                activeOpacity={0.7}
               >
                 <SculptedIcon name="close" size={14} variant="plain" color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
 
-          <ScrollView style={styles.sheetContent} showsVerticalScrollIndicator={false}>
+          {/* Contenido Principal con Scroll unificado (sin scrollviews anidados conflictivos) */}
+          <ScrollView
+            style={styles.sheetContent}
+            contentContainerStyle={styles.sheetContentContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             {/* BOTÓN DESTACADO: ESCANEAR TICKET CON IA */}
             <TouchableOpacity
               style={[
@@ -348,6 +394,7 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                   backgroundColor: isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(2, 132, 199, 0.08)',
                   borderColor: isDark ? colors.neonCyan : colors.primary,
                   borderWidth: 1.5,
+                  ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
                 },
                 isDark ? getNeonGlow(colors.neonCyan, 'low') : {},
                 isScanning && {
@@ -403,7 +450,9 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                   },
                 ]}
               >
-                <Text style={[styles.aiSuccessText, { color: colors.successText, fontWeight: '700' }]}>{aiSuccessMessage}</Text>
+                <Text style={[styles.aiSuccessText, { color: colors.successText, fontWeight: '700' }]}>
+                  {aiSuccessMessage}
+                </Text>
               </View>
             )}
 
@@ -463,7 +512,9 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
 
             {/* 2. CONCEPTO O TÍTULO */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontWeight: '700' }]}>Concepto / ¿Qué se compró?</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontWeight: '700' }]}>
+                Concepto / ¿Qué se compró?
+              </Text>
               <TextInput
                 style={[
                   styles.textInput,
@@ -494,6 +545,7 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.categoryScrollContent}
                 style={styles.categoryScroll}
+                keyboardShouldPersistTaps="handled"
               >
                 {CATEGORIES.map((cat) => {
                   const isSelected = category === cat.id;
@@ -571,19 +623,45 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
               </ScrollView>
             </View>
 
-            {/* 4. ¿QUIÉN LO PAGÓ? */}
+            {/* 4. ¿QUIÉN LO PAGÓ? (TOTALMENTE ACCESIBLE Y ADAPTABLE A IPAD/TABLET) */}
             <View style={styles.fieldGroup}>
               <View style={styles.payerLabelRow}>
-                <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontWeight: '700' }]}>¿Quién lo pagó de su bolsillo?</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontWeight: '700' }]}>
+                  ¿Quién lo pagó de su bolsillo?
+                </Text>
                 {selectedParticipant ? (
-                  <View style={[styles.selectedPayerPill, { backgroundColor: isDark ? 'rgba(0, 240, 255, 0.15)' : colors.primaryLight, borderColor: isDark ? colors.primaryBorder : colors.primaryBorder, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                  <View
+                    style={[
+                      styles.selectedPayerPill,
+                      {
+                        backgroundColor: isDark ? 'rgba(0, 240, 255, 0.15)' : colors.primaryLight,
+                        borderColor: colors.primaryBorder,
+                        borderWidth: 1,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                      },
+                    ]}
+                  >
                     <SculptedIcon name="user" size={11} variant="plain" color={colors.primary} />
                     <Text style={[styles.selectedPayerText, { color: isDark ? colors.neonCyan : colors.primary, fontWeight: '700' }]}>
                       {selectedParticipant.name}
                     </Text>
                   </View>
                 ) : (
-                  <View style={[styles.selectedPayerPill, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                  <View
+                    style={[
+                      styles.selectedPayerPill,
+                      {
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : colors.surfaceSubtle,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                      },
+                    ]}
+                  >
                     <SculptedIcon name="bank" size={11} variant="plain" color={colors.textSecondary} />
                     <Text style={[styles.selectedPayerText, { color: colors.textSecondary, fontWeight: '600' }]}>
                       Fondo Común / General
@@ -592,66 +670,96 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                 )}
               </View>
 
-              {participants.length === 0 ? (
-                <View
-                  style={{
-                    padding: 14,
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.95)',
-                    backgroundColor: isDark ? 'rgba(13, 17, 23, 0.60)' : 'rgba(241, 245, 249, 0.85)',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
-                  }}
+              {/* Buscador de pagadores si hay varios */}
+              {participants.length > 3 && (
+                <TextInput
+                  style={[
+                    styles.searchPayerInput,
+                    {
+                      backgroundColor: isDark ? 'rgba(13, 17, 23, 0.75)' : 'rgba(248, 250, 252, 0.95)',
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.95)',
+                      borderWidth: 1.5,
+                      color: colors.textPrimary,
+                    },
+                  ]}
+                  placeholder="Buscar por nombre o familia..."
+                  value={payerSearch}
+                  onChangeText={setPayerSearch}
+                  placeholderTextColor={colors.textMuted}
+                />
+              )}
+
+              {/* Contenedor de participantes y fondo común (sin ScrollView anidado que bloquee toques en iOS/iPad) */}
+              <View style={[styles.payerGridContainer, isTablet && styles.payerGridContainerTablet]}>
+                {/* Opción Fondo Común / General */}
+                <TouchableOpacity
+                  style={[
+                    styles.payerItemCard,
+                    isTablet && styles.payerItemCardTablet,
+                    {
+                      backgroundColor: activePaidBy === ''
+                        ? isDark
+                          ? 'rgba(0, 240, 255, 0.15)'
+                          : 'rgba(2, 132, 199, 0.12)'
+                        : isDark
+                        ? 'rgba(19, 25, 36, 0.85)'
+                        : 'rgba(255, 255, 255, 0.95)',
+                      borderColor: activePaidBy === ''
+                        ? colors.primary
+                        : isDark
+                        ? 'rgba(255, 255, 255, 0.08)'
+                        : 'rgba(226, 232, 240, 0.95)',
+                      borderWidth: activePaidBy === '' ? 1.5 : 1,
+                      ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
+                    },
+                  ]}
+                  onPress={() => setPaidBy('')}
+                  activeOpacity={0.7}
                 >
-                  <SculptedIcon name="bank" size={18} variant="plain" color={colors.primary} />
+                  <View
+                    style={[
+                      styles.payerRadioCircle,
+                      {
+                        borderColor: activePaidBy === '' ? colors.primary : (isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(203, 213, 225, 0.90)'),
+                        backgroundColor: activePaidBy === '' ? (isDark ? 'rgba(0, 240, 255, 0.10)' : colors.primaryLight) : 'transparent',
+                      },
+                    ]}
+                  >
+                    {activePaidBy === '' && <View style={[styles.payerRadioInner, { backgroundColor: colors.primary }]} />}
+                  </View>
+                  <View
+                    style={[
+                      styles.payerAvatarCircle,
+                      { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(241, 245, 249, 0.9)' },
+                    ]}
+                  >
+                    <SculptedIcon name="bank" size={14} variant="plain" color={activePaidBy === '' ? colors.primary : colors.textSecondary} />
+                  </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>
-                      Gasto General / Fondo Común
+                    <Text
+                      style={[
+                        styles.payerNameText,
+                        { color: colors.textPrimary },
+                        activePaidBy === '' && { color: isDark ? colors.neonCyan : colors.primary, fontWeight: '700' },
+                      ]}
+                    >
+                      Fondo Común / General
                     </Text>
-                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                      Se registrará como gasto general del evento.
+                    <Text style={[styles.payerSubFamilyText, { color: colors.textSecondary }]}>
+                      Gasto global del evento
                     </Text>
                   </View>
-                </View>
-              ) : (
-                <>
-                  <TextInput
-                    style={[
-                      styles.searchPayerInput,
-                      {
-                        backgroundColor: isDark ? 'rgba(13, 17, 23, 0.75)' : 'rgba(248, 250, 252, 0.95)',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.95)',
-                        borderWidth: 1.5,
-                        color: colors.textPrimary,
-                      },
-                    ]}
-                    placeholder="Buscar por nombre o familia..."
-                    value={payerSearch}
-                    onChangeText={setPayerSearch}
-                    placeholderTextColor={colors.textMuted}
-                  />
+                </TouchableOpacity>
 
-                  <ScrollView
-                    style={[
-                      styles.payerChipsScroll,
-                      {
-                        backgroundColor: isDark ? 'rgba(13, 17, 23, 0.60)' : 'rgba(241, 245, 249, 0.85)',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.95)',
-                        borderWidth: 1.5,
-                      },
-                    ]}
-                    contentContainerStyle={styles.payerChipsContent}
-                    nestedScrollEnabled
-                  >
-                {filteredParticipants.slice(0, 8).map((p) => {
+                {/* Participantes del evento */}
+                {filteredParticipants.map((p) => {
                   const isSelected = activePaidBy === p.id;
                   return (
                     <TouchableOpacity
                       key={p.id}
                       style={[
                         styles.payerItemCard,
+                        isTablet && styles.payerItemCardTablet,
                         {
                           backgroundColor: isSelected
                             ? isDark
@@ -666,20 +774,30 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                             ? 'rgba(255, 255, 255, 0.08)'
                             : 'rgba(226, 232, 240, 0.95)',
                           borderWidth: isSelected ? 1.5 : 1,
+                          ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
                         },
                       ]}
                       onPress={() => setPaidBy(p.id)}
+                      activeOpacity={0.7}
                     >
                       <View
                         style={[
                           styles.payerRadioCircle,
-                          { borderColor: isSelected ? colors.primary : (isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(203, 213, 225, 0.90)') },
-                          isSelected && { borderColor: colors.primary, backgroundColor: colors.surface },
+                          {
+                            borderColor: isSelected ? colors.primary : (isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(203, 213, 225, 0.90)'),
+                            backgroundColor: isSelected ? (isDark ? 'rgba(0, 240, 255, 0.10)' : colors.primaryLight) : 'transparent',
+                          },
                         ]}
                       >
-                        {isSelected && (
-                          <View style={[styles.payerRadioInner, { backgroundColor: colors.primary }]} />
-                        )}
+                        {isSelected && <View style={[styles.payerRadioInner, { backgroundColor: colors.primary }]} />}
+                      </View>
+                      <View
+                        style={[
+                          styles.payerAvatarCircle,
+                          { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(241, 245, 249, 0.9)' },
+                        ]}
+                      >
+                        <SculptedIcon name="user" size={14} variant="plain" color={isSelected ? colors.primary : colors.textSecondary} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text
@@ -688,12 +806,13 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                             { color: colors.textPrimary },
                             isSelected && { color: isDark ? colors.neonCyan : colors.primary, fontWeight: '700' },
                           ]}
+                          numberOfLines={1}
                         >
                           {p.name}
                         </Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <SculptedIcon name="home" size={11} variant="plain" color={colors.textSecondary} />
-                          <Text style={[styles.payerSubFamilyText, { color: colors.textSecondary }]}>
+                          <Text style={[styles.payerSubFamilyText, { color: colors.textSecondary }]} numberOfLines={1}>
                             {p.subFamily || 'General'}
                           </Text>
                         </View>
@@ -701,11 +820,9 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                     </TouchableOpacity>
                   );
                 })}
-              </ScrollView>
-            </>
-          )}
-        </View>
-      </ScrollView>
+              </View>
+            </View>
+          </ScrollView>
 
           {/* BOTÓN GUARDAR GASTO DE ANCHO COMPLETO */}
           <View style={[styles.sheetFooter, { borderTopColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.95)' }]}>
@@ -718,6 +835,7 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
+                  ...(Platform.OS === 'web' ? ({ cursor: 'pointer' } as any) : {}),
                 },
                 isDark ? getNeonGlow(colors.neonGreen, 'medium') : {},
               ]}
@@ -739,9 +857,13 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'flex-end',
     alignItems: 'center',
+  },
+  backdropTablet: {
+    justifyContent: 'center',
+    padding: 24,
   },
   backdropTouchable: {
     position: 'absolute',
@@ -752,28 +874,46 @@ const styles = StyleSheet.create({
   },
   bottomSheet: {
     width: '100%',
-    maxHeight: '90%',
+    maxHeight: '92%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingTop: 12,
-    paddingBottom: 24,
+    paddingTop: 14,
+    paddingBottom: 20,
     paddingHorizontal: 20,
-    gap: 12,
+    zIndex: 10,
   },
   bottomSheetTablet: {
-    maxWidth: 540,
+    width: '92%',
+    maxWidth: 680,
+    maxHeight: '88%',
     borderRadius: 24,
-    marginBottom: 40,
+    paddingHorizontal: 28,
+    paddingTop: 22,
+    paddingBottom: 24,
+    marginBottom: 0,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 24px 64px rgba(0, 0, 0, 0.45)',
+      } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.35,
+        shadowRadius: 24,
+        elevation: 12,
+      },
+    }),
   },
   sheetHeader: {
     alignItems: 'center',
     gap: 8,
-    paddingBottom: 2,
+    paddingBottom: 6,
   },
   dragHandle: {
     width: 40,
     height: 4,
     borderRadius: 2,
+    marginBottom: 4,
   },
   headerRow: {
     flexDirection: 'row',
@@ -783,27 +923,26 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   sheetSub: {
     fontSize: 12,
     marginTop: 1,
   },
   closeBtn: {
-    padding: 6,
-  },
-  closeBtnText: {
-    fontSize: 16,
-    fontWeight: '500',
+    padding: 8,
   },
   sheetContent: {
-    maxHeight: 460,
+    flexShrink: 1,
+  },
+  sheetContentContainer: {
+    paddingVertical: 8,
+    gap: 12,
   },
   scanTicketButton: {
     borderRadius: 14,
     borderWidth: 1.5,
     padding: 12,
-    marginBottom: 10,
     ...Platform.select({
       web: {
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
@@ -828,9 +967,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  scanIcon: {
-    fontSize: 24,
   },
   scanTicketTitle: {
     fontSize: 14,
@@ -864,7 +1000,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     borderWidth: 1,
-    marginBottom: 8,
   },
   aiSuccessText: {
     fontSize: 12,
@@ -876,7 +1011,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
     padding: 8,
-    marginBottom: 8,
     gap: 10,
   },
   scannedThumbnail: {
@@ -906,10 +1040,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    marginVertical: 4,
-    gap: 8,
+    gap: 10,
   },
   currencySymbol: {
     fontSize: 34,
@@ -918,12 +1051,11 @@ const styles = StyleSheet.create({
   giantAmountInput: {
     fontSize: 34,
     fontWeight: '700',
-    minWidth: 120,
+    minWidth: 130,
     textAlign: 'left',
     padding: 0,
   },
   fieldGroup: {
-    marginTop: 10,
     gap: 6,
   },
   fieldLabel: {
@@ -947,8 +1079,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryChip: {
-    paddingHorizontal: 11,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderRadius: 10,
   },
   categoryIconCircle: {
@@ -988,26 +1120,40 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     fontSize: 12,
   },
-  payerChipsScroll: {
-    maxHeight: 125,
-    borderRadius: 12,
+  payerGridContainer: {
+    flexDirection: 'column',
+    gap: 8,
+    marginTop: 2,
   },
-  payerChipsContent: {
-    padding: 6,
-    gap: 6,
+  payerGridContainerTablet: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 10,
   },
   payerItemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
     gap: 10,
   },
+  payerItemCardTablet: {
+    width: '48.5%',
+    paddingVertical: 12,
+  },
+  payerAvatarCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   payerRadioCircle: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1019,14 +1165,14 @@ const styles = StyleSheet.create({
   },
   payerNameText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   payerSubFamilyText: {
     fontSize: 11,
   },
   sheetFooter: {
-    marginTop: 6,
-    paddingTop: 8,
+    marginTop: 8,
+    paddingTop: 12,
     borderTopWidth: 1,
   },
   saveExpenseBtn: {
@@ -1039,3 +1185,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 });
+
