@@ -105,17 +105,25 @@ const resolveBase64 = async (imageUri: string, providedBase64?: string | null): 
   }
 };
 
+const DEFAULT_GEMINI_MODEL: string =
+  process.env.EXPO_PUBLIC_GEMINI_MODEL ||
+  extra.EXPO_PUBLIC_GEMINI_MODEL ||
+  'gemini-2.5-flash';
+
 /**
  * Procesa la imagen usando Google Gemini Vision (Flash).
  * Prueba en cascada los modelos vigentes de Google GenAI (gemini-2.5-flash, gemini-2.0-flash, etc.).
  */
 const processWithGemini = async (base64Data: string, apiKey: string): Promise<ExtractedReceiptData> => {
-  const candidateModels = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-exp',
-    'gemini-1.5-flash-latest',
-  ];
+  const candidateModels = Array.from(
+    new Set([
+      DEFAULT_GEMINI_MODEL,
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-exp',
+      'gemini-flash-latest',
+    ])
+  );
 
   let lastError: Error | null = null;
 
