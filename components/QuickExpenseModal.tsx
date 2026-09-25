@@ -133,25 +133,31 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
   }, [participants, activePaidBy]);
 
   // Procesar imagen con IA
-  const processReceiptImage = async (uri: string) => {
+  const processReceiptImage = async (uri: string, base64?: string | null) => {
     setScannedImageUri(uri);
     setIsScanning(true);
     setAiSuccessMessage(null);
 
     try {
-      const result = await extractDataFromReceipt(uri);
+      const result = await extractDataFromReceipt(uri, base64);
       // Autocompletar los campos del formulario con el resultado de la IA
-      setAmount(result.amount.toFixed(2));
-      setTitle(result.title);
+      if (typeof result.amount === 'number' && !isNaN(result.amount)) {
+        setAmount(result.amount.toFixed(2));
+      }
+      if (result.title) {
+        setTitle(result.title);
+      }
       if (result.category) {
         setCategory(result.category);
       }
       setAiSuccessMessage('✓ ¡Ticket analizado con éxito! Revisa o ajusta los datos.');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[ReceiptScanner] Error:', error);
+      const msg = error?.message || 'No se pudieron extraer los datos del ticket.';
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.alert('Error al escanear: No se pudieron extraer los datos del ticket.');
+        window.alert(`Error al escanear ticket:\n${msg}`);
       } else {
-        Alert.alert('Error al escanear', 'No se pudieron extraer los datos del ticket.');
+        Alert.alert('Error al escanear ticket', msg);
       }
     } finally {
       setIsScanning(false);
@@ -178,16 +184,18 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
         mediaTypes: ['images'],
         allowsEditing: true,
         quality: 0.8,
+        base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        await processReceiptImage(result.assets[0].uri);
+        await processReceiptImage(result.assets[0].uri, result.assets[0].base64);
       }
-    } catch (error) {
+    } catch (error: any) {
+      const msg = error?.message || 'No se pudo abrir la cámara.';
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.alert('Error: No se pudo abrir la cámara.');
+        window.alert(`Error: ${msg}`);
       } else {
-        Alert.alert('Error', 'No se pudo abrir la cámara.');
+        Alert.alert('Error', msg);
       }
     }
   };
@@ -212,16 +220,18 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
         mediaTypes: ['images'],
         allowsEditing: true,
         quality: 0.8,
+        base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        await processReceiptImage(result.assets[0].uri);
+        await processReceiptImage(result.assets[0].uri, result.assets[0].base64);
       }
-    } catch (error) {
+    } catch (error: any) {
+      const msg = error?.message || 'No se pudo abrir la galería.';
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.alert('Error: No se pudo abrir la galería.');
+        window.alert(`Error: ${msg}`);
       } else {
-        Alert.alert('Error', 'No se pudo abrir la galería.');
+        Alert.alert('Error', msg);
       }
     }
   };
