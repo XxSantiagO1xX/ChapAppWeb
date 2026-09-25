@@ -230,17 +230,20 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
   const handleSave = () => {
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
-      Alert.alert('Monto requerido', 'Ingresa un monto válido mayor a 0.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Monto requerido: Ingresa un monto válido mayor a 0.');
+      } else {
+        Alert.alert('Monto requerido', 'Ingresa un monto válido mayor a 0.');
+      }
       return;
     }
 
     if (!title.trim()) {
-      Alert.alert('Concepto requerido', 'Ingresa qué se compró o pagó.');
-      return;
-    }
-
-    if (!activePaidBy) {
-      Alert.alert('Pagador requerido', 'Selecciona quién pagó este gasto.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('Concepto requerido: Ingresa qué se compró o pagó.');
+      } else {
+        Alert.alert('Concepto requerido', 'Ingresa qué se compró o pagó.');
+      }
       return;
     }
 
@@ -248,7 +251,7 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
       title: title.trim(),
       amount: numAmount,
       category,
-      paidBy: activePaidBy,
+      paidBy: activePaidBy || '',
     });
 
     // Limpiar campos
@@ -572,44 +575,76 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
             <View style={styles.fieldGroup}>
               <View style={styles.payerLabelRow}>
                 <Text style={[styles.fieldLabel, { color: colors.textPrimary, fontWeight: '700' }]}>¿Quién lo pagó de su bolsillo?</Text>
-                {selectedParticipant && (
+                {selectedParticipant ? (
                   <View style={[styles.selectedPayerPill, { backgroundColor: isDark ? 'rgba(0, 240, 255, 0.15)' : colors.primaryLight, borderColor: isDark ? colors.primaryBorder : colors.primaryBorder, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
                     <SculptedIcon name="user" size={11} variant="plain" color={colors.primary} />
                     <Text style={[styles.selectedPayerText, { color: isDark ? colors.neonCyan : colors.primary, fontWeight: '700' }]}>
                       {selectedParticipant.name}
                     </Text>
                   </View>
+                ) : (
+                  <View style={[styles.selectedPayerPill, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                    <SculptedIcon name="bank" size={11} variant="plain" color={colors.textSecondary} />
+                    <Text style={[styles.selectedPayerText, { color: colors.textSecondary, fontWeight: '600' }]}>
+                      Fondo Común / General
+                    </Text>
+                  </View>
                 )}
               </View>
 
-              <TextInput
-                style={[
-                  styles.searchPayerInput,
-                  {
-                    backgroundColor: isDark ? 'rgba(13, 17, 23, 0.75)' : 'rgba(248, 250, 252, 0.95)',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.95)',
-                    borderWidth: 1.5,
-                    color: colors.textPrimary,
-                  },
-                ]}
-                placeholder="Buscar por nombre o familia..."
-                value={payerSearch}
-                onChangeText={setPayerSearch}
-                placeholderTextColor={colors.textMuted}
-              />
-
-              <ScrollView
-                style={[
-                  styles.payerChipsScroll,
-                  {
-                    backgroundColor: isDark ? 'rgba(13, 17, 23, 0.60)' : 'rgba(241, 245, 249, 0.85)',
+              {participants.length === 0 ? (
+                <View
+                  style={{
+                    padding: 14,
+                    borderRadius: 12,
+                    borderWidth: 1,
                     borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.95)',
-                    borderWidth: 1.5,
-                  },
-                ]}
-                contentContainerStyle={styles.payerChipsContent}
-                nestedScrollEnabled
-              >
+                    backgroundColor: isDark ? 'rgba(13, 17, 23, 0.60)' : 'rgba(241, 245, 249, 0.85)',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                >
+                  <SculptedIcon name="bank" size={18} variant="plain" color={colors.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>
+                      Gasto General / Fondo Común
+                    </Text>
+                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                      Se registrará como gasto general del evento.
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <>
+                  <TextInput
+                    style={[
+                      styles.searchPayerInput,
+                      {
+                        backgroundColor: isDark ? 'rgba(13, 17, 23, 0.75)' : 'rgba(248, 250, 252, 0.95)',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(203, 213, 225, 0.95)',
+                        borderWidth: 1.5,
+                        color: colors.textPrimary,
+                      },
+                    ]}
+                    placeholder="Buscar por nombre o familia..."
+                    value={payerSearch}
+                    onChangeText={setPayerSearch}
+                    placeholderTextColor={colors.textMuted}
+                  />
+
+                  <ScrollView
+                    style={[
+                      styles.payerChipsScroll,
+                      {
+                        backgroundColor: isDark ? 'rgba(13, 17, 23, 0.60)' : 'rgba(241, 245, 249, 0.85)',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.95)',
+                        borderWidth: 1.5,
+                      },
+                    ]}
+                    contentContainerStyle={styles.payerChipsContent}
+                    nestedScrollEnabled
+                  >
                 {filteredParticipants.slice(0, 8).map((p) => {
                   const isSelected = activePaidBy === p.id;
                   return (
@@ -667,8 +702,10 @@ export const QuickExpenseModal: React.FC<QuickExpenseModalProps> = ({
                   );
                 })}
               </ScrollView>
-            </View>
-          </ScrollView>
+            </>
+          )}
+        </View>
+      </ScrollView>
 
           {/* BOTÓN GUARDAR GASTO DE ANCHO COMPLETO */}
           <View style={[styles.sheetFooter, { borderTopColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.95)' }]}>
