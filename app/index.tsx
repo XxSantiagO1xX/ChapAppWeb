@@ -41,7 +41,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { isMobile, isTablet, isDesktop, isTabletOrDesktop, insets } = useResponsiveLayout();
   const isSmallPhone = isMobile;
-  const { colors, isDark, toggleTheme, getLiquidGlass } = useTheme();
+  const { colors, isDark, toggleTheme, getLiquidGlass, getNeonGlow } = useTheme();
 
   const [events, setEvents] = useState<EventConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -306,7 +306,6 @@ export default function HomeScreen() {
 
           <View
             style={[
-              styles.logoBadgeContainer,
               {
                 width: isTablet ? 40 : 36,
                 height: isTablet ? 40 : 36,
@@ -478,7 +477,6 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View
                   style={[
-                    styles.logoBadgeContainer,
                     {
                       width: 38,
                       height: 38,
@@ -2142,6 +2140,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-
-                                                                                                  
