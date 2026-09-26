@@ -83,6 +83,10 @@ export default function EventDetailDashboard() {
   const isSmallPhone = width < 420;
   const { colors, isDark, toggleTheme, getNeonGlow } = useTheme();
 
+  const centerLogoSize = isTablet ? 68 : (isSmallPhone ? 52 : 58);
+  const centerLogoIconSize = isTablet ? 44 : (isSmallPhone ? 34 : 38);
+  const centerLogoRadius = isTablet ? 20 : (isSmallPhone ? 16 : 18);
+
   const [event, setEvent] = useState<EventConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -940,11 +944,14 @@ export default function EventDetailDashboard() {
             {
               position: 'absolute',
               left: '50%',
-              top: isTablet ? -14 : (isSmallPhone ? -8 : -10),
-              transform: [{ translateX: isTablet ? -29 : (isSmallPhone ? -22 : -25) }],
-              width: isTablet ? 58 : (isSmallPhone ? 44 : 50),
-              height: isTablet ? 58 : (isSmallPhone ? 44 : 50),
-              borderRadius: isTablet ? 18 : (isSmallPhone ? 14 : 16),
+              top: '50%',
+              transform: [
+                { translateX: -centerLogoSize / 2 },
+                { translateY: -centerLogoSize / 2 },
+              ],
+              width: centerLogoSize,
+              height: centerLogoSize,
+              borderRadius: centerLogoRadius,
               backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
               borderColor: isDark ? 'rgba(0, 240, 255, 0.50)' : 'rgba(2, 132, 199, 0.38)',
               borderWidth: 1.5,
@@ -958,8 +965,8 @@ export default function EventDetailDashboard() {
                     WebkitBackdropFilter: 'blur(16px)',
                     cursor: 'pointer',
                     boxShadow: isDark
-                      ? '0 8px 24px rgba(0, 240, 255, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.40), inset 0 -2px 6px rgba(0, 0, 0, 0.40)'
-                      : '0 8px 20px rgba(2, 132, 199, 0.22), 0 2px 6px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.95)',
+                      ? '0 10px 28px rgba(0, 240, 255, 0.38), inset 0 1px 2px rgba(255, 255, 255, 0.45), inset 0 -2px 6px rgba(0, 0, 0, 0.40)'
+                      : '0 10px 24px rgba(2, 132, 199, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.95)',
                   } as any)
                 : {
                     shadowColor: isDark ? colors.primary : '#0284C7',
@@ -974,8 +981,8 @@ export default function EventDetailDashboard() {
           <Image
             source={require('../../assets/logo_tree.png')}
             style={{
-              width: isTablet ? 38 : (isSmallPhone ? 28 : 32),
-              height: isTablet ? 38 : (isSmallPhone ? 28 : 32),
+              width: centerLogoIconSize,
+              height: centerLogoIconSize,
               tintColor: isDark ? colors.primary : colors.textPrimary,
             }}
             resizeMode="contain"
