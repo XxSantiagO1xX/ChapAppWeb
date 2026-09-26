@@ -23,19 +23,19 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  themeMode: 'light',
-  isDark: false,
-  colors: LightPalette,
+  themeMode: 'dark',
+  isDark: true,
+  colors: DarkPalette,
   toggleTheme: () => {},
   setThemeMode: () => {},
   getNeonGlow: () => ({}),
   getLiquidGlass: () => ({}),
-  cardShadow: Shadows.card,
+  cardShadow: Shadows.cardDark,
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemScheme = useColorScheme();
-  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
+  const [themeMode, setThemeMode] = useState<ThemeMode>('dark');
 
   const isDark = themeMode === 'dark';
   const colors = useMemo(() => (isDark ? DarkPalette : LightPalette), [isDark]);

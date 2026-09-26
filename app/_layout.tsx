@@ -42,12 +42,54 @@ export default function RootLayout() {
   });
 
   // Escala compacta global (~90%) en entorno Web para mayor densidad y vista panorámica
+  // Y modo pantalla completa automático exclusivo para dispositivos iPad
   React.useEffect(() => {
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof document !== 'undefined') {
       try {
         document.documentElement.style.zoom = '90%';
       } catch (e) {
         // Fallback silencioso si no está soportado
+      }
+
+      // Detección exclusiva de iPad (iPadOS Safari y navegadores en iPad)
+      const ua = navigator.userAgent || '';
+      const isIPadUA = /iPad/i.test(ua);
+      const isMacTouch = /Macintosh/i.test(ua) && navigator.maxTouchPoints && navigator.maxTouchPoints > 1;
+      const isIPadDevice = isIPadUA || Boolean(isMacTouch);
+
+      if (isIPadDevice) {
+        // Inyección de meta-etiquetas de pantalla completa para iPadOS Web App
+        const setMetaTag = (name: string, content: string) => {
+          if (!document.querySelector(`meta[name="${name}"]`)) {
+            const meta = document.createElement('meta');
+            meta.name = name;
+            meta.content = content;
+            document.head.appendChild(meta);
+          }
+        };
+
+        setMetaTag('apple-mobile-web-app-capable', 'yes');
+        setMetaTag('apple-mobile-web-app-status-bar-style', 'black-translucent');
+        setMetaTag('apple-touch-fullscreen', 'yes');
+        setMetaTag('mobile-web-app-capable', 'yes');
+
+        // Activación de Fullscreen al primer toque en iPad
+        const handleFirstIPadTouch = () => {
+          const docEl: any = document.documentElement;
+          if (!document.fullscreenElement && !(document as any).webkitFullscreenElement) {
+            const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
+            if (req) {
+              req.call(docEl).catch(() => {
+                // Silencioso si la política del navegador de iPad lo restringe
+              });
+            }
+          }
+          window.removeEventListener('touchstart', handleFirstIPadTouch);
+          window.removeEventListener('click', handleFirstIPadTouch);
+        };
+
+        window.addEventListener('touchstart', handleFirstIPadTouch, { once: true });
+        window.addEventListener('click', handleFirstIPadTouch, { once: true });
       }
     }
   }, []);

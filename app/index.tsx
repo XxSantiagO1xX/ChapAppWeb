@@ -13,6 +13,7 @@ import {
   Platform,
   RefreshControl,
   KeyboardAvoidingView,
+  Image,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -303,15 +304,41 @@ export default function HomeScreen() {
             <SculptedIcon name="menu" size={18} variant="plain" color={colors.textPrimary} />
           </TouchableOpacity>
 
-          <SculptedIcon
-            name="money"
-            size={isTablet ? 20 : 18}
-            containerSize={isTablet ? 40 : 36}
-            variant="sunken"
-            glow={isDark}
-            accentColor={colors.primary}
-            color={colors.primary}
-          />
+          <View
+            style={[
+              styles.logoBadgeContainer,
+              {
+                width: isTablet ? 40 : 36,
+                height: isTablet ? 40 : 36,
+                borderRadius: Radii.md,
+                backgroundColor: isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(2, 132, 199, 0.08)',
+                borderColor: isDark ? 'rgba(0, 240, 255, 0.35)' : 'rgba(2, 132, 199, 0.25)',
+                borderWidth: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                ...(isDark ? getNeonGlow(colors.primary, 'low') : {}),
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      boxShadow: isDark
+                        ? 'inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 0 10px rgba(0, 240, 255, 0.20)'
+                        : 'inset 0 1px 1px rgba(255, 255, 255, 0.90), 0 2px 6px rgba(15, 23, 42, 0.05)',
+                    } as any)
+                  : {}),
+              },
+            ]}
+          >
+            <Image
+              source={require('../assets/logo_tree.png')}
+              style={{
+                width: isTablet ? 24 : 21,
+                height: isTablet ? 24 : 21,
+                tintColor: isDark ? colors.primary : colors.textPrimary,
+              }}
+              resizeMode="contain"
+            />
+          </View>
           <View style={{ flexShrink: 1 }}>
             <Text style={[styles.appTitle, isSmallPhone && { fontSize: 18 }, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
               ChapApp
@@ -449,15 +476,32 @@ export default function HomeScreen() {
             {/* Header del Drawer */}
             <View style={styles.drawerHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <SculptedIcon
-                  name="money"
-                  size={20}
-                  containerSize={38}
-                  variant="sunken"
-                  glow={isDark}
-                  accentColor={colors.primary}
-                  color={colors.primary}
-                />
+                <View
+                  style={[
+                    styles.logoBadgeContainer,
+                    {
+                      width: 38,
+                      height: 38,
+                      borderRadius: Radii.md,
+                      backgroundColor: isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(2, 132, 199, 0.08)',
+                      borderColor: isDark ? 'rgba(0, 240, 255, 0.35)' : 'rgba(2, 132, 199, 0.25)',
+                      borderWidth: 1,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      ...(isDark ? getNeonGlow(colors.primary, 'low') : {}),
+                    },
+                  ]}
+                >
+                  <Image
+                    source={require('../assets/logo_tree.png')}
+                    style={{
+                      width: 23,
+                      height: 23,
+                      tintColor: isDark ? colors.primary : colors.textPrimary,
+                    }}
+                    resizeMode="contain"
+                  />
+                </View>
                 <View>
                   <Text style={[styles.drawerTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
                     ChapApp
@@ -2100,3 +2144,4 @@ const styles = StyleSheet.create({
 });
 
 
+                                                                                                  

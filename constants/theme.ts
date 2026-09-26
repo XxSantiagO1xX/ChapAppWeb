@@ -220,7 +220,7 @@ export const LaserGradients = {
 };
 
 // Objeto Colors por defecto
-export const Colors = LightPalette;
+export const Colors = DarkPalette;
 
 export const createNeonGlow = (color: string, intensity: 'low' | 'medium' | 'high' = 'medium') => {
   const radius = intensity === 'high' ? 14 : intensity === 'medium' ? 8 : 4;

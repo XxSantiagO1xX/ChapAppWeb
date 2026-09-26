@@ -1496,10 +1496,28 @@ export default function EventDetailDashboard() {
                   <View style={styles.masterDetailRow}>
                     {/* COLUMNA IZQUIERDA (35%): LISTA DE SUBFAMILIAS */}
                     <View style={styles.masterColumn}>
-                      <View style={styles.masterColumnHeader}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <SculptedIcon name="home" size={14} variant="plain" color={colors.textPrimary} />
-                          <Text style={[styles.masterColumnTitle, { color: colors.textPrimary }]}>
+                      <View
+                        style={[
+                          styles.masterColumnHeader,
+                          {
+                            backgroundColor: isDark ? 'rgba(13, 20, 32, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+                            borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                            borderWidth: 1,
+                            borderRadius: Radii.md,
+                            paddingHorizontal: 14,
+                            paddingVertical: 10,
+                            ...(Platform.OS === 'web'
+                              ? ({
+                                  backdropFilter: 'blur(16px)',
+                                  WebkitBackdropFilter: 'blur(16px)',
+                                } as any)
+                              : {}),
+                          },
+                        ]}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <SculptedIcon name="home" size={15} variant="plain" color={colors.primary} />
+                          <Text style={[styles.masterColumnTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
                             Subfamilias ({totals.subFamilies.length})
                           </Text>
                         </View>
@@ -1510,8 +1528,15 @@ export default function EventDetailDashboard() {
                         style={[
                           styles.searchBoxContainer,
                           {
-                            backgroundColor: colors.surfaceSubtle,
-                            borderColor: colors.border,
+                            backgroundColor: isDark ? 'rgba(13, 20, 32, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+                            borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                            borderWidth: 1,
+                            ...(Platform.OS === 'web'
+                              ? ({
+                                  backdropFilter: 'blur(16px)',
+                                  WebkitBackdropFilter: 'blur(16px)',
+                                } as any)
+                              : {}),
                           },
                         ]}
                       >
@@ -1726,8 +1751,15 @@ export default function EventDetailDashboard() {
                           style={[
                             styles.searchBoxContainer,
                             {
-                              backgroundColor: colors.surfaceSubtle,
-                              borderColor: colors.border,
+                              backgroundColor: isDark ? 'rgba(13, 20, 32, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+                              borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                              borderWidth: 1,
+                              ...(Platform.OS === 'web'
+                                ? ({
+                                    backdropFilter: 'blur(16px)',
+                                    WebkitBackdropFilter: 'blur(16px)',
+                                  } as any)
+                                : {}),
                             },
                           ]}
                         >
@@ -1926,56 +1958,83 @@ export default function EventDetailDashboard() {
           {/* ================= PESTAÑA 2: SUBFAMILIAS Y ASISTENCIA ================= */}
           {activeTab === 'participants' && (
             <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeaderRow}>
-                <View>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                    Subfamilias y Control de Asistencia
-                  </Text>
-                  <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
-                    Confirma asistencia, liquida cuentas familiares o agrega integrantes al evento
-                  </Text>
-                </View>
-
-                <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <TouchableOpacity
-                    style={[
-                      styles.secondaryHeaderButton,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                      },
-                    ]}
-                    onPress={() => setIsDirectoryImportOpen(true)}
-                  >
-                    <SculptedIcon name="users" size={15} variant="plain" color={colors.textPrimary} />
-                    <Text style={[styles.secondaryHeaderButtonText, { color: colors.textPrimary }]}>
-                      Importar del Directorio
+              <View
+                style={[
+                  styles.sectionHeaderCapsule,
+                  {
+                    backgroundColor: isDark ? 'rgba(13, 20, 32, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                    borderWidth: 1,
+                    borderRadius: Radii.lg,
+                    paddingHorizontal: 18,
+                    paddingVertical: 14,
+                    marginBottom: 14,
+                    ...(Platform.OS === 'web'
+                      ? ({
+                          backdropFilter: 'blur(20px) saturate(180%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                          boxShadow: isDark
+                            ? '0 8px 24px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                            : '0 4px 16px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
+                        } as any)
+                      : {}),
+                  },
+                ]}
+              >
+                <View style={[styles.sectionHeaderRow, { marginBottom: 0 }]}>
+                  <View style={{ flex: 1, minWidth: 240 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <SculptedIcon name="users" size={16} variant="plain" color={colors.primary} />
+                      <Text style={[styles.sectionTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                        Subfamilias y Control de Asistencia
+                      </Text>
+                    </View>
+                    <Text style={[styles.sectionSub, { color: colors.textSecondary, marginTop: 3 }]}>
+                      Confirma asistencia, liquida cuentas familiares o agrega integrantes al evento
                     </Text>
-                  </TouchableOpacity>
+                  </View>
 
-                  <TouchableOpacity
-                    style={[
-                      styles.primaryButton,
-                      {
-                        backgroundColor: colors.primary,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                      },
-                    ]}
-                    onPress={() => {
-                      setPartName('');
-                      setPartCategory('adulto');
-                      setPartWeight('1.0');
-                      setIsParticipantModalOpen(true);
-                    }}
-                  >
-                    <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
-                    <Text style={[styles.primaryButtonText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Agregar Integrante</Text>
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+                    <TouchableOpacity
+                      style={[
+                        styles.secondaryHeaderButton,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                        },
+                      ]}
+                      onPress={() => setIsDirectoryImportOpen(true)}
+                    >
+                      <SculptedIcon name="users" size={15} variant="plain" color={colors.textPrimary} />
+                      <Text style={[styles.secondaryHeaderButtonText, { color: colors.textPrimary }]}>
+                        Importar del Directorio
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.primaryButton,
+                        {
+                          backgroundColor: colors.primary,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                        },
+                      ]}
+                      onPress={() => {
+                        setPartName('');
+                        setPartCategory('adulto');
+                        setPartWeight('1.0');
+                        setIsParticipantModalOpen(true);
+                      }}
+                    >
+                      <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                      <Text style={[styles.primaryButtonText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Agregar Integrante</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
 
@@ -1984,8 +2043,16 @@ export default function EventDetailDashboard() {
                 style={[
                   styles.searchBoxContainer,
                   {
-                    backgroundColor: colors.surfaceSubtle,
-                    borderColor: colors.border,
+                    backgroundColor: isDark ? 'rgba(13, 20, 32, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                    borderWidth: 1,
+                    marginBottom: 16,
+                    ...(Platform.OS === 'web'
+                      ? ({
+                          backdropFilter: 'blur(16px)',
+                          WebkitBackdropFilter: 'blur(16px)',
+                        } as any)
+                      : {}),
                   },
                 ]}
               >
@@ -2315,56 +2382,85 @@ export default function EventDetailDashboard() {
           {/* ================= PESTAÑA 3: GASTOS E INSUMOS ================= */}
           {activeTab === 'expenses' && (
             <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeaderRow}>
-                <View>
-                  <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Gastos Registrados</Text>
-                  <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
-                    Listado de compras e insumos realizadas por los participantes
-                  </Text>
-                </View>
-
-                <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <TouchableOpacity
-                    style={[
-                      styles.secondaryHeaderButton,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                      },
-                    ]}
-                    onPress={() => setIsCsvModalOpen(true)}
-                  >
-                    <SculptedIcon name="receipt" size={15} variant="plain" color={colors.textPrimary} />
-                    <Text style={[styles.secondaryHeaderButtonText, { color: colors.textPrimary }]}>
-                      Importar CSV
+              <View
+                style={[
+                  styles.sectionHeaderCapsule,
+                  {
+                    backgroundColor: isDark ? 'rgba(13, 20, 32, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                    borderWidth: 1,
+                    borderRadius: Radii.lg,
+                    paddingHorizontal: 18,
+                    paddingVertical: 14,
+                    marginBottom: 16,
+                    ...(Platform.OS === 'web'
+                      ? ({
+                          backdropFilter: 'blur(20px) saturate(180%)',
+                          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                          boxShadow: isDark
+                            ? '0 8px 24px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                            : '0 4px 16px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
+                        } as any)
+                      : {}),
+                  },
+                ]}
+              >
+                <View style={[styles.sectionHeaderRow, { marginBottom: 0 }]}>
+                  <View style={{ flex: 1, minWidth: 240 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <SculptedIcon name="cart" size={16} variant="plain" color={colors.primary} />
+                      <Text style={[styles.sectionTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                        Gastos Registrados
+                      </Text>
+                    </View>
+                    <Text style={[styles.sectionSub, { color: colors.textSecondary, marginTop: 3 }]}>
+                      Listado de compras e insumos realizadas por los participantes
                     </Text>
-                  </TouchableOpacity>
+                  </View>
 
-                  <TouchableOpacity
-                    style={[
-                      styles.primaryButton,
-                      {
-                        backgroundColor: colors.primary,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                        ...(isDark ? getNeonGlow(colors.neonGreen, 'low') : {}),
-                      },
-                    ]}
-                    onPress={() => {
-                      setExpTitle('');
-                      setExpAmount('');
-                      setExpCategory('Comida');
-                      setExpPaidBy(event.participants[0]?.id || '');
-                      setIsExpenseModalOpen(true);
-                    }}
-                  >
-                    <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
-                    <Text style={[styles.primaryButtonText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Registrar Gasto</Text>
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+                    <TouchableOpacity
+                      style={[
+                        styles.secondaryHeaderButton,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                        },
+                      ]}
+                      onPress={() => setIsCsvModalOpen(true)}
+                    >
+                      <SculptedIcon name="receipt" size={15} variant="plain" color={colors.textPrimary} />
+                      <Text style={[styles.secondaryHeaderButtonText, { color: colors.textPrimary }]}>
+                        Importar CSV
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.primaryButton,
+                        {
+                          backgroundColor: colors.primary,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                          ...(isDark ? getNeonGlow(colors.neonGreen, 'low') : {}),
+                        },
+                      ]}
+                      onPress={() => {
+                        setExpTitle('');
+                        setExpAmount('');
+                        setExpCategory('Comida');
+                        setExpPaidBy(event.participants[0]?.id || '');
+                        setIsExpenseModalOpen(true);
+                      }}
+                    >
+                      <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
+                      <Text style={[styles.primaryButtonText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Registrar Gasto</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
 
@@ -3767,13 +3863,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
   },
+  sectionHeaderCapsule: {
+    width: '100%',
+  },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,

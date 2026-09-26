@@ -205,7 +205,16 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
           <View
             style={[
               styles.tabsAndSearchRow,
-              { borderBottomColor: colors.borderLight, backgroundColor: colors.surface },
+              {
+                borderBottomColor: colors.borderLight,
+                backgroundColor: isDark ? 'rgba(13, 20, 32, 0.85)' : 'rgba(255, 255, 255, 0.90)',
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(16px)',
+                      WebkitBackdropFilter: 'blur(16px)',
+                    } as any)
+                  : {}),
+              },
             ]}
           >
             {/* Pestañas */}
@@ -213,7 +222,7 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
               <TouchableOpacity
                 style={[
                   styles.tabButton,
-                  { backgroundColor: colors.surfaceSubtle, borderWidth: 1, borderColor: colors.borderLight },
+                  { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.04)', borderWidth: 1, borderColor: colors.borderLight },
                   activeTab === 'individuals' && {
                     backgroundColor: colors.primaryLight,
                     borderWidth: 1,
@@ -237,7 +246,7 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
               <TouchableOpacity
                 style={[
                   styles.tabButton,
-                  { backgroundColor: colors.surfaceSubtle, borderWidth: 1, borderColor: colors.borderLight },
+                  { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.04)', borderWidth: 1, borderColor: colors.borderLight },
                   activeTab === 'families' && {
                     backgroundColor: colors.primaryLight,
                     borderWidth: 1,
@@ -264,8 +273,16 @@ export const EventCutModal: React.FC<EventCutModalProps> = ({
               style={[
                 styles.searchBar,
                 {
-                  backgroundColor: colors.surfaceSubtle,
-                  borderColor: colors.border,
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.05)',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(226, 232, 240, 0.90)',
+                  borderWidth: 1,
+                  ...(Platform.OS === 'web'
+                    ? ({
+                        boxShadow: isDark
+                          ? 'inset 0 1px 2px rgba(0,0,0,0.5)'
+                          : 'inset 0 1px 2px rgba(15,23,42,0.05)',
+                      } as any)
+                    : {}),
                 },
               ]}
             >
