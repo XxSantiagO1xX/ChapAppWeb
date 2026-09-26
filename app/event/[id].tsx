@@ -551,18 +551,10 @@ export default function EventDetailDashboard() {
 
       await loadEvent(false);
 
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.alert(`¡Gasto Guardado!\nSe registró "${savedExpense.title}" por ${FormatCurrency(savedExpense.amount)}.`);
-      } else {
-        Alert.alert('¡Gasto Guardado!', `Se registró "${savedExpense.title}" por ${FormatCurrency(savedExpense.amount)}.`);
-      }
+      Alert.alert('¡Gasto Guardado!', `Se registró "${savedExpense.title}" por ${FormatCurrency(savedExpense.amount)}.`);
     } catch (err: any) {
       console.error('[QuickExpense] Error al guardar gasto:', err);
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        window.alert(`Error al guardar gasto:\n${err?.message || 'Ocurrió un error en Supabase.'}`);
-      } else {
-        Alert.alert('Error al guardar gasto', err?.message || 'Ocurrió un error al guardar el gasto en Supabase.');
-      }
+      Alert.alert('Error al guardar gasto', err?.message || 'Ocurrió un error al guardar el gasto en Supabase.');
     } finally {
       setLoading(false);
     }
@@ -2451,12 +2443,16 @@ export default function EventDetailDashboard() {
           },
         ]}
         onPress={() => {
+          if (event.participants.length === 0) {
+            Alert.alert('Atención', 'Primero agrega participantes al evento para asignar el pago.');
+            return;
+          }
           setIsQuickExpenseOpen(true);
         }}
         activeOpacity={0.85}
       >
         <SculptedIcon name="plus" size={16} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
-        <Text style={[styles.fabText, { color: isDark ? '#0D1117' : '#FFFFFF', fontWeight: '700' }]}>Gasto Rápido</Text>
+        <Text style={[styles.fabText, { color: isDark ? '#0D1117' : '#FFFFFF', fontWeight: '700' }]}>+ Gasto Rápido</Text>
       </TouchableOpacity>
 
       {/* Modal: Captura Rápida de Gastos */}

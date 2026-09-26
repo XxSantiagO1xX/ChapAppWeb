@@ -34,14 +34,13 @@ import { GlassCard } from '../components/GlassCard';
 import { SculptedIcon } from '../components/SculptedIcon';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { AmbientBackground } from '../components/AmbientBackground';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const isTablet = width >= 768;
-  const isSmallPhone = width < 420;
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { isMobile, isTablet, isDesktop, isTabletOrDesktop, insets } = useResponsiveLayout();
+  const isSmallPhone = isMobile;
+  const { colors, isDark, toggleTheme, getLiquidGlass } = useTheme();
 
   const [events, setEvents] = useState<EventConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -927,7 +926,11 @@ export default function HomeScreen() {
                 return (
                   <GlassCard
                     key={event.id}
-                    style={[styles.eventCard, isTablet && styles.eventCardTablet]}
+                    style={[
+                      styles.eventCard,
+                      isTablet && styles.eventCardTablet,
+                      isDesktop && styles.eventCardDesktop,
+                    ]}
                     contentStyle={styles.eventCardContent}
                   >
                     {/* Header de la tarjeta con Relieve */}
@@ -1143,7 +1146,11 @@ export default function HomeScreen() {
               {filterTab !== 'archived' && (
                 <GlassCard
                   variant="subtle"
-                  style={[styles.createEventCardCompanion, isTablet && styles.eventCardTablet]}
+                  style={[
+                    styles.createEventCardCompanion,
+                    isTablet && styles.eventCardTablet,
+                    isDesktop && styles.eventCardDesktop,
+                  ]}
                   contentStyle={styles.createEventCardInner}
                   onPress={() => {
                     setNewYear(new Date().getFullYear().toString());
@@ -1705,8 +1712,13 @@ const styles = StyleSheet.create({
   },
   eventCardTablet: {
     flex: 1,
-    minWidth: 320,
+    minWidth: 300,
     maxWidth: '49%',
+  },
+  eventCardDesktop: {
+    flex: 1,
+    minWidth: 320,
+    maxWidth: '32%',
   },
   eventCardContent: {
     padding: 22,

@@ -7,6 +7,8 @@ import {
   DarkPalette,
   createNeonGlow,
   Shadows,
+  getLiquidGlassStyle,
+  LiquidGlassVariant,
 } from '../constants/theme';
 
 interface ThemeContextValue {
@@ -16,6 +18,7 @@ interface ThemeContextValue {
   toggleTheme: () => void;
   setThemeMode: (mode: ThemeMode) => void;
   getNeonGlow: (color: string, intensity?: 'low' | 'medium' | 'high') => any;
+  getLiquidGlass: (variant?: LiquidGlassVariant) => any;
   cardShadow: any;
 }
 
@@ -53,6 +56,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return createNeonGlow(color, intensity);
   };
 
+  const getLiquidGlass = (variant: LiquidGlassVariant = 'card') => {
+    return getLiquidGlassStyle(isDark, variant);
+  };
+
   const cardShadow = useMemo(() => {
     return isDark ? Shadows.cardDark : Shadows.card;
   }, [isDark]);
@@ -65,6 +72,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       toggleTheme,
       setThemeMode,
       getNeonGlow,
+      getLiquidGlass,
       cardShadow,
     }),
     [themeMode, isDark, colors, cardShadow]

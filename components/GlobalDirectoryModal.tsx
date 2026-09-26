@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Radii } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
+import { useResponsiveLayout } from '../hooks/useResponsiveLayout';
 import { GlassCard } from './GlassCard';
 import { SculptedIcon } from './SculptedIcon';
 import type { DirectoryParticipant, CategoryType } from '../types';
@@ -39,9 +40,8 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
   onImportSelected,
   mode = 'import',
 }) => {
-  const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
-  const { colors, isDark, getNeonGlow } = useTheme();
+  const { isMobile, isTablet, isDesktop, isTabletOrDesktop, insets } = useResponsiveLayout();
+  const { colors, isDark, getNeonGlow, getLiquidGlass } = useTheme();
 
   const [directory, setDirectory] = useState<DirectoryParticipant[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -236,13 +236,26 @@ export const GlobalDirectoryModal: React.FC<GlobalDirectoryModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.backdrop}>
+    <Modal visible={visible} transparent animationType={isTablet ? 'fade' : 'slide'}>
+      <View
+        style={[
+          styles.backdrop,
+          {
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.75)' : 'rgba(15, 23, 42, 0.55)',
+            ...(Platform.OS === 'web'
+              ? ({
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                } as any)
+              : {}),
+          },
+        ]}
+      >
         <View
           style={[
             styles.container,
             isTablet && styles.containerTablet,
-            { backgroundColor: colors.surface },
+            getLiquidGlass('modal'),
           ]}
         >
           {/* Header */}
