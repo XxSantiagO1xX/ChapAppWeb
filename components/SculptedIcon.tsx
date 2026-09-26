@@ -15,6 +15,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Radii } from '../constants/theme';
 
 export type IconName =
+  | 'menu'
   | 'chart'
   | 'trending-up'
   | 'users'
@@ -84,6 +85,13 @@ export const SculptedIcon: React.FC<SculptedIconProps> = ({
   // Renderizar las formas vectoriales SVG de 24x24 estándar
   const renderGlyph = () => {
     switch (name) {
+      case 'menu':
+        return (
+          <>
+            <Path d="M4 6h16M4 12h16M4 18h16" stroke={iconColor} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </>
+        );
+
       case 'chart':
         return (
           <>

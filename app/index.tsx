@@ -47,7 +47,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filterTab, setFilterTab] = useState<'active' | 'archived' | 'all'>('active');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Modal para Directorio Global
   const [isDirectoryModalOpen, setIsDirectoryModalOpen] = useState(false);
@@ -248,7 +248,7 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <AmbientBackground />
-      {/* Header Principal con Isla Flotante de Cristal (Opción A) */}
+      {/* Header Principal con Botón Hamburguesa de Cristal */}
       <View
         style={[
           styles.header,
@@ -256,17 +256,17 @@ export default function HomeScreen() {
           {
             marginTop:
               Platform.OS === 'web'
-                ? isTablet ? 20 : 12
-                : Math.max(insets.top, 12) + (isTablet ? 8 : 4),
-            backgroundColor: isDark ? 'rgba(13, 20, 32, 0.60)' : 'rgba(255, 255, 255, 0.65)',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.90)',
-            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.98)',
+                ? isTablet ? 16 : 10
+                : Math.max(insets.top, 12) + (isTablet ? 6 : 2),
+            backgroundColor: isDark ? 'rgba(13, 20, 32, 0.65)' : 'rgba(255, 255, 255, 0.70)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.98)',
             ...(Platform.OS === 'web'
               ? ({
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  backdropFilter: 'blur(25px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(25px) saturate(180%)',
                   boxShadow: isDark
-                    ? '0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14)'
+                    ? '0 12px 32px rgba(0, 0, 0, 0.50), 0 2px 6px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.16)'
                     : '0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
                 } as any)
               : {
@@ -279,11 +279,34 @@ export default function HomeScreen() {
           },
         ]}
       >
-        <View style={[styles.headerLeft, isSmallPhone && { gap: 8, flexShrink: 1 }]}>
+        <View style={[styles.headerLeft, isSmallPhone && { gap: 10, flexShrink: 1 }]}>
+          {/* Botón Hamburguesa ☰ */}
+          <TouchableOpacity
+            style={[
+              styles.hamburgerButton,
+              {
+                backgroundColor: colors.surfaceSubtle,
+                borderColor: colors.border,
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      cursor: 'pointer',
+                    } as any)
+                  : {}),
+              },
+            ]}
+            onPress={() => setIsDrawerOpen(true)}
+            activeOpacity={0.8}
+            accessibilityLabel="Abrir menú lateral"
+          >
+            <SculptedIcon name="menu" size={18} variant="plain" color={colors.textPrimary} />
+          </TouchableOpacity>
+
           <SculptedIcon
             name="money"
-            size={isTablet ? 22 : 18}
-            containerSize={isTablet ? 46 : 38}
+            size={isTablet ? 20 : 18}
+            containerSize={isTablet ? 40 : 36}
             variant="sunken"
             glow={isDark}
             accentColor={colors.primary}
@@ -305,67 +328,59 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={[styles.headerRightActions, isSmallPhone && { gap: 6 }]}>
-          {/* Botón de Cambio de Tema en Cristal */}
+        <View style={[styles.headerRightActions, isSmallPhone && { gap: 8 }]}>
+          {/* Badge de Filtro Activo (Acceso Rápido al Menú) */}
           <TouchableOpacity
-            onPress={toggleTheme}
-            activeOpacity={0.8}
-            accessibilityLabel={isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
             style={[
-              styles.themeIconButton,
-              isSmallPhone && { width: 36, height: 36 },
+              styles.activeFilterChip,
               {
                 backgroundColor: colors.surfaceSubtle,
                 borderColor: colors.border,
                 ...(Platform.OS === 'web'
                   ? ({
-                      backdropFilter: 'blur(10px)',
-                      WebkitBackdropFilter: 'blur(10px)',
-                      boxShadow: isDark
-                        ? '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
-                        : '0 2px 8px rgba(31, 38, 135, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                      cursor: 'pointer',
                     } as any)
                   : {}),
               },
             ]}
-          >
-            <SculptedIcon
-              name={isDark ? 'moon' : 'sun'}
-              size={isSmallPhone ? 16 : 18}
-              variant="plain"
-              color={isDark ? colors.neonAmber : colors.primary}
-            />
-          </TouchableOpacity>
-
-          {/* Botón Directorio Global de Cristal */}
-          <TouchableOpacity
-            style={[
-              styles.directoryHeaderButton,
-              isSmallPhone && { paddingHorizontal: 10, paddingVertical: 8 },
-              {
-                backgroundColor: colors.purpleLight,
-                borderColor: colors.purpleBorder,
-              },
-            ]}
-            onPress={() => setIsDirectoryModalOpen(true)}
+            onPress={() => setIsDrawerOpen(true)}
             activeOpacity={0.8}
           >
-            <SculptedIcon name="users" size={14} variant="plain" color={colors.purple} />
-            {isTablet && (
-              <Text style={[styles.directoryHeaderButtonText, { color: colors.purple, fontFamily: Fonts.semiBold }]}>
-                Directorio
-              </Text>
-            )}
+            <View
+              style={[
+                styles.tabStatusDot,
+                {
+                  backgroundColor:
+                    filterTab === 'active'
+                      ? colors.success
+                      : filterTab === 'archived'
+                      ? colors.textMuted
+                      : colors.primary,
+                },
+              ]}
+            />
+            <Text style={[styles.activeFilterChipText, { color: colors.textSecondary, fontFamily: Fonts.medium }]}>
+              {filterTab === 'active'
+                ? `Activos (${activeCount})`
+                : filterTab === 'archived'
+                ? `Archivados (${archivedCount})`
+                : `Todos (${events.length})`}
+            </Text>
           </TouchableOpacity>
 
           {/* Botón Crear Nuevo Evento */}
           <TouchableOpacity
             style={[
               styles.primaryHeaderButton,
-              isSmallPhone && { paddingHorizontal: 10, paddingVertical: 8 },
+              isSmallPhone && { paddingHorizontal: 12, paddingVertical: 8 },
               {
                 backgroundColor: colors.primary,
                 borderWidth: 0,
+                ...(Platform.OS === 'web'
+                  ? ({
+                      cursor: 'pointer',
+                    } as any)
+                  : {}),
               },
             ]}
             onPress={() => {
@@ -376,12 +391,12 @@ export default function HomeScreen() {
             }}
             activeOpacity={0.85}
           >
-            <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#141210' : '#FFFFFF'} />
+            <SculptedIcon name="plus" size={14} variant="plain" color={isDark ? '#000000' : '#FFFFFF'} />
             <Text
               style={[
                 styles.primaryHeaderButtonText,
                 isSmallPhone && { fontSize: 12 },
-                { color: isDark ? '#141210' : '#FFFFFF', fontFamily: Fonts.bold },
+                { color: isDark ? '#000000' : '#FFFFFF', fontFamily: Fonts.bold },
               ]}
             >
               {isTablet ? 'Nuevo Evento' : 'Nuevo'}
@@ -390,507 +405,429 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Layout Master-Detail / Grid */}
-      <View style={[styles.mainLayout, isTablet && styles.mainLayoutTablet]}>
-        {/* Barra de Filtro Desplegable para Móvil (Oculto por defecto) */}
-        {!isTablet && (
-          <View style={styles.mobileFilterBar}>
-            <TouchableOpacity
-              style={[
-                styles.mobileFilterTriggerBtn,
-                {
-                  backgroundColor: isMobileFilterOpen || searchQuery ? colors.primaryLight : colors.surface,
-                  borderColor: isMobileFilterOpen || searchQuery ? colors.primaryBorder : colors.border,
-                },
-              ]}
-              onPress={() => setIsMobileFilterOpen((prev) => !prev)}
-              activeOpacity={0.8}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                <SculptedIcon
-                  name="search"
-                  size={14}
-                  variant="plain"
-                  color={isMobileFilterOpen || searchQuery ? colors.primaryText : colors.textMuted}
-                />
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={[
-                    styles.mobileFilterTriggerText,
-                    {
-                      color: isMobileFilterOpen || searchQuery ? colors.primaryText : colors.textSecondary,
-                      fontFamily: Fonts.medium,
-                    },
-                  ]}
-                >
-                  {searchQuery
-                    ? `Búsqueda: "${searchQuery}"`
-                    : filterTab === 'active'
-                    ? `Eventos Activos (${activeCount})`
-                    : filterTab === 'archived'
-                    ? `Archivados (${archivedCount})`
-                    : `Todos los Años (${events.length})`}
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <View style={[styles.mobileFilterBadge, { backgroundColor: colors.primaryLight }]}>
-                  <Text style={[styles.mobileFilterBadgeText, { color: colors.primaryText, fontFamily: Fonts.bold }]}>
-                    {filterTab === 'active' ? activeCount : filterTab === 'archived' ? archivedCount : events.length}
-                  </Text>
-                </View>
-                <SculptedIcon
-                  name={isMobileFilterOpen ? 'chevron-down' : 'chevron-right'}
-                  size={13}
-                  variant="plain"
-                  color={isMobileFilterOpen ? colors.primaryText : colors.textMuted}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
+      {/* 🧭 MODAL / DRAWER LATERAL DE CRISTAL (HAMBURGUESA) */}
+      <Modal
+        visible={isDrawerOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsDrawerOpen(false)}
+      >
+        <View style={styles.drawerBackdrop}>
+          <TouchableOpacity
+            style={styles.drawerBackdropTouch}
+            activeOpacity={1}
+            onPress={() => setIsDrawerOpen(false)}
+          />
 
-        {/* Panel lateral / Filtros de Cristal (Visible en Tablet o cuando el usuario lo despliega en Móvil) */}
-        {(isTablet || isMobileFilterOpen) && (
           <View
             style={[
-              styles.sidebar,
-              isTablet && styles.sidebarTablet,
-              !isTablet && styles.sidebarMobileExpanded,
+              styles.drawerPanel,
               {
-                backgroundColor: isDark ? 'rgba(13, 20, 32, 0.50)' : 'rgba(255, 255, 255, 0.55)',
-                borderRightColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.80)',
-                borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(226, 232, 240, 0.80)',
-                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(255, 255, 255, 0.95)',
+                backgroundColor: isDark ? 'rgba(10, 14, 23, 0.90)' : 'rgba(255, 255, 255, 0.92)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                borderRightColor: isDark ? 'rgba(255, 255, 255, 0.18)' : 'rgba(226, 232, 240, 0.95)',
+                paddingTop: Math.max(insets.top, 20) + 10,
+                paddingBottom: Math.max(insets.bottom, 20) + 10,
                 ...(Platform.OS === 'web'
                   ? ({
-                      backdropFilter: 'blur(20px) saturate(180%)',
-                      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                      backdropFilter: 'blur(30px) saturate(190%)',
+                      WebkitBackdropFilter: 'blur(30px) saturate(190%)',
                       boxShadow: isDark
-                        ? '4px 0 24px rgba(0, 0, 0, 0.35)'
-                        : '4px 0 24px rgba(31, 38, 135, 0.05)',
+                        ? '16px 0 40px rgba(0, 0, 0, 0.70)'
+                        : '16px 0 40px rgba(31, 38, 135, 0.12)',
                     } as any)
-                  : {}),
+                  : {
+                      shadowColor: '#000000',
+                      shadowOffset: { width: 4, height: 0 },
+                      shadowOpacity: isDark ? 0.5 : 0.15,
+                      shadowRadius: 20,
+                      elevation: 16,
+                    }),
               },
             ]}
           >
-            <View style={styles.sidebarHeaderRow}>
-              <Text style={[styles.sectionHeading, { color: colors.textMuted, fontFamily: Fonts.bold }]}>
-                Vistas y Filtros
-              </Text>
-              {!isTablet && (
-                <TouchableOpacity
-                  onPress={() => setIsMobileFilterOpen(false)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
-                </TouchableOpacity>
-              )}
-            </View>
-
-          {/* Pestañas de Filtro en Cristal */}
-          <View style={styles.tabsContainer}>
-            {/* Pestaña: Activos */}
-            <TouchableOpacity
-              style={[
-                styles.tabButton,
-                filterTab === 'active'
-                  ? [
-                      styles.tabButtonActive,
-                      {
-                        backgroundColor: isDark ? 'rgba(0, 240, 255, 0.14)' : 'rgba(2, 132, 199, 0.12)',
-                        borderColor: isDark ? 'rgba(0, 240, 255, 0.40)' : 'rgba(2, 132, 199, 0.35)',
-                      },
-                    ]
-                  : [
-                      styles.tabButtonInactive,
-                      {
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.40)',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
-                      },
-                    ],
-              ]}
-              onPress={() => setFilterTab('active')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.tabContentRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <View
-                    style={[
-                      styles.tabStatusDot,
-                      {
-                        backgroundColor: filterTab === 'active' ? colors.success : colors.textMuted,
-                      },
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      {
-                        color: filterTab === 'active' ? colors.primaryText : colors.textSecondary,
-                        fontFamily: filterTab === 'active' ? Fonts.bold : Fonts.medium,
-                      },
-                    ]}
-                  >
-                    Activos
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.tabBadge,
-                    {
-                      backgroundColor: filterTab === 'active' ? colors.primaryLight : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.50)'),
-                      borderColor: filterTab === 'active' ? colors.primaryBorder : 'transparent',
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.tabBadgeText,
-                      {
-                        color: filterTab === 'active' ? colors.primaryText : colors.textMuted,
-                        fontFamily: Fonts.bold,
-                      },
-                    ]}
-                  >
-                    {activeCount}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Pestaña: Historial Archivado */}
-            <TouchableOpacity
-              style={[
-                styles.tabButton,
-                filterTab === 'archived'
-                  ? [
-                      styles.tabButtonActive,
-                      {
-                        backgroundColor: isDark ? 'rgba(0, 240, 255, 0.14)' : 'rgba(2, 132, 199, 0.12)',
-                        borderColor: isDark ? 'rgba(0, 240, 255, 0.40)' : 'rgba(2, 132, 199, 0.35)',
-                      },
-                    ]
-                  : [
-                      styles.tabButtonInactive,
-                      {
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.40)',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
-                      },
-                    ],
-              ]}
-              onPress={() => setFilterTab('archived')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.tabContentRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <SculptedIcon
-                    name="archive"
-                    size={13}
-                    variant="plain"
-                    color={filterTab === 'archived' ? colors.primaryText : colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      {
-                        color: filterTab === 'archived' ? colors.primaryText : colors.textSecondary,
-                        fontFamily: filterTab === 'archived' ? Fonts.bold : Fonts.medium,
-                      },
-                    ]}
-                  >
-                    Historial Archivado
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.tabBadge,
-                    {
-                      backgroundColor: filterTab === 'archived' ? colors.primaryLight : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.50)'),
-                      borderColor: filterTab === 'archived' ? colors.primaryBorder : 'transparent',
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.tabBadgeText,
-                      {
-                        color: filterTab === 'archived' ? colors.primaryText : colors.textMuted,
-                        fontFamily: Fonts.bold,
-                      },
-                    ]}
-                  >
-                    {archivedCount}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Pestaña: Todos los Años */}
-            <TouchableOpacity
-              style={[
-                styles.tabButton,
-                filterTab === 'all'
-                  ? [
-                      styles.tabButtonActive,
-                      {
-                        backgroundColor: isDark ? 'rgba(0, 240, 255, 0.14)' : 'rgba(2, 132, 199, 0.12)',
-                        borderColor: isDark ? 'rgba(0, 240, 255, 0.40)' : 'rgba(2, 132, 199, 0.35)',
-                      },
-                    ]
-                  : [
-                      styles.tabButtonInactive,
-                      {
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.40)',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
-                      },
-                    ],
-              ]}
-              onPress={() => setFilterTab('all')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.tabContentRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <SculptedIcon
-                    name="calendar"
-                    size={13}
-                    variant="plain"
-                    color={filterTab === 'all' ? colors.primaryText : colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      {
-                        color: filterTab === 'all' ? colors.primaryText : colors.textSecondary,
-                        fontFamily: filterTab === 'all' ? Fonts.bold : Fonts.medium,
-                      },
-                    ]}
-                  >
-                    Todos los Años
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.tabBadge,
-                    {
-                      backgroundColor: filterTab === 'all' ? colors.primaryLight : (isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.50)'),
-                      borderColor: filterTab === 'all' ? colors.primaryBorder : 'transparent',
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.tabBadgeText,
-                      {
-                        color: filterTab === 'all' ? colors.primaryText : colors.textMuted,
-                        fontFamily: Fonts.bold,
-                      },
-                    ]}
-                  >
-                    {events.length}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* Buscador de Cristal con Cavidad Rehundida */}
-          <View
-            style={[
-              styles.searchBox,
-              {
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.40)',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
-                ...(Platform.OS === 'web'
-                  ? ({
-                      boxShadow: isDark
-                        ? 'inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.04)'
-                        : 'inset 0 2px 4px rgba(31, 38, 135, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.6)',
-                    } as any)
-                  : {}),
-              },
-            ]}
-          >
-            <SculptedIcon name="search" size={14} variant="plain" color={colors.textMuted} />
-            <TextInput
-              style={[styles.searchInput, { color: colors.textPrimary, fontFamily: Fonts.regular }]}
-              placeholder="Buscar año o título..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor={colors.textMuted}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Tarjeta informativa de Directorio Global */}
-          {isTablet && (
-            <GlassCard
-              variant="purple"
-              glow={isDark}
-              style={styles.directoryCardPromo}
-              contentStyle={styles.directoryCardPromoContent}
-              onPress={() => setIsDirectoryModalOpen(true)}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
+            {/* Header del Drawer */}
+            <View style={styles.drawerHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <SculptedIcon
-                  name="users"
-                  size={14}
-                  containerSize={28}
+                  name="money"
+                  size={20}
+                  containerSize={38}
                   variant="sunken"
-                  accentColor={colors.purple}
-                  color={colors.purple}
+                  glow={isDark}
+                  accentColor={colors.primary}
+                  color={colors.primary}
                 />
-                <Text style={[styles.directoryCardPromoTitle, { color: colors.purple, fontFamily: Fonts.bold, flex: 1, flexWrap: 'wrap' }]}>
-                  Directorio Global de Subfamilias
-                </Text>
-              </View>
-              <Text style={[styles.directoryCardPromoText, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
-                Reutiliza familias e integrantes para crear eventos rápidamente.
-              </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                <Text style={[styles.directoryCardPromoLink, { color: colors.purple, fontFamily: Fonts.semiBold }]}>
-                  Gestionar familias
-                </Text>
-                <SculptedIcon name="chevron-right" size={12} variant="plain" color={colors.purple} />
-              </View>
-            </GlassCard>
-          )}
-        </View>
-      )}
-
-      {/* Área de Contenido Principal */}
-        <View style={styles.contentArea}>
-          {/* Barra de Resumen Ejecutivo Global en Cristal */}
-          {events.length > 0 && (
-            <View
-              style={[
-                styles.executiveSummaryBar,
-                {
-                  backgroundColor: isDark ? 'rgba(14, 22, 36, 0.45)' : 'rgba(255, 255, 255, 0.48)',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.65)',
-                  borderTopColor: isDark ? 'rgba(255, 255, 255, 0.30)' : 'rgba(255, 255, 255, 0.95)',
-                  borderWidth: 1,
-                  ...(Platform.OS === 'web'
-                    ? ({
-                        backdropFilter: 'blur(20px) saturate(180%)',
-                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                        boxShadow: isDark
-                          ? '0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18)'
-                          : '0 8px 24px rgba(31, 38, 135, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
-                      } as any)
-                    : {
-                        shadowColor: isDark ? '#000000' : '#1F2687',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: isDark ? 0.35 : 0.08,
-                        shadowRadius: 8,
-                        elevation: 3,
-                      }),
-                },
-              ]}
-            >
-              <View style={styles.summaryItem}>
-                <View style={styles.summaryItemHeader}>
-                  <View style={[styles.pulseDot, { backgroundColor: colors.success }]} />
-                  <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
-                    Eventos Activos
+                <View>
+                  <Text style={[styles.drawerTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                    ChapApp
+                  </Text>
+                  <Text style={[styles.drawerSubtitle, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
+                    Menú Principal
                   </Text>
                 </View>
-                <Text style={[styles.summaryValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
-                  {globalSummary.activeEventsCount} {globalSummary.activeEventsCount === 1 ? 'Evento' : 'Eventos'}
-                </Text>
               </View>
 
-              <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
-
-              <View style={styles.summaryItem}>
-                <View style={styles.summaryItemHeader}>
-                  <SculptedIcon name="receipt" size={12} variant="plain" color={colors.primary} />
-                  <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
-                    Gastos Acumulados
-                  </Text>
-                </View>
-                <Text style={[styles.summaryValue, { color: colors.primary, fontFamily: Fonts.bold }]}>
-                  {FormatCurrency(globalSummary.totalExpenses)}
-                </Text>
-              </View>
-
-              <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
-
-              <View style={styles.summaryItem}>
-                <View style={styles.summaryItemHeader}>
-                  <SculptedIcon name="users" size={12} variant="plain" color={colors.purple} />
-                  <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
-                    Asistentes Totales
-                  </Text>
-                </View>
-                <Text style={[styles.summaryValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
-                  {globalSummary.totalParticipants} Asistentes
-                </Text>
-              </View>
-
-              <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
-
-              <View style={styles.summaryItem}>
-                <View style={styles.summaryItemHeader}>
-                  <SculptedIcon name="family" size={12} variant="plain" color={colors.warning} />
-                  <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
-                    Subfamilias
-                  </Text>
-                </View>
-                <Text style={[styles.summaryValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
-                  {globalSummary.subFamiliesCount} Familias
-                </Text>
-              </View>
+              <TouchableOpacity
+                style={[styles.drawerCloseBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                onPress={() => setIsDrawerOpen(false)}
+                activeOpacity={0.7}
+              >
+                <SculptedIcon name="close" size={14} variant="plain" color={colors.textPrimary} />
+              </TouchableOpacity>
             </View>
-          )}
 
-          {/* Grid de Tarjetas o Estado Vacío */}
-          {filteredEvents.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <SculptedIcon
-                name="calendar"
-                size={42}
-                containerSize={76}
-                variant="sunken"
-                glow={isDark}
-                accentColor={colors.primary}
-                color={colors.primary}
-              />
-              <Text style={[styles.emptyTitle, { color: colors.textPrimary, fontFamily: Fonts.bold, marginTop: 14 }]}>
-                No hay eventos en esta sección
-              </Text>
-              <Text style={[styles.emptyDescription, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
-                {searchQuery
-                  ? 'No se encontraron eventos que coincidan con la búsqueda.'
-                  : 'Crea tu primer evento anual para comenzar a gestionar gastos y prorrateo.'}
-              </Text>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.drawerScrollContent}>
+              {/* Sección: Tema Claro / Oscuro */}
+              <View style={styles.drawerSection}>
+                <Text style={[styles.drawerSectionTitle, { color: colors.textMuted, fontFamily: Fonts.bold }]}>
+                  APARIENCIA
+                </Text>
+                <TouchableOpacity
+                  style={[
+                    styles.themeToggleRow,
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      borderColor: colors.border,
+                      ...(Platform.OS === 'web'
+                        ? ({
+                            cursor: 'pointer',
+                          } as any)
+                        : {}),
+                    },
+                  ]}
+                  onPress={toggleTheme}
+                  activeOpacity={0.8}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <SculptedIcon
+                      name={isDark ? 'moon' : 'sun'}
+                      size={16}
+                      variant="plain"
+                      color={isDark ? colors.neonAmber : colors.primary}
+                    />
+                    <Text style={[styles.themeToggleText, { color: colors.textPrimary, fontFamily: Fonts.medium }]}>
+                      {isDark ? 'Modo Oscuro (Liquid Glass)' : 'Modo Claro (High-Key)'}
+                    </Text>
+                  </View>
+                  <View style={[styles.themeSwitchPill, { backgroundColor: isDark ? colors.primary : colors.primaryLight }]}>
+                    <Text style={[styles.themeSwitchPillText, { color: isDark ? '#000000' : colors.primaryText, fontFamily: Fonts.bold }]}>
+                      {isDark ? 'ON' : 'OFF'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Sección: Buscador */}
+              <View style={styles.drawerSection}>
+                <Text style={[styles.drawerSectionTitle, { color: colors.textMuted, fontFamily: Fonts.bold }]}>
+                  BÚSQUEDA RÁPIDA
+                </Text>
+                <View
+                  style={[
+                    styles.searchBox,
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      borderColor: colors.border,
+                      marginBottom: 0,
+                    },
+                  ]}
+                >
+                  <SculptedIcon name="search" size={14} variant="plain" color={colors.textMuted} />
+                  <TextInput
+                    style={[styles.searchInput, { color: colors.textPrimary, fontFamily: Fonts.regular }]}
+                    placeholder="Buscar por año o título..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor={colors.textMuted}
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
+              {/* Sección: Vistas y Filtros */}
+              <View style={styles.drawerSection}>
+                <Text style={[styles.drawerSectionTitle, { color: colors.textMuted, fontFamily: Fonts.bold }]}>
+                  VISTAS Y FILTROS
+                </Text>
+
+                <View style={styles.tabsContainer}>
+                  {/* Pestaña: Activos */}
+                  <TouchableOpacity
+                    style={[
+                      styles.tabButton,
+                      filterTab === 'active'
+                        ? [
+                            styles.tabButtonActive,
+                            {
+                              backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+                              borderColor: isDark ? 'rgba(0, 240, 255, 0.45)' : 'rgba(2, 132, 199, 0.35)',
+                            },
+                          ]
+                        : [
+                            styles.tabButtonInactive,
+                            {
+                              backgroundColor: colors.surfaceSubtle,
+                              borderColor: colors.border,
+                            },
+                          ],
+                    ]}
+                    onPress={() => {
+                      setFilterTab('active');
+                      setIsDrawerOpen(false);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.tabContentRow}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <View
+                          style={[
+                            styles.tabStatusDot,
+                            {
+                              backgroundColor: colors.success,
+                            },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.tabButtonText,
+                            {
+                              color: filterTab === 'active' ? colors.primaryText : colors.textSecondary,
+                              fontFamily: filterTab === 'active' ? Fonts.bold : Fonts.medium,
+                            },
+                          ]}
+                        >
+                          Eventos Activos
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.tabBadge,
+                          {
+                            backgroundColor: filterTab === 'active' ? colors.primaryLight : (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)'),
+                            borderColor: filterTab === 'active' ? colors.primaryBorder : 'transparent',
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.tabBadgeText,
+                            {
+                              color: filterTab === 'active' ? colors.primaryText : colors.textMuted,
+                              fontFamily: Fonts.bold,
+                            },
+                          ]}
+                        >
+                          {activeCount}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Pestaña: Archivados */}
+                  <TouchableOpacity
+                    style={[
+                      styles.tabButton,
+                      filterTab === 'archived'
+                        ? [
+                            styles.tabButtonActive,
+                            {
+                              backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+                              borderColor: isDark ? 'rgba(0, 240, 255, 0.45)' : 'rgba(2, 132, 199, 0.35)',
+                            },
+                          ]
+                        : [
+                            styles.tabButtonInactive,
+                            {
+                              backgroundColor: colors.surfaceSubtle,
+                              borderColor: colors.border,
+                            },
+                          ],
+                    ]}
+                    onPress={() => {
+                      setFilterTab('archived');
+                      setIsDrawerOpen(false);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.tabContentRow}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <SculptedIcon
+                          name="archive"
+                          size={13}
+                          variant="plain"
+                          color={filterTab === 'archived' ? colors.primaryText : colors.textMuted}
+                        />
+                        <Text
+                          style={[
+                            styles.tabButtonText,
+                            {
+                              color: filterTab === 'archived' ? colors.primaryText : colors.textSecondary,
+                              fontFamily: filterTab === 'archived' ? Fonts.bold : Fonts.medium,
+                            },
+                          ]}
+                        >
+                          Historial Archivado
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.tabBadge,
+                          {
+                            backgroundColor: filterTab === 'archived' ? colors.primaryLight : (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)'),
+                            borderColor: filterTab === 'archived' ? colors.primaryBorder : 'transparent',
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.tabBadgeText,
+                            {
+                              color: filterTab === 'archived' ? colors.primaryText : colors.textMuted,
+                              fontFamily: Fonts.bold,
+                            },
+                          ]}
+                        >
+                          {archivedCount}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+
+                  {/* Pestaña: Todos los Años */}
+                  <TouchableOpacity
+                    style={[
+                      styles.tabButton,
+                      filterTab === 'all'
+                        ? [
+                            styles.tabButtonActive,
+                            {
+                              backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+                              borderColor: isDark ? 'rgba(0, 240, 255, 0.45)' : 'rgba(2, 132, 199, 0.35)',
+                            },
+                          ]
+                        : [
+                            styles.tabButtonInactive,
+                            {
+                              backgroundColor: colors.surfaceSubtle,
+                              borderColor: colors.border,
+                            },
+                          ],
+                    ]}
+                    onPress={() => {
+                      setFilterTab('all');
+                      setIsDrawerOpen(false);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.tabContentRow}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <SculptedIcon
+                          name="calendar"
+                          size={13}
+                          variant="plain"
+                          color={filterTab === 'all' ? colors.primaryText : colors.textMuted}
+                        />
+                        <Text
+                          style={[
+                            styles.tabButtonText,
+                            {
+                              color: filterTab === 'all' ? colors.primaryText : colors.textSecondary,
+                              fontFamily: filterTab === 'all' ? Fonts.bold : Fonts.medium,
+                            },
+                          ]}
+                        >
+                          Todos los Años
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.tabBadge,
+                          {
+                            backgroundColor: filterTab === 'all' ? colors.primaryLight : (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)'),
+                            borderColor: filterTab === 'all' ? colors.primaryBorder : 'transparent',
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.tabBadgeText,
+                            {
+                              color: filterTab === 'all' ? colors.primaryText : colors.textMuted,
+                              fontFamily: Fonts.bold,
+                            },
+                          ]}
+                        >
+                          {events.length}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Sección: Directorio Global */}
+              <View style={styles.drawerSection}>
+                <Text style={[styles.drawerSectionTitle, { color: colors.textMuted, fontFamily: Fonts.bold }]}>
+                  CONTACTOS Y FAMILIAS
+                </Text>
+                <GlassCard
+                  variant="purple"
+                  glow={isDark}
+                  style={styles.directoryCardPromo}
+                  contentStyle={styles.directoryCardPromoContent}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
+                    setIsDirectoryModalOpen(true);
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <SculptedIcon
+                      name="users"
+                      size={16}
+                      containerSize={32}
+                      variant="sunken"
+                      accentColor={colors.purple}
+                      color={colors.purple}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.directoryCardPromoTitle, { color: colors.purple, fontFamily: Fonts.bold }]}>
+                        Directorio Global
+                      </Text>
+                      <Text style={[styles.directoryCardPromoText, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
+                        Gestiona familias e integrantes
+                      </Text>
+                    </View>
+                    <SculptedIcon name="chevron-right" size={13} variant="plain" color={colors.purple} />
+                  </View>
+                </GlassCard>
+              </View>
+            </ScrollView>
+
+            {/* Footer del Drawer: Crear Nuevo Evento */}
+            <View style={styles.drawerFooter}>
               <TouchableOpacity
                 style={[
                   styles.primaryHeaderButton,
                   {
-                    marginTop: 18,
+                    width: '100%',
                     backgroundColor: colors.primary,
                     borderWidth: 0,
+                    paddingVertical: 12,
+                    justifyContent: 'center',
                     ...(Platform.OS === 'web'
                       ? ({
-                          boxShadow: isDark
-                            ? '-2px -2px 6px rgba(255, 255, 255, 0.02), 3px 4px 10px rgba(0, 0, 0, 0.45)'
-                            : '-3px -3px 7px #FFFFFF, 3px 4px 10px rgba(21, 128, 61, 0.35)',
+                          cursor: 'pointer',
                         } as any)
-                      : {
-                          shadowColor: '#000000',
-                          shadowOffset: { width: 0, height: 3 },
-                          shadowOpacity: 0.3,
-                          shadowRadius: 6,
-                          elevation: 3,
-                        }),
+                      : {}),
                   },
                 ]}
                 onPress={() => {
+                  setIsDrawerOpen(false);
                   setNewYear(new Date().getFullYear().toString());
                   setNewTitle(`Vacaciones ${new Date().getFullYear()}`);
                   setSelectedDirectoryContacts([]);
@@ -898,43 +835,188 @@ export default function HomeScreen() {
                 }}
                 activeOpacity={0.85}
               >
-                <SculptedIcon name="plus" size={15} variant="plain" color={isDark ? '#0B0F19' : '#FFFFFF'} />
-                <Text style={[styles.primaryHeaderButtonText, { color: isDark ? '#0B0F19' : '#FFFFFF', fontFamily: Fonts.bold }]}>
+                <SculptedIcon name="plus" size={15} variant="plain" color={isDark ? '#000000' : '#FFFFFF'} />
+                <Text style={[styles.primaryHeaderButtonText, { color: isDark ? '#000000' : '#FFFFFF', fontFamily: Fonts.bold, fontSize: 14 }]}>
                   Crear Nuevo Evento
                 </Text>
               </TouchableOpacity>
             </View>
-          ) : (
-            <ScrollView
-              contentContainerStyle={styles.cardsGrid}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  tintColor={colors.primary}
-                  colors={[colors.primary]}
-                  progressBackgroundColor={colors.surface}
-                />
-              }
-            >
-              {filteredEvents.map((event) => {
-                const totals = calculateEventTotals(event);
-                const isReembolsoSim = event.id.includes('reembolso');
-                const isCuotasFijasSim = event.id.includes('cuotas_fijas');
+          </View>
+        </View>
+      </Modal>
 
-                return (
-                  <GlassCard
-                    key={event.id}
-                    style={[
-                      styles.eventCard,
-                      isTablet && styles.eventCardTablet,
-                      isDesktop && styles.eventCardDesktop,
-                    ]}
-                    contentStyle={styles.eventCardContent}
-                  >
-                    {/* Header de la tarjeta con Relieve */}
-                    <View style={styles.cardHeader}>
+      {/* Área de Contenido Principal Panorámica */}
+      <View style={styles.contentArea}>
+        {/* Barra de Resumen Ejecutivo Global en Cristal */}
+        {events.length > 0 && (
+          <View
+            style={[
+              styles.executiveSummaryBar,
+              {
+                backgroundColor: isDark ? 'rgba(14, 22, 36, 0.50)' : 'rgba(255, 255, 255, 0.60)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.85)',
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.98)',
+                borderWidth: 1,
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(20px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                      boxShadow: isDark
+                        ? '0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18)'
+                        : '0 8px 24px rgba(31, 38, 135, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
+                    } as any)
+                  : {
+                      shadowColor: isDark ? '#000000' : '#1F2687',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isDark ? 0.35 : 0.08,
+                      shadowRadius: 8,
+                      elevation: 3,
+                    }),
+              },
+            ]}
+          >
+            <View style={styles.summaryItem}>
+              <View style={styles.summaryItemHeader}>
+                <View style={[styles.pulseDot, { backgroundColor: colors.success }]} />
+                <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                  Eventos Activos
+                </Text>
+              </View>
+              <Text style={[styles.summaryValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                {globalSummary.activeEventsCount} {globalSummary.activeEventsCount === 1 ? 'Evento' : 'Eventos'}
+              </Text>
+            </View>
+
+            <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+
+            <View style={styles.summaryItem}>
+              <View style={styles.summaryItemHeader}>
+                <SculptedIcon name="receipt" size={12} variant="plain" color={colors.primary} />
+                <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                  Gastos Acumulados
+                </Text>
+              </View>
+              <Text style={[styles.summaryValue, { color: colors.primary, fontFamily: Fonts.bold }]}>
+                {FormatCurrency(globalSummary.totalExpenses)}
+              </Text>
+            </View>
+
+            <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+
+            <View style={styles.summaryItem}>
+              <View style={styles.summaryItemHeader}>
+                <SculptedIcon name="users" size={12} variant="plain" color={colors.purple} />
+                <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                  Asistentes Totales
+                </Text>
+              </View>
+              <Text style={[styles.summaryValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                {globalSummary.totalParticipants} Asistentes
+              </Text>
+            </View>
+
+            <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+
+            <View style={styles.summaryItem}>
+              <View style={styles.summaryItemHeader}>
+                <SculptedIcon name="family" size={12} variant="plain" color={colors.warning} />
+                <Text style={[styles.summaryLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                  Subfamilias
+                </Text>
+              </View>
+              <Text style={[styles.summaryValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                {globalSummary.subFamiliesCount} Familias
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* 🗂️ LISTA DE TARJETAS HORIZONTALES ACOPLADAS DE EVENTOS */}
+        {filteredEvents.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <SculptedIcon
+              name="calendar"
+              size={42}
+              containerSize={76}
+              variant="sunken"
+              glow={isDark}
+              accentColor={colors.primary}
+              color={colors.primary}
+            />
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary, fontFamily: Fonts.bold, marginTop: 14 }]}>
+              No hay eventos en esta sección
+            </Text>
+            <Text style={[styles.emptyDescription, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
+              {searchQuery
+                ? 'No se encontraron eventos que coincidan con la búsqueda.'
+                : 'Crea tu primer evento anual para comenzar a gestionar gastos y prorrateo.'}
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.primaryHeaderButton,
+                {
+                  marginTop: 18,
+                  backgroundColor: colors.primary,
+                  borderWidth: 0,
+                  ...(Platform.OS === 'web'
+                    ? ({
+                        cursor: 'pointer',
+                        boxShadow: isDark
+                          ? '-2px -2px 6px rgba(255, 255, 255, 0.02), 3px 4px 10px rgba(0, 0, 0, 0.45)'
+                          : '-3px -3px 7px #FFFFFF, 3px 4px 10px rgba(21, 128, 61, 0.35)',
+                      } as any)
+                    : {
+                        shadowColor: '#000000',
+                        shadowOffset: { width: 0, height: 3 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 6,
+                        elevation: 3,
+                      }),
+                },
+              ]}
+              onPress={() => {
+                setNewYear(new Date().getFullYear().toString());
+                setNewTitle(`Vacaciones ${new Date().getFullYear()}`);
+                setSelectedDirectoryContacts([]);
+                setIsModalOpen(true);
+              }}
+              activeOpacity={0.85}
+            >
+              <SculptedIcon name="plus" size={15} variant="plain" color={isDark ? '#000000' : '#FFFFFF'} />
+              <Text style={[styles.primaryHeaderButtonText, { color: isDark ? '#000000' : '#FFFFFF', fontFamily: Fonts.bold }]}>
+                Crear Nuevo Evento
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.horizontalCardsContainer}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.primary}
+                colors={[colors.primary]}
+                progressBackgroundColor={colors.surface}
+              />
+            }
+          >
+            {filteredEvents.map((event) => {
+              const totals = calculateEventTotals(event);
+              const isReembolsoSim = event.id.includes('reembolso');
+              const isCuotasFijasSim = event.id.includes('cuotas_fijas');
+
+              return (
+                <GlassCard
+                  key={event.id}
+                  style={styles.horizontalEventCard}
+                  contentStyle={styles.horizontalEventCardContent}
+                  onPress={() => router.push(`/event/${event.id}`)}
+                >
+                  <View style={[styles.hCardLayout, isTablet && styles.hCardLayoutTablet]}>
+                    {/* 1. Lado Izquierdo: Badges, Título, Metadatos */}
+                    <View style={styles.hCardLeftCol}>
                       <View style={styles.cardHeaderLeft}>
                         {/* Insignia de Año en Cristal */}
                         <View
@@ -943,15 +1025,6 @@ export default function HomeScreen() {
                             {
                               backgroundColor: colors.surfaceSubtle,
                               borderColor: colors.border,
-                              ...(Platform.OS === 'web'
-                                ? ({
-                                    backdropFilter: 'blur(8px)',
-                                    WebkitBackdropFilter: 'blur(8px)',
-                                    boxShadow: isDark
-                                      ? 'inset 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.04)'
-                                      : 'inset 0 1px 2px rgba(31, 38, 135, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.6)',
-                                  } as any)
-                                : {}),
                             },
                           ]}
                         >
@@ -966,8 +1039,8 @@ export default function HomeScreen() {
                             style={[
                               styles.archivedBadge,
                               {
-                                backgroundColor: isDark ? 'rgba(107, 114, 128, 0.15)' : 'rgba(107, 114, 128, 0.10)',
-                                borderColor: isDark ? 'rgba(107, 114, 128, 0.3)' : 'rgba(107, 114, 128, 0.25)',
+                                backgroundColor: isDark ? 'rgba(107, 114, 128, 0.18)' : 'rgba(107, 114, 128, 0.10)',
+                                borderColor: isDark ? 'rgba(107, 114, 128, 0.35)' : 'rgba(107, 114, 128, 0.25)',
                               },
                             ]}
                           >
@@ -980,8 +1053,8 @@ export default function HomeScreen() {
                             style={[
                               styles.activeBadge,
                               {
-                                backgroundColor: isDark ? 'rgba(0, 230, 118, 0.12)' : 'rgba(22, 163, 74, 0.12)',
-                                borderColor: isDark ? 'rgba(0, 230, 118, 0.35)' : 'rgba(22, 163, 74, 0.30)',
+                                backgroundColor: isDark ? 'rgba(0, 230, 118, 0.15)' : 'rgba(22, 163, 74, 0.12)',
+                                borderColor: isDark ? 'rgba(0, 230, 118, 0.40)' : 'rgba(22, 163, 74, 0.30)',
                               },
                             ]}
                           >
@@ -998,7 +1071,7 @@ export default function HomeScreen() {
                             style={[
                               styles.simBadgeReembolso,
                               {
-                                backgroundColor: isDark ? 'rgba(255, 171, 0, 0.15)' : 'rgba(217, 119, 6, 0.12)',
+                                backgroundColor: isDark ? 'rgba(255, 171, 0, 0.18)' : 'rgba(217, 119, 6, 0.12)',
                                 borderColor: isDark ? colors.warning : 'rgba(217, 119, 6, 0.35)',
                               },
                             ]}
@@ -1013,7 +1086,7 @@ export default function HomeScreen() {
                             style={[
                               styles.simBadgeCuotas,
                               {
-                                backgroundColor: isDark ? 'rgba(0, 229, 255, 0.15)' : 'rgba(2, 132, 199, 0.12)',
+                                backgroundColor: isDark ? 'rgba(0, 229, 255, 0.18)' : 'rgba(2, 132, 199, 0.12)',
                                 borderColor: isDark ? colors.primary : 'rgba(2, 132, 199, 0.35)',
                               },
                             ]}
@@ -1025,10 +1098,98 @@ export default function HomeScreen() {
                         )}
                       </View>
 
-                      {/* Botones de acción esculpidos en la tarjeta */}
+                      <Text
+                        style={[
+                          styles.hCardTitle,
+                          { color: colors.textPrimary, fontFamily: Fonts.bold },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {event.title}
+                      </Text>
+
+                      <Text
+                        style={[
+                          styles.hCardMeta,
+                          { color: colors.textSecondary, fontFamily: Fonts.regular },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {totals.totalAttendingCount} {totals.totalAttendingCount === 1 ? 'asistente' : 'asistentes'} • {totals.subFamilies.length} {totals.subFamilies.length === 1 ? 'familia' : 'familias'} • {event.availableDays?.length || 4} días
+                      </Text>
+                    </View>
+
+                    {/* 2. Centro: Métricas en Cápsulas Horizontales de Cristal */}
+                    <View style={[styles.hCardMetricsCol, isTablet && styles.hCardMetricsColTablet]}>
+                      <View
+                        style={[
+                          styles.hMetricPill,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: colors.border,
+                          },
+                        ]}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <SculptedIcon name="money" size={11} variant="plain" color={colors.primary} />
+                          <Text style={[styles.hMetricLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                            Total Gastos
+                          </Text>
+                        </View>
+                        <Text style={[styles.hMetricValue, { color: colors.primary, fontFamily: Fonts.bold }]}>
+                          {FormatCurrency(totals.totalExpenses)}
+                        </Text>
+                      </View>
+
+                      <View
+                        style={[
+                          styles.hMetricPill,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: colors.border,
+                          },
+                        ]}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <SculptedIcon name="users" size={11} variant="plain" color={colors.purple} />
+                          <Text style={[styles.hMetricLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                            Asistentes
+                          </Text>
+                        </View>
+                        <Text style={[styles.hMetricValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                          {totals.totalAttendingCount}/{event.participants.length}
+                        </Text>
+                      </View>
+
+                      <View
+                        style={[
+                          styles.hMetricPill,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: colors.border,
+                          },
+                        ]}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <SculptedIcon name="family" size={11} variant="plain" color={colors.warning} />
+                          <Text style={[styles.hMetricLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
+                            Familias
+                          </Text>
+                        </View>
+                        <Text style={[styles.hMetricValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                          {totals.subFamilies.length}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* 3. Lado Derecho: Acciones y Botón Abrir */}
+                    <View style={[styles.hCardRightCol, isTablet && styles.hCardRightColTablet]}>
                       <View style={styles.cardActions}>
                         <TouchableOpacity
-                          onPress={() => handleToggleArchive(event)}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleToggleArchive(event);
+                          }}
                           accessibilityLabel={event.isArchived ? 'Desarchivar' : 'Archivar'}
                           activeOpacity={0.7}
                         >
@@ -1041,7 +1202,10 @@ export default function HomeScreen() {
                           />
                         </TouchableOpacity>
                         <TouchableOpacity
-                          onPress={() => handleDelete(event)}
+                          onPress={(e) => {
+                            e.stopPropagation();
+                            handleDelete(event);
+                          }}
                           accessibilityLabel="Eliminar evento"
                           activeOpacity={0.7}
                         >
@@ -1056,130 +1220,72 @@ export default function HomeScreen() {
                           />
                         </TouchableOpacity>
                       </View>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.hCardOpenBtn,
+                          {
+                            backgroundColor: colors.primaryLight,
+                            borderColor: colors.primaryBorder,
+                            ...(Platform.OS === 'web'
+                              ? ({
+                                  cursor: 'pointer',
+                                } as any)
+                              : {}),
+                          },
+                        ]}
+                        onPress={() => router.push(`/event/${event.id}`)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.hCardOpenBtnText, { color: colors.primaryText, fontFamily: Fonts.bold }]}>
+                          Abrir Dashboard
+                        </Text>
+                        <SculptedIcon name="chevron-right" size={13} variant="plain" color={colors.primaryText} />
+                      </TouchableOpacity>
                     </View>
+                  </View>
+                </GlassCard>
+              );
+            })}
 
-                    {/* Título Principal del Evento */}
-                    <Text
-                      style={[
-                        styles.cardTitle,
-                        { color: colors.textPrimary, fontFamily: Fonts.bold },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {event.title}
-                    </Text>
-
-                    {/* Bandeja de Métricas de Cristal */}
-                    <View
-                      style={[
-                        styles.metricsTray,
-                        {
-                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.35)',
-                          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.65)',
-                        },
-                      ]}
-                    >
-                      <View style={styles.metricItem}>
-                        <View style={styles.metricHeaderRow}>
-                          <SculptedIcon name="money" size={11} variant="plain" color={colors.textMuted} />
-                          <Text style={[styles.metricLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
-                            Total Gastos
-                          </Text>
-                        </View>
-                        <Text style={[styles.metricValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
-                          {FormatCurrency(totals.totalExpenses)}
-                        </Text>
-                      </View>
-
-                      <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
-
-                      <View style={styles.metricItem}>
-                        <View style={styles.metricHeaderRow}>
-                          <SculptedIcon name="user" size={11} variant="plain" color={colors.textMuted} />
-                          <Text style={[styles.metricLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
-                            Asistentes
-                          </Text>
-                        </View>
-                        <Text style={[styles.metricValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
-                          {totals.totalAttendingCount}/{event.participants.length}
-                        </Text>
-                      </View>
-
-                      <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
-
-                      <View style={styles.metricItem}>
-                        <View style={styles.metricHeaderRow}>
-                          <SculptedIcon name="family" size={11} variant="plain" color={colors.textMuted} />
-                          <Text style={[styles.metricLabel, { color: colors.textMuted, fontFamily: Fonts.medium }]}>
-                            Familias
-                          </Text>
-                        </View>
-                        <Text style={[styles.metricValue, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
-                          {totals.subFamilies.length}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Botón de Entrada al Dashboard */}
-                    <TouchableOpacity
-                      style={[
-                        styles.openButton,
-                        {
-                          backgroundColor: colors.primaryLight,
-                          borderColor: colors.primaryBorder,
-                          borderWidth: 1,
-                        },
-                      ]}
-                      onPress={() => router.push(`/event/${event.id}`)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.openButtonText, { color: colors.primaryText, fontFamily: Fonts.bold }]}>
-                        Abrir Dashboard
-                      </Text>
-                      <SculptedIcon name="chevron-right" size={14} variant="plain" color={colors.primaryText} />
-                    </TouchableOpacity>
-                  </GlassCard>
-                );
-              })}
-
-              {/* Tarjeta Complementaria para Crear Nuevo Evento en el Grid en Cristal */}
-              {filterTab !== 'archived' && (
-                <GlassCard
-                  variant="subtle"
-                  style={[
-                    styles.createEventCardCompanion,
-                    isTablet && styles.eventCardTablet,
-                    isDesktop && styles.eventCardDesktop,
-                  ]}
-                  contentStyle={styles.createEventCardInner}
-                  onPress={() => {
-                    setNewYear(new Date().getFullYear().toString());
-                    setNewTitle(`Vacaciones ${new Date().getFullYear()}`);
-                    setSelectedDirectoryContacts([]);
-                    setIsModalOpen(true);
-                  }}
-                  activeOpacity={0.8}
-                >
+            {/* Tarjeta Complementaria Horizontal para Crear Nuevo Evento en Cristal */}
+            {filterTab !== 'archived' && (
+              <GlassCard
+                variant="subtle"
+                style={styles.horizontalCreateCard}
+                contentStyle={styles.horizontalCreateCardInner}
+                onPress={() => {
+                  setNewYear(new Date().getFullYear().toString());
+                  setNewTitle(`Vacaciones ${new Date().getFullYear()}`);
+                  setSelectedDirectoryContacts([]);
+                  setIsModalOpen(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                   <SculptedIcon
                     name="plus"
-                    size={24}
-                    containerSize={52}
+                    size={18}
+                    containerSize={42}
                     variant="sunken"
                     glow={false}
                     accentColor={colors.primary}
                     color={colors.primary}
                   />
-                  <Text style={[styles.createEventCardTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
-                    Crear Nuevo Evento
-                  </Text>
-                  <Text style={[styles.createEventCardSubtitle, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
-                    Registrar finanzas para un nuevo año
-                  </Text>
-                </GlassCard>
-              )}
-            </ScrollView>
-          )}
-        </View>
+                  <View>
+                    <Text style={[styles.createEventCardTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
+                      Crear Nuevo Evento Anual
+                    </Text>
+                    <Text style={[styles.createEventCardSubtitle, { color: colors.textSecondary, fontFamily: Fonts.regular }]}>
+                      Registrar finanzas y distribución para un nuevo evento
+                    </Text>
+                  </View>
+                </View>
+                <SculptedIcon name="chevron-right" size={16} variant="plain" color={colors.textMuted} />
+              </GlassCard>
+            )}
+          </ScrollView>
+        )}
       </View>
 
       {/* Modal para Crear Evento */}
@@ -1435,7 +1541,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 14,
     marginTop: Platform.OS === 'ios' ? 48 : 12,
     marginBottom: 8,
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: Radii.xl,
     borderWidth: 1,
@@ -1443,53 +1549,53 @@ const styles = StyleSheet.create({
   },
   headerTablet: {
     marginHorizontal: 24,
-    marginTop: 18,
+    marginTop: 16,
     marginBottom: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 22,
     paddingVertical: 14,
     borderRadius: 24,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-  },
-  headerRightActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
   },
-  themeIconButton: {
-    width: 40,
-    height: 40,
+  hamburgerButton: {
+    width: 38,
+    height: 38,
     borderRadius: Radii.md,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   appTitle: {
-    fontSize: 22,
+    fontSize: 20,
     letterSpacing: -0.5,
   },
   appSubtitle: {
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: 12,
+    marginTop: 1,
   },
-  directoryHeaderButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: Radii.md,
-    borderWidth: 1,
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  activeFilterChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
   },
-  directoryHeaderButtonText: {
-    fontSize: 13,
+  activeFilterChipText: {
+    fontSize: 12,
   },
   primaryHeaderButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 11,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: Radii.md,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1497,81 +1603,110 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   primaryHeaderButtonText: {
-    fontSize: 14,
-  },
-  mainLayout: {
-    flex: 1,
-    flexDirection: 'column',
-  },
-  mainLayoutTablet: {
-    flexDirection: 'row',
-  },
-  mobileFilterBar: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    marginBottom: 4,
-  },
-  mobileFilterTriggerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: Radii.lg,
-    borderWidth: 1,
-  },
-  mobileFilterTriggerText: {
     fontSize: 13,
   },
-  mobileFilterBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: Radii.sm,
+
+  // 🧭 ESTILOS DEL DRAWER LATERAL DE CRISTAL
+  drawerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    flexDirection: 'row',
   },
-  mobileFilterBadgeText: {
-    fontSize: 11,
+  drawerBackdropTouch: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
-  sidebar: {
-    padding: 24,
-    borderBottomWidth: 1,
-  },
-  sidebarMobileExpanded: {
-    marginHorizontal: 14,
-    marginBottom: 12,
-    borderRadius: Radii.xl,
-    borderWidth: 1,
-    padding: 16,
-  },
-  sidebarTablet: {
-    width: 320,
-    minWidth: 300,
+  drawerPanel: {
+    width: '85%',
     maxWidth: 360,
-    flexShrink: 0,
-    borderBottomWidth: 0,
+    height: '100%',
     borderRightWidth: 1,
-    padding: 24,
+    paddingHorizontal: 20,
+    zIndex: 100,
   },
-  sidebarHeaderRow: {
+  drawerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.10)',
     marginBottom: 16,
   },
-  sectionHeading: {
+  drawerTitle: {
+    fontSize: 18,
+    letterSpacing: -0.3,
+  },
+  drawerSubtitle: {
     fontSize: 12,
-    textTransform: 'uppercase',
+  },
+  drawerCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  drawerScrollContent: {
+    paddingBottom: 24,
+    gap: 20,
+  },
+  drawerSection: {
+    gap: 10,
+  },
+  drawerSectionTitle: {
+    fontSize: 11,
     letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
-  tabsContainer: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  tabButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+  themeToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderRadius: Radii.lg,
     borderWidth: 1,
-    minHeight: 52,
+  },
+  themeToggleText: {
+    fontSize: 13,
+  },
+  themeSwitchPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radii.pill,
+  },
+  themeSwitchPillText: {
+    fontSize: 10,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: Radii.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 46,
+    borderWidth: 1,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    paddingVertical: 2,
+  },
+  tabsContainer: {
+    gap: 8,
+  },
+  tabButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: Radii.lg,
+    borderWidth: 1,
+    minHeight: 46,
     justifyContent: 'center',
   },
   tabButtonActive: {},
@@ -1589,101 +1724,247 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   tabButtonText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     flexShrink: 1,
   },
   tabBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: Radii.pill,
     borderWidth: 1,
     flexShrink: 0,
   },
   tabBadgeText: {
-    fontSize: 12,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: Radii.lg,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    minHeight: 50,
-    borderWidth: 1,
-    marginBottom: 24,
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    paddingVertical: 2,
+    fontSize: 11,
   },
   directoryCardPromo: {
-    marginTop: 'auto',
     width: '100%',
   },
   directoryCardPromoContent: {
-    padding: 20,
-    gap: 10,
-    minHeight: 140,
-    justifyContent: 'center',
+    padding: 14,
   },
   directoryCardPromoTitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    flexShrink: 1,
+    fontSize: 13,
+    lineHeight: 18,
   },
   directoryCardPromoText: {
-    fontSize: 13,
-    lineHeight: 19,
-    flexShrink: 1,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
   },
-  directoryCardPromoLink: {
-    fontSize: 13,
+  drawerFooter: {
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.10)',
   },
+
+  // 📊 ÁREA DE CONTENIDO Y RESUMEN
   contentArea: {
     flex: 1,
-    padding: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    maxWidth: 1240,
+    width: '100%',
+    alignSelf: 'center',
   },
   executiveSummaryBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
     borderRadius: Radii.lg,
     borderWidth: 1,
-    marginBottom: 22,
+    marginBottom: 16,
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
   },
   summaryItem: {
     flex: 1,
-    minWidth: 110,
+    minWidth: 100,
   },
   summaryItemHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   pulseDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   summaryLabel: {
-    fontSize: 11,
+    fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   summaryValue: {
-    fontSize: 15,
+    fontSize: 14,
   },
   summaryDivider: {
     width: 1,
-    height: 30,
+    height: 24,
+  },
+
+  // 🗂️ TARJETAS DE EVENTOS HORIZONTALES ACOPLADAS
+  horizontalCardsContainer: {
+    gap: 12,
+    paddingBottom: 50,
+  },
+  horizontalEventCard: {
+    width: '100%',
+  },
+  horizontalEventCardContent: {
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+  },
+  hCardLayout: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  hCardLayoutTablet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  hCardLeftCol: {
+    flex: 1,
+    minWidth: 220,
+  },
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+    marginBottom: 4,
+  },
+  yearBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+  },
+  yearBadgeText: {
+    fontSize: 11,
+  },
+  activeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+  },
+  activeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  activeBadgeText: {
+    fontSize: 11,
+  },
+  archivedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+  },
+  archivedBadgeText: {
+    fontSize: 11,
+  },
+  simBadgeReembolso: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+  },
+  simBadgeCuotas: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+  },
+  simBadgeText: {
+    fontSize: 10,
+  },
+  hCardTitle: {
+    fontSize: 16,
+    marginVertical: 3,
+    letterSpacing: -0.3,
+  },
+  hCardMeta: {
+    fontSize: 12,
+  },
+  hCardMetricsCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  hCardMetricsColTablet: {
+    flexShrink: 0,
+  },
+  hMetricPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+    minWidth: 96,
+  },
+  hMetricLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  hMetricValue: {
+    fontSize: 13,
+    marginTop: 1,
+  },
+  hCardRightCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  hCardRightColTablet: {
+    justifyContent: 'flex-end',
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  hCardOpenBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: Radii.md,
+    borderWidth: 1,
+  },
+  hCardOpenBtnText: {
+    fontSize: 12,
+  },
+  horizontalCreateCard: {
+    width: '100%',
+  },
+  horizontalCreateCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+  },
+  createEventCardTitle: {
+    fontSize: 14,
+  },
+  createEventCardSubtitle: {
+    fontSize: 12,
   },
   emptyContainer: {
     flex: 1,
@@ -1700,162 +1981,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 400,
     lineHeight: 20,
-  },
-  cardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 20,
-    paddingBottom: 40,
-  },
-  eventCard: {
-    width: '100%',
-  },
-  eventCardTablet: {
-    flex: 1,
-    minWidth: 300,
-    maxWidth: '49%',
-  },
-  eventCardDesktop: {
-    flex: 1,
-    minWidth: 320,
-    maxWidth: '32%',
-  },
-  eventCardContent: {
-    padding: 22,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  cardHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  yearBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-  },
-  yearBadgeText: {
-    fontSize: 12,
-  },
-  activeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-  },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  activeBadgeText: {
-    fontSize: 11,
-  },
-  archivedBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-  },
-  archivedBadgeText: {
-    fontSize: 11,
-  },
-  simBadgeReembolso: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-  },
-  simBadgeCuotas: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-  },
-  simBadgeText: {
-    fontSize: 11,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  cardTitle: {
-    fontSize: 19,
-    marginBottom: 16,
-    letterSpacing: -0.4,
-  },
-  metricsTray: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: Radii.md,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-  },
-  metricItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  metricHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 3,
-  },
-  metricLabel: {
-    fontSize: 11,
-  },
-  metricValue: {
-    fontSize: 14,
-  },
-  metricDivider: {
-    width: 1,
-    height: 24,
-  },
-  openButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: Radii.md,
-    gap: 6,
-    borderWidth: 1,
-  },
-  openButtonText: {
-    fontSize: 13,
-  },
-  createEventCardCompanion: {
-    borderRadius: Radii.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 220,
-    width: '100%',
-    padding: 24,
-  },
-  createEventCardInner: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  createEventCardTitle: {
-    fontSize: 16,
-    marginTop: 4,
-  },
-  createEventCardSubtitle: {
-    fontSize: 12,
-    textAlign: 'center',
   },
   modalBackdrop: {
     flex: 1,
