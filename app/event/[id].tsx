@@ -14,6 +14,7 @@ import {
   Platform,
   RefreshControl,
   KeyboardAvoidingView,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -881,7 +882,7 @@ export default function EventDetailDashboard() {
           },
         ]}
       >
-        <View style={[styles.headerLeft, isSmallPhone && { gap: 8, flex: 1 }]}>
+        <View style={[styles.headerLeft, isSmallPhone && { gap: 8, flex: 1, maxWidth: '42%' }]}>
           <TouchableOpacity
             style={[
               styles.backButton,
@@ -930,7 +931,58 @@ export default function EventDetailDashboard() {
           </View>
         </View>
 
-        <View style={[styles.headerActions, isSmallPhone && { gap: 6 }]}>
+        {/* Emblema Central Flotante y Sobrepuesto */}
+        <TouchableOpacity
+          onPress={() => router.push('/')}
+          activeOpacity={0.85}
+          accessibilityLabel="Ir al Inicio - ChapApp"
+          style={[
+            {
+              position: 'absolute',
+              left: '50%',
+              top: isTablet ? -14 : (isSmallPhone ? -8 : -10),
+              transform: [{ translateX: isTablet ? -29 : (isSmallPhone ? -22 : -25) }],
+              width: isTablet ? 58 : (isSmallPhone ? 44 : 50),
+              height: isTablet ? 58 : (isSmallPhone ? 44 : 50),
+              borderRadius: isTablet ? 18 : (isSmallPhone ? 14 : 16),
+              backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+              borderColor: isDark ? 'rgba(0, 240, 255, 0.50)' : 'rgba(2, 132, 199, 0.38)',
+              borderWidth: 1.5,
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 35,
+              ...(isDark ? getNeonGlow(colors.primary, 'medium') : {}),
+              ...(Platform.OS === 'web'
+                ? ({
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    cursor: 'pointer',
+                    boxShadow: isDark
+                      ? '0 8px 24px rgba(0, 240, 255, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.40), inset 0 -2px 6px rgba(0, 0, 0, 0.40)'
+                      : '0 8px 20px rgba(2, 132, 199, 0.22), 0 2px 6px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.95)',
+                  } as any)
+                : {
+                    shadowColor: isDark ? colors.primary : '#0284C7',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.45 : 0.2,
+                    shadowRadius: 10,
+                    elevation: 8,
+                  }),
+            },
+          ]}
+        >
+          <Image
+            source={require('../../assets/logo_tree.png')}
+            style={{
+              width: isTablet ? 38 : (isSmallPhone ? 28 : 32),
+              height: isTablet ? 38 : (isSmallPhone ? 28 : 32),
+              tintColor: isDark ? colors.primary : colors.textPrimary,
+            }}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        <View style={[styles.headerActions, isSmallPhone && { gap: 6, maxWidth: '44%', justifyContent: 'flex-end' }]}>
           {/* Botón de Cambio de Tema */}
           <TouchableOpacity
             onPress={toggleTheme}
@@ -3320,7 +3372,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: Radii.xl,
     borderWidth: 1,
-    zIndex: 10,
+    zIndex: 20,
+    overflow: 'visible',
   },
   topHeaderTablet: {
     marginHorizontal: 24,
@@ -3334,6 +3387,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
+    overflow: 'visible',
   },
   backButton: {
     paddingHorizontal: 12,
