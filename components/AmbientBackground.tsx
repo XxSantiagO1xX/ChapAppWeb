@@ -10,33 +10,45 @@ export const AmbientBackground: React.FC = () => {
   const bgSource = isDark ? darkBgImage : lightBgImage;
 
   return (
-    <View style={styles.container} pointerEvents="none">
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? '#000000' : '#F8FAFC',
+        },
+      ]}
+      pointerEvents="none"
+    >
       {/* 1. Capa de Arte 3D en Alta Definición y Máxima Nitidez Nativa */}
       <Image
         source={bgSource}
         style={[
           styles.backgroundImage,
           {
-            opacity: isDark ? 0.95 : 0.98,
+            opacity: 1,
             ...(Platform.OS === 'web'
               ? ({
                   imageRendering: '-webkit-optimize-contrast',
+                  objectFit: isDark ? 'contain' : 'cover',
+                  objectPosition: 'center',
                 } as any)
               : {}),
           },
         ]}
-        resizeMode="cover"
+        resizeMode={isDark ? 'contain' : 'cover'}
       />
 
-      {/* 2. Capa de Tinte Translúcido Sutil para Legibilidad y Contraste */}
-      <View
-        style={[
-          styles.tintOverlay,
-          {
-            backgroundColor: isDark ? 'rgba(13, 17, 23, 0.25)' : 'rgba(248, 250, 252, 0.12)',
-          },
-        ]}
-      />
+      {/* 2. Capa de Tinte Translúcido Sutil para Legibilidad en Modo Claro */}
+      {!isDark && (
+        <View
+          style={[
+            styles.tintOverlay,
+            {
+              backgroundColor: 'rgba(248, 250, 252, 0.12)',
+            },
+          ]}
+        />
+      )}
     </View>
   );
 };

@@ -138,7 +138,7 @@ export const LightPalette: ThemePalette = {
 
 export const DarkPalette: ThemePalette = {
   mode: 'dark',
-  background: '#0D1117',        // Canvas medianoche moderno (Glassmorphism dark)
+  background: '#000000',        // Canvas negro puro ultra-nítido que se fusiona con el fondo de cristal 3D
   surface: 'rgba(18, 26, 42, 0.45)', // Tarjeta de cristal oscuro translúcido auténtico
   surfaceSubtle: 'rgba(255, 255, 255, 0.05)',
   surfaceHighlight: 'rgba(255, 255, 255, 0.12)',
