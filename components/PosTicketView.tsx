@@ -877,18 +877,19 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   posHeader: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 6,
+    width: '100%',
   },
   posBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: Radii.sm,
     borderWidth: 1,
+    alignSelf: 'flex-start',
   },
   posBadgeText: {
     fontSize: 11,
@@ -899,12 +900,12 @@ const styles = StyleSheet.create({
   posTitle: {
     fontSize: 22,
     fontWeight: '600',
-    textAlign: 'center',
+    textAlign: 'left',
     letterSpacing: -0.4,
   },
   posSubtitle: {
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   dashedDivider: {
     width: '100%',

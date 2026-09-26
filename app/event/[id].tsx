@@ -1456,8 +1456,31 @@ export default function EventDetailDashboard() {
 
               {/* SECCIÓN MASTER-DETAIL: SUBFAMILIAS (35%) VS TICKET POS DETALLE (65%) */}
               <View style={styles.masterDetailSection}>
-                <View style={styles.masterDetailHeader}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={[
+                    styles.masterDetailHeader,
+                    {
+                      backgroundColor: isDark ? 'rgba(13, 20, 32, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+                      borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                      borderWidth: 1,
+                      borderRadius: Radii.lg,
+                      paddingHorizontal: 18,
+                      paddingVertical: 14,
+                      gap: 6,
+                      alignItems: 'flex-start',
+                      ...(Platform.OS === 'web'
+                        ? ({
+                            backdropFilter: 'blur(20px) saturate(180%)',
+                            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                            boxShadow: isDark
+                              ? '0 8px 24px rgba(0, 0, 0, 0.40), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                              : '0 4px 16px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
+                          } as any)
+                        : {}),
+                    },
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <SculptedIcon name="receipt" size={16} variant="plain" color={colors.primary} />
                     <Text style={[styles.masterDetailTitle, { color: colors.textPrimary }]}>
                       Cuentas y Tickets de Cobro POS

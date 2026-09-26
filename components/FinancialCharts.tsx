@@ -9,6 +9,7 @@ import {
 import Svg, {
   G,
   Circle,
+  Ellipse,
   Path,
   Rect,
   Defs,
@@ -28,27 +29,29 @@ interface FinancialChartsProps {
   totals: EventTotalsResult;
 }
 
-// Paleta coordinada de tonos pasteles ejecutivos para categorías
-const PASTEL_CATEGORY_COLORS: Record<string, string> = {
-  Comida: '#F59E0B',           // Ámbar cálido pastel
-  'Gastos Generales': '#38BDF8', // Azul acero pastel
-  Varios: '#C084FC',           // Lavanda suave pastel
-  Rentas: '#FB7185',           // Terracota / Coral pastel
-  Mejoras: '#10B981',          // Menta esmeralda
-  Hospedaje: '#FB923C',        // Terracota naranja suave
-  Transporte: '#60A5FA',       // Azul pastel
-  Entretenimiento: '#F472B6',  // Rosa pastel
-  Bebidas: '#818CF8',          // Índigo lavanda
+// Paleta Luminous 3D de alta saturación, contraste y profundidad para gráficas
+const LUMINOUS_3D_CATEGORY_COLORS: Record<string, string> = {
+  Comida: '#F59E0B',           // Ámbar Dorado 3D
+  'Gastos Generales': '#00F0FF', // Cian Eléctrico Luminous 3D
+  Varios: '#A855F7',           // Violeta Amatista Neón 3D
+  Rentas: '#F43F5E',           // Coral Rubí Intenso 3D
+  Mejoras: '#00E599',          // Menta Esmeralda 3D
+  Hospedaje: '#FF7A00',        // Naranja Solar Topacio 3D
+  Transporte: '#38BDF8',       // Zafiro Celeste 3D
+  Entretenimiento: '#EC4899',  // Turmalina Rosa Eléctrico 3D
+  Bebidas: '#6366F1',          // Azul Índigo Neón 3D
 };
 
-const PASTEL_FALLBACK_COLORS = [
+const LUMINOUS_3D_FALLBACK_COLORS = [
   '#F59E0B',
+  '#00F0FF',
+  '#A855F7',
+  '#F43F5E',
+  '#00E599',
+  '#FF7A00',
   '#38BDF8',
-  '#C084FC',
-  '#FB7185',
-  '#10B981',
-  '#FB923C',
-  '#818CF8',
+  '#EC4899',
+  '#6366F1',
 ];
 
 /**
@@ -110,7 +113,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     map.forEach((value, key) => {
       const percentage = (value.total / totals.totalExpenses) * 100;
       const color =
-        PASTEL_CATEGORY_COLORS[key] || PASTEL_FALLBACK_COLORS[colorIdx % PASTEL_FALLBACK_COLORS.length];
+        LUMINOUS_3D_CATEGORY_COLORS[key] || LUMINOUS_3D_FALLBACK_COLORS[colorIdx % LUMINOUS_3D_FALLBACK_COLORS.length];
       colorIdx++;
 
       items.push({
@@ -155,8 +158,8 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     const activeAccentColor = isComplete
       ? (isDark ? '#00E599' : '#10B981')
       : clampedRatio > 0.5
-      ? '#C084FC'
-      : '#38BDF8';
+      ? '#A855F7'
+      : '#00F0FF';
 
     return {
       gaugePercent,
@@ -170,10 +173,10 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
     };
   }, [totals.totalExpenses, totals.totalCollected, trackCircumference, center, outerOrbitRadius, isDark]);
 
-  // Dimensiones de las Barras Verticales en Cápsula
-  const barSvgWidth = 28;
+  // Dimensiones de las Barras Verticales Cilíndricas 3D
+  const barSvgWidth = 32;
   const barSvgHeight = 132;
-  const barMaxFillHeight = 122;
+  const barMaxFillHeight = 114;
 
   const dominantCategoryColor = categoryBreakdown[0]?.color || '#F59E0B';
 
@@ -464,12 +467,18 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
             </View>
           ) : (
             <View style={styles.verticalBarsContainer}>
-              {/* FILA DE LAS 5 BARRAS VERTICALES EN CÁPSULA CON RAYITO / SATÉLITE */}
+              {/* FILA DE LAS 5 BARRAS VERTICALES EN CILINDRO DE CRISTAL 3D */}
               <View style={styles.verticalBarsRow}>
                 {categoryBreakdown.slice(0, 5).map((item) => {
-                  const fraction = Math.max(0.06, Math.min(1, item.percentage / 100));
-                  const fillH = Math.max(16, fraction * barMaxFillHeight);
-                  const topY = barSvgHeight - fillH + 8;
+                  const fraction = Math.max(0.08, Math.min(1, item.percentage / 100));
+                  const fillH = Math.max(22, fraction * barMaxFillHeight);
+                  const barWidth = 22;
+                  const barX = 5;
+                  const barY = barSvgHeight - fillH - 4;
+                  const capY = barY + 5;
+                  const rx = 11;
+                  const ry = 4.5;
+                  const topY = capY;
 
                   return (
                     <View key={item.category} style={styles.verticalBarColumn}>
@@ -494,77 +503,144 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                         </Text>
                       </View>
 
-                      {/* Cápsula Vertical SVG con Rayito, Onda Líquida y Satélite Orbital */}
+                      {/* Cápsula Vertical SVG Cilíndrica 3D Glass Sculpted */}
                       <View style={styles.verticalBarSvgWrapper}>
                         <Svg width={barSvgWidth} height={barSvgHeight}>
                           <Defs>
-                            {/* Degradado vertical de la barra fluida */}
-                            <SvgLinearGradient id={`vBarGrad_${item.category}`} x1="0%" y1="100%" x2="0%" y2="0%">
-                              <Stop offset="0%" stopColor={item.color} stopOpacity="0.75" />
-                              <Stop offset="100%" stopColor={item.color} stopOpacity="1" />
+                            {/* 1. Degradado horizontal del carril de cristal 3D */}
+                            <SvgLinearGradient id={`vTrackGrad_${item.category}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity={isDark ? 0.20 : 0.45} />
+                              <Stop offset="25%" stopColor={isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(15, 23, 42, 0.03)'} />
+                              <Stop offset="75%" stopColor={isDark ? 'rgba(0, 0, 0, 0.20)' : 'rgba(15, 23, 42, 0.06)'} />
+                              <Stop offset="100%" stopColor={isDark ? 'rgba(0, 0, 0, 0.40)' : 'rgba(15, 23, 42, 0.12)'} />
+                            </SvgLinearGradient>
+
+                            {/* 2. Degradado horizontal del cuerpo del cilindro 3D (Luz especular izquierda + Sombreado curvatura derecha) */}
+                            <SvgLinearGradient id={`vBar3DGrad_${item.category}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.65" />
+                              <Stop offset="18%" stopColor={item.color} stopOpacity="1" />
+                              <Stop offset="55%" stopColor={item.color} stopOpacity="0.95" />
+                              <Stop offset="85%" stopColor={item.color} stopOpacity="0.75" />
+                              <Stop offset="100%" stopColor="#000000" stopOpacity="0.40" />
+                            </SvgLinearGradient>
+
+                            {/* 3. Degradado de la tapa elíptica 3D superior (Lente reflectante) */}
+                            <SvgLinearGradient id={`vCap3DGrad_${item.category}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.90" />
+                              <Stop offset="50%" stopColor={item.color} stopOpacity="0.95" />
+                              <Stop offset="100%" stopColor={item.color} stopOpacity="0.70" />
                             </SvgLinearGradient>
                           </Defs>
 
-                          {/* 1. Carril base translúcido en cápsula (Track) */}
+                          {/* 1. Carril base cilíndrico de cristal (Track 3D) */}
                           <Rect
-                            x={3}
-                            y={3}
-                            width={22}
-                            height={126}
-                            rx={11}
-                            stroke={isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.08)'}
+                            x={barX}
+                            y={5}
+                            width={barWidth}
+                            height={122}
+                            rx={rx}
+                            fill={`url(#vTrackGrad_${item.category})`}
+                            stroke={isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(15, 23, 42, 0.09)'}
                             strokeWidth={1}
-                            fill={isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.04)'}
+                          />
+
+                          {/* Reflejo biselado en el aro superior del carril */}
+                          <Ellipse
+                            cx={barX + rx}
+                            cy={10}
+                            rx={rx - 1}
+                            ry={ry - 0.5}
+                            fill="none"
+                            stroke={isDark ? 'rgba(255, 255, 255, 0.30)' : 'rgba(255, 255, 255, 0.90)'}
+                            strokeWidth={0.8}
                           />
 
                           {/* 2. Rayito / Onda líquida fluida interior vertical */}
                           <Path
-                            d="M 14 122 Q 9 95 14 68 Q 19 41 14 14"
+                            d={`M ${barX + rx} 120 Q ${barX + 4} 92 ${barX + rx} 64 Q ${barX + barWidth - 4} 36 ${barX + rx} 12`}
                             stroke={item.color}
                             strokeWidth={1.4}
-                            opacity={isDark ? 0.40 : 0.30}
+                            opacity={isDark ? 0.35 : 0.25}
                             fill="none"
                           />
 
-                          {/* 3. Resplandor difuso de la barra activa */}
+                          {/* 3. Resplandor de volumen 3D */}
                           <Rect
-                            x={2}
-                            y={barSvgHeight - fillH - 2}
-                            width={24}
-                            height={fillH}
-                            rx={12}
+                            x={barX - 2}
+                            y={barY - 3}
+                            width={barWidth + 4}
+                            height={fillH + 4}
+                            rx={rx + 2}
                             fill={item.color}
-                            opacity={isDark ? 0.28 : 0.16}
+                            opacity={isDark ? 0.25 : 0.14}
                           />
 
-                          {/* 4. Barra fluida principal en cápsula */}
+                          {/* 4. Cuerpo del Cilindro 3D de la barra */}
                           <Rect
-                            x={4}
-                            y={barSvgHeight - fillH}
-                            width={20}
-                            height={fillH - 4}
-                            rx={10}
-                            fill={`url(#vBarGrad_${item.category})`}
+                            x={barX}
+                            y={capY}
+                            width={barWidth}
+                            height={Math.max(1, fillH - 8)}
+                            fill={`url(#vBar3DGrad_${item.category})`}
                           />
 
-                          {/* 5. El "Rayito" / Satélite Luminoso en la punta superior */}
+                          {/* 5. Tapa Elíptica 3D Inferior (Base del Cilindro) */}
+                          <Ellipse
+                            cx={barX + rx}
+                            cy={barY + fillH - 4}
+                            rx={rx}
+                            ry={ry}
+                            fill={item.color}
+                            opacity={0.85}
+                          />
+
+                          {/* 6. Tapa Elíptica 3D Superior (Lente con relieve y bisel blanco brillante) */}
+                          <Ellipse
+                            cx={barX + rx}
+                            cy={capY}
+                            rx={rx}
+                            ry={ry}
+                            fill={`url(#vCap3DGrad_${item.category})`}
+                            stroke="#FFFFFF"
+                            strokeWidth={1}
+                            strokeOpacity={0.85}
+                          />
+
+                          {/* Reflejo especular puntual en la tapa 3D */}
+                          <Ellipse
+                            cx={barX + rx - 3.5}
+                            cy={capY - 1}
+                            rx={3}
+                            ry={1.2}
+                            fill="#FFFFFF"
+                            opacity={0.90}
+                          />
+
+                          {/* 7. Satélite / Rayito de energía flotante en la cima */}
                           <G>
-                            {/* Halo difuso del rayito satélite */}
+                            {/* Halo difuso del satélite */}
                             <Circle
-                              cx={14}
+                              cx={barX + rx}
                               cy={topY}
                               r={6.5}
                               fill={item.color}
-                              opacity={0.45}
+                              opacity={0.50}
                             />
-                            {/* Núcleo blanco brillante del satélite */}
+                            {/* Núcleo esférico brillante con borde */}
                             <Circle
-                              cx={14}
+                              cx={barX + rx}
                               cy={topY}
                               r={3.2}
                               fill="#FFFFFF"
                               stroke={item.color}
-                              strokeWidth={1}
+                              strokeWidth={1.2}
+                            />
+                            {/* Destello especular en el núcleo */}
+                            <Circle
+                              cx={barX + rx - 1}
+                              cy={topY - 1}
+                              r={1}
+                              fill="#FFFFFF"
                             />
                           </G>
                         </Svg>
@@ -578,7 +654,7 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                             {
                               backgroundColor: item.color,
                               ...(Platform.OS === 'web'
-                                ? ({ boxShadow: `0 0 5px ${item.color}80` } as any)
+                                ? ({ boxShadow: `0 0 6px ${item.color}90` } as any)
                                 : {}),
                             },
                           ]}
@@ -775,7 +851,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   verticalBarSvgWrapper: {
-    width: 28,
+    width: 32,
     height: 132,
     alignItems: 'center',
     justifyContent: 'center',
