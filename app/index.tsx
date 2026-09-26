@@ -304,35 +304,45 @@ export default function HomeScreen() {
             <SculptedIcon name="menu" size={18} variant="plain" color={colors.textPrimary} />
           </TouchableOpacity>
 
+          {/* Logo Badge Flotante & Sobrepuesto */}
           <View
             style={[
               {
-                width: isTablet ? 40 : 36,
-                height: isTablet ? 40 : 36,
-                borderRadius: Radii.md,
-                backgroundColor: isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(2, 132, 199, 0.08)',
-                borderColor: isDark ? 'rgba(0, 240, 255, 0.35)' : 'rgba(2, 132, 199, 0.25)',
-                borderWidth: 1,
+                width: isTablet ? 58 : 48,
+                height: isTablet ? 58 : 48,
+                borderRadius: isTablet ? 18 : 15,
+                backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+                borderColor: isDark ? 'rgba(0, 240, 255, 0.50)' : 'rgba(2, 132, 199, 0.38)',
+                borderWidth: 1.5,
                 alignItems: 'center',
                 justifyContent: 'center',
-                ...(isDark ? getNeonGlow(colors.primary, 'low') : {}),
+                marginTop: isTablet ? -10 : -7,
+                marginBottom: isTablet ? -10 : -7,
+                zIndex: 25,
+                ...(isDark ? getNeonGlow(colors.primary, 'medium') : {}),
                 ...(Platform.OS === 'web'
                   ? ({
-                      backdropFilter: 'blur(10px)',
-                      WebkitBackdropFilter: 'blur(10px)',
+                      backdropFilter: 'blur(16px)',
+                      WebkitBackdropFilter: 'blur(16px)',
                       boxShadow: isDark
-                        ? 'inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 0 10px rgba(0, 240, 255, 0.20)'
-                        : 'inset 0 1px 1px rgba(255, 255, 255, 0.90), 0 2px 6px rgba(15, 23, 42, 0.05)',
+                        ? '0 8px 24px rgba(0, 240, 255, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.40), inset 0 -2px 6px rgba(0, 0, 0, 0.40)'
+                        : '0 8px 20px rgba(2, 132, 199, 0.22), 0 2px 6px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.95)',
                     } as any)
-                  : {}),
+                  : {
+                      shadowColor: isDark ? colors.primary : '#0284C7',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isDark ? 0.45 : 0.2,
+                      shadowRadius: 10,
+                      elevation: 8,
+                    }),
               },
             ]}
           >
             <Image
               source={require('../assets/logo_tree.png')}
               style={{
-                width: isTablet ? 24 : 21,
-                height: isTablet ? 24 : 21,
+                width: isTablet ? 38 : 31,
+                height: isTablet ? 38 : 31,
                 tintColor: isDark ? colors.primary : colors.textPrimary,
               }}
               resizeMode="contain"
@@ -478,23 +488,38 @@ export default function HomeScreen() {
                 <View
                   style={[
                     {
-                      width: 38,
-                      height: 38,
-                      borderRadius: Radii.md,
-                      backgroundColor: isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(2, 132, 199, 0.08)',
-                      borderColor: isDark ? 'rgba(0, 240, 255, 0.35)' : 'rgba(2, 132, 199, 0.25)',
-                      borderWidth: 1,
+                      width: 46,
+                      height: 46,
+                      borderRadius: 15,
+                      backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+                      borderColor: isDark ? 'rgba(0, 240, 255, 0.50)' : 'rgba(2, 132, 199, 0.38)',
+                      borderWidth: 1.5,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      ...(isDark ? getNeonGlow(colors.primary, 'low') : {}),
+                      ...(isDark ? getNeonGlow(colors.primary, 'medium') : {}),
+                      ...(Platform.OS === 'web'
+                        ? ({
+                            backdropFilter: 'blur(16px)',
+                            WebkitBackdropFilter: 'blur(16px)',
+                            boxShadow: isDark
+                              ? '0 6px 18px rgba(0, 240, 255, 0.30), inset 0 1px 2px rgba(255, 255, 255, 0.40)'
+                              : '0 6px 16px rgba(15, 23, 42, 0.10), inset 0 1px 2px rgba(255, 255, 255, 0.95)',
+                          } as any)
+                        : {
+                            shadowColor: isDark ? colors.primary : '#0284C7',
+                            shadowOffset: { width: 0, height: 3 },
+                            shadowOpacity: isDark ? 0.4 : 0.15,
+                            shadowRadius: 6,
+                            elevation: 5,
+                          }),
                     },
                   ]}
                 >
                   <Image
                     source={require('../assets/logo_tree.png')}
                     style={{
-                      width: 23,
-                      height: 23,
+                      width: 30,
+                      height: 30,
                       tintColor: isDark ? colors.primary : colors.textPrimary,
                     }}
                     resizeMode="contain"
@@ -1587,7 +1612,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: Radii.xl,
     borderWidth: 1,
-    zIndex: 10,
+    zIndex: 20,
+    overflow: 'visible',
   },
   headerTablet: {
     marginHorizontal: 24,
@@ -1601,6 +1627,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    overflow: 'visible',
   },
   hamburgerButton: {
     width: 38,
