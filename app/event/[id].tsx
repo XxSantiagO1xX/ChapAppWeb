@@ -83,9 +83,9 @@ export default function EventDetailDashboard() {
   const isSmallPhone = width < 420;
   const { colors, isDark, toggleTheme, getNeonGlow } = useTheme();
 
-  const centerLogoSize = isTablet ? 68 : (isSmallPhone ? 52 : 58);
-  const centerLogoIconSize = isTablet ? 44 : (isSmallPhone ? 34 : 38);
-  const centerLogoRadius = isTablet ? 20 : (isSmallPhone ? 16 : 18);
+  const centerLogoSize = isTablet ? 74 : (isSmallPhone ? 54 : 62);
+  const centerLogoIconSize = isTablet ? 48 : (isSmallPhone ? 35 : 40);
+  const centerLogoRadius = isTablet ? 22 : (isSmallPhone ? 16 : 18);
 
   const [event, setEvent] = useState<EventConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -861,6 +861,7 @@ export default function EventDetailDashboard() {
           styles.topHeader,
           isTablet && styles.topHeaderTablet,
           {
+            position: 'relative',
             marginTop:
               Platform.OS === 'web'
                 ? isTablet ? 20 : 12
@@ -935,59 +936,65 @@ export default function EventDetailDashboard() {
           </View>
         </View>
 
-        {/* Emblema Central Flotante y Sobrepuesto */}
-        <TouchableOpacity
-          onPress={() => router.push('/')}
-          activeOpacity={0.85}
-          accessibilityLabel="Ir al Inicio - ChapApp"
-          style={[
-            {
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              transform: [
-                { translateX: -centerLogoSize / 2 },
-                { translateY: -centerLogoSize / 2 },
-              ],
-              width: centerLogoSize,
-              height: centerLogoSize,
-              borderRadius: centerLogoRadius,
-              backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
-              borderColor: isDark ? 'rgba(0, 240, 255, 0.50)' : 'rgba(2, 132, 199, 0.38)',
-              borderWidth: 1.5,
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 35,
-              ...(isDark ? getNeonGlow(colors.primary, 'medium') : {}),
-              ...(Platform.OS === 'web'
-                ? ({
-                    backdropFilter: 'blur(16px)',
-                    WebkitBackdropFilter: 'blur(16px)',
-                    cursor: 'pointer',
-                    boxShadow: isDark
-                      ? '0 10px 28px rgba(0, 240, 255, 0.38), inset 0 1px 2px rgba(255, 255, 255, 0.45), inset 0 -2px 6px rgba(0, 0, 0, 0.40)'
-                      : '0 10px 24px rgba(2, 132, 199, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.95)',
-                  } as any)
-                : {
-                    shadowColor: isDark ? colors.primary : '#0284C7',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: isDark ? 0.45 : 0.2,
-                    shadowRadius: 10,
-                    elevation: 8,
-                  }),
-            },
-          ]}
+        {/* Contenedor Centrador 100% Absoluto y Simétrico */}
+        <View
+          pointerEvents="box-none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 35,
+          }}
         >
-          <Image
-            source={require('../../assets/logo_tree.png')}
-            style={{
-              width: centerLogoIconSize,
-              height: centerLogoIconSize,
-              tintColor: isDark ? colors.primary : colors.textPrimary,
-            }}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/')}
+            activeOpacity={0.85}
+            accessibilityLabel="Ir al Inicio - ChapApp"
+            style={[
+              {
+                width: centerLogoSize,
+                height: centerLogoSize,
+                borderRadius: centerLogoRadius,
+                backgroundColor: isDark ? 'rgba(0, 240, 255, 0.16)' : 'rgba(2, 132, 199, 0.12)',
+                borderColor: isDark ? 'rgba(0, 240, 255, 0.50)' : 'rgba(2, 132, 199, 0.38)',
+                borderWidth: 1.5,
+                alignItems: 'center',
+                justifyContent: 'center',
+                ...(isDark ? getNeonGlow(colors.primary, 'medium') : {}),
+                ...(Platform.OS === 'web'
+                  ? ({
+                      backdropFilter: 'blur(16px)',
+                      WebkitBackdropFilter: 'blur(16px)',
+                      cursor: 'pointer',
+                      boxShadow: isDark
+                        ? '0 10px 28px rgba(0, 240, 255, 0.38), inset 0 1px 2px rgba(255, 255, 255, 0.45), inset 0 -2px 6px rgba(0, 0, 0, 0.40)'
+                        : '0 10px 24px rgba(2, 132, 199, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.95)',
+                    } as any)
+                  : {
+                      shadowColor: isDark ? colors.primary : '#0284C7',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: isDark ? 0.45 : 0.2,
+                      shadowRadius: 10,
+                      elevation: 8,
+                    }),
+              },
+            ]}
+          >
+            <Image
+              source={require('../../assets/logo_tree.png')}
+              style={{
+                width: centerLogoIconSize,
+                height: centerLogoIconSize,
+                tintColor: isDark ? colors.primary : colors.textPrimary,
+              }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </View>
 
         <View style={[styles.headerActions, isSmallPhone && { gap: 6, maxWidth: '44%', justifyContent: 'flex-end' }]}>
           {/* Botón de Cambio de Tema */}
@@ -3369,6 +3376,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   topHeader: {
+    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
