@@ -2430,29 +2430,37 @@ export default function EventDetailDashboard() {
         </ScrollView>
       </View>
 
-      {/* ⚡ BOTÓN FLOTANTE DE ACCIÓN (FAB) "+ GASTO RÁPIDO" */}
+      {/* ⚡ BOTÓN FLOTANTE DE ACCIÓN (FAB) "GASTO RÁPIDO" */}
       <TouchableOpacity
         style={[
           styles.fabButton,
           {
             backgroundColor: colors.primary,
+            bottom: Math.max(insets.bottom, 16) + 16,
             flexDirection: 'row',
             alignItems: 'center',
             gap: 6,
-            ...(isDark ? getNeonGlow(colors.neonGreen, 'medium') : {}),
+            zIndex: 9999,
+            elevation: 10,
+            ...(isDark ? getNeonGlow(colors.neonCyan, 'medium') : {}),
+            ...(Platform.OS === 'web'
+              ? ({
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  boxShadow: isDark
+                    ? '0 12px 32px rgba(0, 240, 255, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.60)'
+                    : '0 10px 28px rgba(2, 132, 199, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.60)',
+                } as any)
+              : {}),
           },
         ]}
         onPress={() => {
-          if (event.participants.length === 0) {
-            Alert.alert('Atención', 'Primero agrega participantes al evento para asignar el pago.');
-            return;
-          }
           setIsQuickExpenseOpen(true);
         }}
         activeOpacity={0.85}
       >
         <SculptedIcon name="plus" size={16} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
-        <Text style={[styles.fabText, { color: isDark ? '#0D1117' : '#FFFFFF', fontWeight: '700' }]}>+ Gasto Rápido</Text>
+        <Text style={[styles.fabText, { color: isDark ? '#0D1117' : '#FFFFFF', fontWeight: '700' }]}>Gasto Rápido</Text>
       </TouchableOpacity>
 
       {/* Modal: Captura Rápida de Gastos */}

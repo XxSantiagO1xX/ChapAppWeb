@@ -29,6 +29,7 @@ const ThemeContext = createContext<ThemeContextValue>({
   toggleTheme: () => {},
   setThemeMode: () => {},
   getNeonGlow: () => ({}),
+  getLiquidGlass: () => ({}),
   cardShadow: Shadows.card,
 });
 
