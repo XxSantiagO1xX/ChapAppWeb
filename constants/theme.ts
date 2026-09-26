@@ -75,7 +75,7 @@ export interface ThemePalette {
 
 export const LightPalette: ThemePalette = {
   mode: 'light',
-  background: '#F8FAFC',        // Base luminosa y limpia con toque sutil de malla iridiscente
+  background: '#FFFFFF',        // Base blanca pura luminosa que se fusiona con el fondo de cristal líquido claro
   surface: 'rgba(255, 255, 255, 0.48)', // Auténtico vidrio esmerilado blanco translúcido
   surfaceSubtle: 'rgba(255, 255, 255, 0.35)', // Inset esmerilado suave / sunken limpio
   surfaceHighlight: 'rgba(255, 255, 255, 0.70)', // Superficie brillante elevada

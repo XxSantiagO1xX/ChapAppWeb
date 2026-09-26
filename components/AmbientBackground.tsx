@@ -14,12 +14,12 @@ export const AmbientBackground: React.FC = () => {
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? '#000000' : '#F8FAFC',
+          backgroundColor: isDark ? '#000000' : '#FFFFFF',
         },
       ]}
       pointerEvents="none"
     >
-      {/* 1. Capa de Arte 3D en Alta Definición y Máxima Nitidez Nativa */}
+      {/* 1. Capa de Arte 3D en Ultra Alta Definición (Liquid Glass Petals) */}
       <Image
         source={bgSource}
         style={[
@@ -29,26 +29,24 @@ export const AmbientBackground: React.FC = () => {
             ...(Platform.OS === 'web'
               ? ({
                   imageRendering: '-webkit-optimize-contrast',
-                  objectFit: isDark ? 'contain' : 'cover',
+                  objectFit: 'contain',
                   objectPosition: 'center',
                 } as any)
               : {}),
           },
         ]}
-        resizeMode={isDark ? 'contain' : 'cover'}
+        resizeMode="contain"
       />
 
-      {/* 2. Capa de Tinte Translúcido Sutil para Legibilidad en Modo Claro */}
-      {!isDark && (
-        <View
-          style={[
-            styles.tintOverlay,
-            {
-              backgroundColor: 'rgba(248, 250, 252, 0.12)',
-            },
-          ]}
-        />
-      )}
+      {/* 2. Capa de Tinte Sutil para Legibilidad y Profundidad */}
+      <View
+        style={[
+          styles.tintOverlay,
+          {
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+          },
+        ]}
+      />
     </View>
   );
 };
