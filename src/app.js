@@ -11,6 +11,9 @@ import {
   deleteEvent, 
   addParticipant, 
   updateParticipant,
+  updateParticipantRole,
+  toggleSubFamilyAttendance,
+  deleteSubFamily,
   deleteParticipant, 
   settleSubFamily,
   addExpense,
@@ -251,11 +254,28 @@ class App {
         return;
       }
 
-      // 9. Pestañas del Dashboard
+      // 9. Pestañas del Dashboard y Menú Cápsula
       const dashTabBtn = e.target.closest('.dash-tab-btn');
       if (dashTabBtn) {
         const tab = dashTabBtn.getAttribute('data-tab');
         store.setState({ activeDashboardTab: tab });
+        return;
+      }
+
+      // 9.1 Toggle de Colapso de Barra Lateral en Cápsula
+      if (e.target.closest('#btn-toggle-capsule-sidebar')) {
+        const { isSidebarCollapsed } = store.getState();
+        store.setState({ isSidebarCollapsed: !isSidebarCollapsed });
+        return;
+      }
+
+      // 9.2 Accesos Rápidos desde la Barra Lateral en Cápsula
+      if (e.target.closest('#btn-capsule-add-expense')) {
+        this.openQuickExpenseModal();
+        return;
+      }
+      if (e.target.closest('#btn-capsule-directory')) {
+        this.openDirectoryModal('import');
         return;
       }
 
@@ -268,7 +288,7 @@ class App {
       }
 
       // 11. Liquidar / Desmarcar Subfamilia completa
-      const toggleSfSettleBtn = e.target.closest('#btn-toggle-sf-settle');
+      const toggleSfSettleBtn = e.target.closest('#btn-toggle-sf-settle') || e.target.closest('.btn-family-toggle-settle');
       if (toggleSfSettleBtn) {
         const sfName = toggleSfSettleBtn.getAttribute('data-subfamily');
         const eventId = toggleSfSettleBtn.getAttribute('data-event-id');
@@ -281,7 +301,59 @@ class App {
         return;
       }
 
-      // 12. Toggle de Liquidación individual de un integrante
+      // 11.1 Alternar Asistencia de toda una Subfamilia
+      const toggleFamilyAttendBtn = e.target.closest('.btn-family-toggle-attendance');
+      if (toggleFamilyAttendBtn) {
+        const sfName = toggleFamilyAttendBtn.getAttribute('data-subfamily');
+        const eventId = toggleFamilyAttendBtn.getAttribute('data-event-id');
+        const targetAttending = toggleFamilyAttendBtn.getAttribute('data-target-attending') === 'true';
+
+        await toggleSubFamilyAttendance(eventId, sfName, targetAttending);
+        const refreshed = await getEventById(eventId);
+        store.setState({ activeEvent: refreshed });
+        showToast(targetAttending ? `Familia "${sfName}" marcada como asistente` : `Familia "${sfName}" marcada como ausente`, 'info');
+        return;
+      }
+
+      // 11.2 Eliminar una Subfamilia completa
+      const deleteFamilyBtn = e.target.closest('.btn-family-delete');
+      if (deleteFamilyBtn) {
+        const sfName = deleteFamilyBtn.getAttribute('data-subfamily');
+        const eventId = deleteFamilyBtn.getAttribute('data-event-id');
+
+        openConfirmModal({
+          title: `¿Eliminar "${sfName}"?`,
+          message: `Se eliminarán todos los integrantes de esta subfamilia del evento.`,
+          variant: 'danger',
+          onConfirm: async () => {
+            await deleteSubFamily(eventId, sfName);
+            const refreshed = await getEventById(eventId);
+            store.setState({ activeEvent: refreshed });
+            showToast(`Subfamilia "${sfName}" eliminada`, 'success');
+          }
+        });
+        return;
+      }
+
+      // 12. Toggle de Rol / Tarifa de Integrante ('adulto' 1.0 <-> 'nino' 0.5)
+      const toggleRoleBtn = e.target.closest('.btn-toggle-member-role');
+      if (toggleRoleBtn) {
+        const pId = toggleRoleBtn.getAttribute('data-participant-id');
+        const currentCat = toggleRoleBtn.getAttribute('data-category') || 'adulto';
+        const newCat = currentCat === 'nino' ? 'adulto' : 'nino';
+        const newWeight = newCat === 'nino' ? 0.5 : 1.0;
+
+        const { activeEvent } = store.getState();
+        if (activeEvent) {
+          await updateParticipantRole(activeEvent.id, pId, newCat, newWeight);
+          const refreshed = await getEventById(activeEvent.id);
+          store.setState({ activeEvent: refreshed });
+          showToast(`Tarifa cambiada a ${newCat === 'nino' ? 'Niño (0.5)' : 'Adulto (1.0)'}`, 'info');
+        }
+        return;
+      }
+
+      // 12.1 Toggle de Liquidación individual de un integrante
       const settlePartBtn = e.target.closest('.btn-toggle-settle');
       if (settlePartBtn) {
         const pId = settlePartBtn.getAttribute('data-participant-id');

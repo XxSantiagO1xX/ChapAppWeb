@@ -143,7 +143,20 @@ export const parseParticipantRow = (p) => {
 };
 
 const formatEventRow = (row) => {
-  const parts = (row.participants || []).map(parseParticipantRow);
+  const availableDays = Array.isArray(row.available_days)
+    ? row.available_days
+    : typeof row.available_days === 'string'
+    ? JSON.parse(row.available_days)
+    : ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
+
+  const parts = (row.participants || []).map((p) => {
+    const parsed = parseParticipantRow(p);
+    if (!parsed.activeDays || parsed.activeDays.length === 0) {
+      parsed.activeDays = [...availableDays];
+    }
+    return parsed;
+  });
+
   const exps = (row.expenses || []).map((exp) => ({
     id: exp.id,
     title: exp.title,
@@ -162,11 +175,7 @@ const formatEventRow = (row) => {
     slug: row.slug || row.id,
     year: row.year,
     title: row.title,
-    availableDays: Array.isArray(row.available_days)
-      ? row.available_days
-      : typeof row.available_days === 'string'
-      ? JSON.parse(row.available_days)
-      : ['Día 1', 'Día 2', 'Día 3'],
+    availableDays,
     isArchived: Boolean(row.is_archived),
     createdAt: row.created_at,
     settlementNotes: row.settlement_notes,
@@ -345,13 +354,23 @@ export const deleteEvent = async (id) => {
  * Agregar Participante
  */
 export const addParticipant = async (eventId, participantData) => {
+  const localList = loadLocalEvents();
+  const currentEvent = localList.find((e) => e.id === eventId);
+  const defaultDays = currentEvent?.availableDays && currentEvent.availableDays.length > 0
+    ? currentEvent.availableDays
+    : ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
+
   const p = {
-    id: generateUUID(),
+    id: participantData.id || generateUUID(),
     name: participantData.name.trim(),
     category: participantData.category || 'adulto',
-    weight: participantData.weight ?? (participantData.category === 'nino' ? 0.5 : 1.0),
+    weight: typeof participantData.weight === 'number'
+      ? participantData.weight
+      : (participantData.category === 'nino' ? 0.5 : 1.0),
     subFamily: participantData.subFamily || inferSubFamily(participantData.name),
-    activeDays: participantData.activeDays || [],
+    activeDays: Array.isArray(participantData.activeDays) && participantData.activeDays.length > 0
+      ? participantData.activeDays
+      : [...defaultDays],
     isAttending: participantData.isAttending !== false,
     isSettled: Boolean(participantData.isSettled),
   };
@@ -420,6 +439,90 @@ export const updateParticipant = async (eventId, participant) => {
       event.participants[idx] = { ...event.participants[idx], ...participant };
       saveLocalEvents(list);
     }
+  }
+};
+
+/**
+ * Alternar rol/categoría del participante ('adulto' <-> 'nino')
+ */
+export const updateParticipantRole = async (eventId, participantId, category, weight) => {
+  const supabase = await initSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase.from('participants').update({
+        category,
+        weight,
+      }).eq('id', participantId);
+    } catch (e) {}
+  }
+
+  const list = loadLocalEvents();
+  const event = list.find((e) => e.id === eventId);
+  if (event) {
+    const part = event.participants.find((p) => p.id === participantId);
+    if (part) {
+      part.category = category;
+      part.weight = weight;
+      saveLocalEvents(list);
+    }
+  }
+};
+
+/**
+ * Alternar asistencia de toda una subfamilia
+ */
+export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttending) => {
+  const event = await getEventById(eventId);
+  if (!event) return;
+
+  const targetParts = event.participants.filter(
+    (p) => (p.subFamily || 'Familia General') === subFamilyName
+  );
+
+  const supabase = await initSupabaseClient();
+  for (const p of targetParts) {
+    p.isAttending = isAttending;
+    if (supabase) {
+      try {
+        await supabase.from('participants').update({
+          is_attending: isAttending,
+          active_days: {
+            days: p.activeDays,
+            isAttending,
+            isSettled: p.isSettled,
+            subFamily: p.subFamily,
+          },
+        }).eq('id', p.id);
+      } catch (e) {}
+    }
+  }
+
+  const list = loadLocalEvents();
+  const ev = list.find((e) => e.id === eventId);
+  if (ev) {
+    ev.participants = event.participants;
+    saveLocalEvents(list);
+  }
+};
+
+/**
+ * Eliminar una Subfamilia completa
+ */
+export const deleteSubFamily = async (eventId, subFamilyName) => {
+  const supabase = await initSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase.from('participants').delete().eq('event_id', eventId).eq('sub_family', subFamilyName);
+    } catch (e) {}
+  }
+
+  const list = loadLocalEvents();
+  const event = list.find((e) => e.id === eventId);
+  if (event) {
+    event.participants = (event.participants || []).filter(
+      (p) => (p.subFamily || 'Familia General') !== subFamilyName
+    );
+    saveLocalEvents(list);
   }
 };
 

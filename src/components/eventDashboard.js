@@ -1,5 +1,5 @@
 /**
- * ChapApp - Vista del Dashboard del Evento (3 Pestañas Integradas)
+ * ChapApp - Vista del Dashboard del Evento (Menú Lateral Flotante en Cápsula y 3 Pestañas Integradas)
  */
 
 import { formatCurrency, calculateEventTotals } from '../utils/calculations.js';
@@ -20,47 +20,90 @@ export const renderEventDashboard = (event) => {
     `;
   }
 
-  const { activeDashboardTab = 'summary', selectedSubFamily = null } = store.getState();
+  const { activeDashboardTab = 'summary', selectedSubFamily = null, isSidebarCollapsed = false } = store.getState();
   const totals = calculateEventTotals(event);
   const collectionPercent =
     totals.totalToCollect > 0
       ? Math.min(100, Math.round((totals.totalCollected / totals.totalToCollect) * 100))
       : 100;
 
-  // 1. Barra de Navegación por Pestañas (Estilo Cápsula Liquid Glass)
-  const navTabsHtml = `
-    <nav class="dashboard-tabs-bar glass-panel" aria-label="Secciones del evento">
-      <button 
-        class="dash-tab-btn ${activeDashboardTab === 'summary' ? 'active' : ''}" 
-        data-tab="summary"
-      >
-        ${renderIcon('chart', { size: 18 })}
-        <span>1. Resumen y Cuadre</span>
+  // 1. Barra Lateral Flotante en Forma de Cápsula (Left Floating Capsule Sidebar)
+  const capsuleSidebarHtml = `
+    <aside id="floating-capsule-sidebar" class="floating-capsule-sidebar glass-panel ${isSidebarCollapsed ? 'collapsed' : ''}" aria-label="Navegación del evento">
+      <!-- Botón Colapsar / Expandir Barra Lateral (Desktop/Tablet) -->
+      <button id="btn-toggle-capsule-sidebar" class="capsule-toggle-btn" title="${isSidebarCollapsed ? 'Expandir menú lateral' : 'Colapsar menú lateral'}">
+        ${renderIcon(isSidebarCollapsed ? 'chevron-right' : 'chevron-left', { size: 14 })}
       </button>
-      <button 
-        class="dash-tab-btn ${activeDashboardTab === 'subfamilies' ? 'active' : ''}" 
-        data-tab="subfamilies"
-      >
-        ${renderIcon('users', { size: 18 })}
-        <span>2. Subfamilias y Asistencia</span>
-        <span class="tab-badge">${event.participants?.length || 0}</span>
-      </button>
-      <button 
-        class="dash-tab-btn ${activeDashboardTab === 'expenses' ? 'active' : ''}" 
-        data-tab="expenses"
-      >
-        ${renderIcon('receipt', { size: 18 })}
-        <span>3. Gastos Registrados</span>
-        <span class="tab-badge">${event.expenses?.length || 0}</span>
-      </button>
-    </nav>
+
+      <!-- Grupo de Pestañas en Cápsula -->
+      <div class="capsule-tabs-group">
+        <!-- Tab 1: Corte y Tickets -->
+        <button 
+          class="capsule-tab-item dash-tab-btn ${activeDashboardTab === 'summary' ? 'active' : ''}" 
+          data-tab="summary"
+          title="1. Corte y Tickets POS"
+        >
+          <div class="capsule-icon-box">
+            ${renderIcon('chart', { size: 19 })}
+          </div>
+          <div class="capsule-text-box">
+            <span class="capsule-tab-title">Corte y Tickets</span>
+            <span class="capsule-tab-sub">Métricas & POS</span>
+          </div>
+        </button>
+
+        <!-- Tab 2: Subfamilias y Asistencia -->
+        <button 
+          class="capsule-tab-item dash-tab-btn ${activeDashboardTab === 'subfamilies' ? 'active' : ''}" 
+          data-tab="subfamilies"
+          title="2. Subfamilias y Asistencia"
+        >
+          <div class="capsule-icon-box">
+            ${renderIcon('users', { size: 19 })}
+          </div>
+          <div class="capsule-text-box">
+            <span class="capsule-tab-title">Subfamilias</span>
+            <span class="capsule-tab-sub">${totals.totalAttendingCount} de ${event.participants?.length || 0} asisten</span>
+          </div>
+          <span class="capsule-count-badge">${event.participants?.length || 0}</span>
+        </button>
+
+        <!-- Tab 3: Gastos e Insumos -->
+        <button 
+          class="capsule-tab-item dash-tab-btn ${activeDashboardTab === 'expenses' ? 'active' : ''}" 
+          data-tab="expenses"
+          title="3. Gastos Registrados"
+        >
+          <div class="capsule-icon-box">
+            ${renderIcon('receipt', { size: 19 })}
+          </div>
+          <div class="capsule-text-box">
+            <span class="capsule-tab-title">Gastos</span>
+            <span class="capsule-tab-sub">${formatCurrency(totals.totalExpenses)}</span>
+          </div>
+          <span class="capsule-count-badge">${event.expenses?.length || 0}</span>
+        </button>
+      </div>
+
+      <!-- Accesos Rápidos de Acción en la Cápsula -->
+      <div class="capsule-shortcuts-group">
+        <button id="btn-capsule-add-expense" class="capsule-shortcut-btn btn-pill-cyan" title="Registrar Gasto con IA">
+          ${renderIcon('plus', { size: 15 })}
+          <span class="shortcut-label">+ Gasto IA</span>
+        </button>
+        <button id="btn-capsule-directory" class="capsule-shortcut-btn btn-pill-glass" title="Directorio Global">
+          ${renderIcon('users', { size: 15 })}
+          <span class="shortcut-label">Directorio</span>
+        </button>
+      </div>
+    </aside>
   `;
 
   // 2. Contenido según la pestaña activa
   let tabContentHtml = '';
 
   if (activeDashboardTab === 'summary') {
-    // --- TAB 1: RESUMEN Y CUADRE ---
+    // --- TAB 1: RESUMEN, CUADRE Y TICKETS POS ---
     tabContentHtml = `
       <div class="tab-summary-content animate-fade-in">
         <!-- 4 Tarjetas HUD Métricas Superiores -->
@@ -142,10 +185,14 @@ export const renderEventDashboard = (event) => {
 
     const sfCardsHtml = Object.keys(groupedBySf).sort().map((sfName) => {
       const parts = groupedBySf[sfName];
+      const sfCalc = totals.bySubFamily[sfName];
       const attendingCount = parts.filter((p) => p.isAttending).length;
+      const allAttending = attendingCount === parts.length;
+      const isFamilyPaid = sfCalc ? sfCalc.isFullySettled : (parts.length > 0 && parts.every((p) => p.isSettled));
 
       const membersListHtml = parts.map((p) => {
         const availableDays = event.availableDays || ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
+        const isChild = p.category === 'nino';
         const dayChipsHtml = availableDays.map((d) => {
           const isDayActive = Array.isArray(p.activeDays) && p.activeDays.includes(d);
           return `
@@ -166,8 +213,19 @@ export const renderEventDashboard = (event) => {
             <div class="participant-info-col">
               <div class="participant-name-row">
                 <span class="participant-name">👤 ${p.name}</span>
-                <span class="badge-pill badge-neutral">${p.category.toUpperCase()} (${p.weight || (p.category === 'nino' ? 0.5 : 1.0)})</span>
+                
+                <!-- Botón de Cambio Rápido de Tarifa (Adulto 1.0 <-> Niño 0.5) -->
+                <button 
+                  class="btn-toggle-member-role ${isChild ? 'role-child' : 'role-adult'}"
+                  data-participant-id="${p.id}"
+                  data-category="${p.category}"
+                  title="Clic para cambiar tarifa entre Adulto (1.0) y Niño (0.5)"
+                >
+                  ${isChild ? '👶 Niño (0.5)' : '🧑 Adulto (1.0)'}
+                </button>
               </div>
+
+              <!-- Chips de Selección de Días -->
               <div class="days-chips-row">
                 ${dayChipsHtml}
               </div>
@@ -179,6 +237,7 @@ export const renderEventDashboard = (event) => {
                 data-participant-id="${p.id}"
                 data-event-id="${event.id}"
                 data-attending="${p.isAttending}"
+                title="${p.isAttending ? 'Marcar como ausente' : 'Marcar como asistente'}"
               >
                 ${p.isAttending ? '✓ Asiste' : '❌ Falta'}
               </button>
@@ -197,13 +256,48 @@ export const renderEventDashboard = (event) => {
       }).join('');
 
       return `
-        <div class="subfamily-group-card glass-panel" data-sf-name="${sfName.toLowerCase()}">
+        <div class="subfamily-group-card glass-panel ${isFamilyPaid ? 'sf-card-settled' : ''}" data-sf-name="${sfName.toLowerCase()}">
           <div class="sf-group-header">
-            <div>
+            <div class="sf-title-info-group">
               <h4 class="sf-group-title">🏡 ${sfName}</h4>
-              <span class="sf-group-stats">${attendingCount} asistentes de ${parts.length} integrantes</span>
+              <span class="sf-group-stats">
+                ${attendingCount} de ${parts.length} asisten • Saldo: <strong class="${sfCalc && sfCalc.finalBalance > 0 ? 'text-amber' : sfCalc && sfCalc.finalBalance < 0 ? 'text-emerald' : 'text-cyan'}">${sfCalc ? formatCurrency(sfCalc.finalBalance) : '$0.00'}</strong>
+              </span>
+            </div>
+
+            <!-- Acciones de Cabecera de Subfamilia -->
+            <div class="sf-header-actions-group">
+              <button 
+                class="btn-pill-glass btn-family-toggle-attendance"
+                data-subfamily="${sfName}"
+                data-event-id="${event.id}"
+                data-target-attending="${!allAttending}"
+                title="${allAttending ? 'Marcar a todos como ausentes' : 'Marcar a todos como asistentes'}"
+              >
+                ${allAttending ? 'Ausentes' : 'Todos Asisten'}
+              </button>
+
+              <button 
+                class="btn-pill-action ${isFamilyPaid ? 'btn-settled-success' : 'btn-settle-action'} btn-family-toggle-settle"
+                data-subfamily="${sfName}"
+                data-event-id="${event.id}"
+                data-settled="${isFamilyPaid}"
+                title="${isFamilyPaid ? 'Reabrir cuenta de la subfamilia' : 'Liquidar cuenta de toda la subfamilia'}"
+              >
+                ${isFamilyPaid ? '✓ Liquidada' : 'Liquidar'}
+              </button>
+
+              <button 
+                class="btn-icon-danger btn-family-delete"
+                data-subfamily="${sfName}"
+                data-event-id="${event.id}"
+                title="Eliminar subfamilia completa"
+              >
+                ${renderIcon('trash', { size: 15 })}
+              </button>
             </div>
           </div>
+
           <div class="sf-members-list">
             ${membersListHtml}
           </div>
@@ -216,7 +310,7 @@ export const renderEventDashboard = (event) => {
         <div class="tab-actions-header">
           <div class="section-title-box">
             <h3 class="section-heading">Subfamilias y Control de Asistencia</h3>
-            <p class="section-subheading">Gestiona integrantes, días activos y presencia para el prorrateo automático.</p>
+            <p class="section-subheading">Gestiona integrantes, tarifas (adulto/niño), días activos y presencia para el prorrateo automático.</p>
           </div>
           <div class="tab-buttons-group">
             <button id="btn-open-directory-import" class="btn-pill-glass">
@@ -237,7 +331,8 @@ export const renderEventDashboard = (event) => {
             type="text" 
             id="subfamilies-search-input" 
             class="glass-input-search" 
-            placeholder="Buscar integrante o subfamilia..." 
+            placeholder="Buscar por nombre o familia..." 
+            autocomplete="off"
           />
         </div>
 
@@ -310,6 +405,7 @@ export const renderEventDashboard = (event) => {
             id="expenses-search-input" 
             class="glass-input-search" 
             placeholder="Buscar por concepto o quien pagó..." 
+            autocomplete="off"
           />
         </div>
 
@@ -321,9 +417,12 @@ export const renderEventDashboard = (event) => {
   }
 
   return `
-    <div class="event-dashboard-view">
-      ${navTabsHtml}
-      ${tabContentHtml}
+    <div class="dashboard-layout-container">
+      ${capsuleSidebarHtml}
+      <main class="dashboard-main-content">
+        ${tabContentHtml}
+      </main>
     </div>
   `;
 };
+

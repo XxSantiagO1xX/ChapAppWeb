@@ -621,19 +621,39 @@ button:active {
 }
 
 .subfamily-group-card {
-  padding: 22px;
+  padding: 20px;
   border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
   gap: 16px;
+  transition: all var(--transition-fast);
+}
+
+.subfamily-group-card.sf-card-settled {
+  border-color: rgba(16, 185, 129, 0.40);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
 }
 
 .sf-group-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 680px) {
+  .sf-group-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.sf-title-info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .sf-group-title {
@@ -643,8 +663,15 @@ button:active {
 }
 
 .sf-group-stats {
-  font-size: 0.80rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
+}
+
+.sf-header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .sf-members-list {
@@ -682,6 +709,7 @@ button:active {
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  flex: 1;
 }
 
 .participant-name-row {
@@ -695,6 +723,39 @@ button:active {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+/* Botón de Rol / Tarifa Adulto vs Niño */
+.btn-toggle-member-role {
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-member-role.role-adult {
+  background: rgba(0, 240, 255, 0.14);
+  color: var(--color-primary);
+  border-color: rgba(0, 240, 255, 0.35);
+}
+
+.btn-toggle-member-role.role-adult:hover {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+.btn-toggle-member-role.role-child {
+  background: rgba(168, 85, 247, 0.16);
+  color: var(--color-purple);
+  border-color: rgba(168, 85, 247, 0.40);
+}
+
+.btn-toggle-member-role.role-child:hover {
+  background: rgba(168, 85, 247, 0.28);
+  box-shadow: 0 0 10px var(--color-purple-glow);
 }
 
 .days-chips-row {
