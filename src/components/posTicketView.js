@@ -4,7 +4,6 @@
 
 import { formatCurrency, calculateEventTotals } from '../utils/calculations.js';
 import { renderIcon } from '../utils/icons.js';
-import { generateSubfamilyWhatsAppText, shareViaWhatsApp, printReportHtml } from '../utils/reports.js';
 import { store } from '../state/store.js';
 
 export const renderPosTicketView = (event, selectedSubFamily = null) => {
@@ -14,9 +13,9 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
   if (subFamilies.length === 0) {
     return `
       <div class="glass-panel empty-state-box">
-        ${renderIcon('users', { size: 40, className: 'text-muted' })}
-        <h3>No hay subfamilias registradas</h3>
-        <p>Agrega participantes con subfamilia asignada para generar los tickets de cobro.</p>
+        <div class="empty-icon-circle">${renderIcon('users', { size: 36 })}</div>
+        <h3 class="empty-title">No hay subfamilias registradas</h3>
+        <p class="empty-description">Agrega participantes con subfamilia asignada para generar los tickets de cobro.</p>
       </div>
     `;
   }
@@ -61,7 +60,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
     ? 'Reembolso a Devolver'
     : isOwed
     ? 'Saldo a Entregar en Caja'
-    : 'Cuenta en Tablas';
+    : 'Cuenta en Tablas ($0.00)';
 
   const balanceColorClass = isRefund ? 'text-refund' : isOwed ? 'text-owed' : 'text-even';
 
@@ -84,12 +83,12 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
         <td class="col-member-name">
           <strong>${p.participantName}</strong>
           <span class="member-category-chip">${p.category.toUpperCase()} • ${p.activeDaysCount} días</span>
-          ${!p.isAttending ? '<span class="badge-absent">No Asistió</span>' : ''}
+          ${!p.isAttending ? '<span class="badge-absent">❌ No Asistió</span>' : ''}
         </td>
         <td class="col-num">${formatCurrency(p.proportionalShare)}</td>
         <td class="col-num">${formatCurrency(p.totalPaid)}</td>
         <td class="col-num ${pBalClass}"><strong>${pBalText}</strong></td>
-        <td class="col-action">
+        <td class="col-action" style="text-align: center;">
           <button 
             class="btn-toggle-settle ${p.isSettled ? 'settled' : 'pending'}"
             data-participant-id="${p.participantId}"
@@ -155,10 +154,10 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             <thead>
               <tr>
                 <th>Integrante</th>
-                <th>Cuota</th>
-                <th>Compras Pagadas</th>
-                <th>Saldo Neto</th>
-                <th>Estatus</th>
+                <th class="col-num">Cuota</th>
+                <th class="col-num">Compras Pagadas</th>
+                <th class="col-num">Saldo Neto</th>
+                <th style="text-align: center;">Estatus</th>
               </tr>
             </thead>
             <tbody>

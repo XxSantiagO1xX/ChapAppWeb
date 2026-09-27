@@ -2,7 +2,9 @@
  * ChapApp - Efectos Liquid Glass, Neumorfismo y Fondos Ambientales
  */
 
-/* Fondo dinámico fluido */
+/* ==========================================================================
+   FONDO AMBIENTAL FLUIDO
+   ========================================================================== */
 .ambient-background-layer {
   position: fixed;
   top: 0;
@@ -20,92 +22,159 @@
   height: 100%;
   object-fit: cover;
   object-position: center;
-  opacity: 0.85;
+  opacity: 0.82;
+  filter: saturate(1.1) brightness(0.9);
   transition: opacity var(--transition-normal);
 }
 
 [data-theme="light"] .ambient-wallpaper-img {
-  opacity: 0.40;
+  opacity: 0.35;
+  filter: saturate(1.05) brightness(1.05);
 }
 
-/* Panel Glass estándar */
+/* Capa de viñeta y gradiente para garantizar contraste del contenido */
+.ambient-background-layer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 10%, transparent 20%, rgba(var(--bg-app-rgb), 0.70) 90%),
+              linear-gradient(180deg, rgba(var(--bg-app-rgb), 0.20) 0%, rgba(var(--bg-app-rgb), 0.85) 100%);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   PANELES LIQUID GLASS
+   ========================================================================== */
 .glass-panel {
   background: var(--surface-card);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
   border: 1px solid var(--border-subtle);
   border-top-color: var(--border-glass-highlight);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal), background-color var(--transition-normal);
+  position: relative;
 }
 
 .glass-panel:hover {
-  border-color: var(--border-glass);
+  border-color: var(--border-subtle-hover);
 }
 
 /* Header Glass */
 .glass-header {
   background: var(--surface-header);
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
   border: 1px solid var(--border-subtle);
   border-top-color: var(--border-glass-highlight);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-header);
 }
 
-/* Drawer Glass */
+/* Drawer Lateral Glass */
 .glass-drawer {
   background: var(--surface-drawer);
-  backdrop-filter: blur(30px) saturate(200%);
-  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  backdrop-filter: blur(32px) saturate(210%);
+  -webkit-backdrop-filter: blur(32px) saturate(210%);
   border-right: 1px solid var(--border-subtle);
+  box-shadow: 20px 0 50px rgba(0, 0, 0, 0.6);
 }
 
-/* Dialog Glass */
+/* Modal Dialog Glass */
 .glass-dialog {
   background: transparent;
   border: none;
   padding: 0;
-  max-width: 90vw;
+  max-width: 92vw;
   width: 580px;
+  margin: auto;
+}
+
+.glass-dialog.modal-lg {
+  width: 780px;
+}
+
+.glass-dialog.modal-sm {
+  width: 440px;
 }
 
 .glass-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.70);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  animation: fadeIn 0.25s ease-out;
 }
 
 .glass-dialog .dialog-content {
   background: var(--surface-dialog);
-  backdrop-filter: blur(30px) saturate(190%);
-  -webkit-backdrop-filter: blur(30px) saturate(190%);
+  backdrop-filter: blur(36px) saturate(200%);
+  -webkit-backdrop-filter: blur(36px) saturate(200%);
   border: 1px solid var(--border-subtle);
   border-top-color: var(--border-glass-highlight);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-dialog);
-  padding: 24px;
+  padding: 26px 28px;
   max-height: 88vh;
   overflow-y: auto;
+  animation: dialogScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Scrollbar estilizado Glass */
+/* ==========================================================================
+   SCROLLBARS ESTILIZADOS
+   ========================================================================== */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.20);
+  background: rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary-glow);
+}
+
+/* ==========================================================================
+   ANIMACIONES DE INTERFAZ
+   ========================================================================== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes dialogScaleIn {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 12px var(--color-primary-glow); }
+  50% { box-shadow: 0 0 24px var(--color-primary-glow), 0 0 8px var(--color-primary); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }

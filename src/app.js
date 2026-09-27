@@ -785,17 +785,17 @@ class App {
           </div>
         </div>
 
-        <h4 style="margin: 20px 0 10px; font-size: 1rem;">Consolidado de Subfamilias</h4>
+        <h4 style="margin: 20px 0 10px; font-size: 1rem; font-weight: 800;">Consolidado de Subfamilias</h4>
         <div class="cut-table-scroll">
           <table class="pos-table">
             <thead>
               <tr>
                 <th>Subfamilia</th>
                 <th>Asistentes</th>
-                <th>Cuota</th>
-                <th>Compras</th>
-                <th>Saldo Neto</th>
-                <th>Estado</th>
+                <th class="col-num">Cuota</th>
+                <th class="col-num">Compras</th>
+                <th class="col-num">Saldo Neto</th>
+                <th style="text-align: center;">Estado</th>
               </tr>
             </thead>
             <tbody>
@@ -808,7 +808,7 @@ class App {
                   <td class="col-num ${sf.finalBalance < 0 ? 'text-refund' : sf.finalBalance > 0 ? 'text-owed' : 'text-even'}">
                     <strong>${sf.finalBalance < 0 ? `Reembolso ${formatCurrency(Math.abs(sf.finalBalance))}` : formatCurrency(sf.finalBalance)}</strong>
                   </td>
-                  <td>
+                  <td style="text-align: center;">
                     <span class="badge-status ${sf.isFullySettled ? 'status-active' : 'status-archived'}">
                       ${sf.isFullySettled ? 'Liquidada' : 'Pendiente'}
                     </span>
