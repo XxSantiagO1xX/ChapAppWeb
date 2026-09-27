@@ -1,0 +1,111 @@
+/**
+ * ChapApp - Efectos Liquid Glass, Neumorfismo y Fondos Ambientales
+ */
+
+/* Fondo dinámico fluido */
+.ambient-background-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--bg-app);
+}
+
+.ambient-wallpaper-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.85;
+  transition: opacity var(--transition-normal);
+}
+
+[data-theme="light"] .ambient-wallpaper-img {
+  opacity: 0.40;
+}
+
+/* Panel Glass estándar */
+.glass-panel {
+  background: var(--surface-card);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-subtle);
+  border-top-color: var(--border-glass-highlight);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.glass-panel:hover {
+  border-color: var(--border-glass);
+}
+
+/* Header Glass */
+.glass-header {
+  background: var(--surface-header);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid var(--border-subtle);
+  border-top-color: var(--border-glass-highlight);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-header);
+}
+
+/* Drawer Glass */
+.glass-drawer {
+  background: var(--surface-drawer);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border-right: 1px solid var(--border-subtle);
+}
+
+/* Dialog Glass */
+.glass-dialog {
+  background: transparent;
+  border: none;
+  padding: 0;
+  max-width: 90vw;
+  width: 580px;
+}
+
+.glass-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.70);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.glass-dialog .dialog-content {
+  background: var(--surface-dialog);
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+  border: 1px solid var(--border-subtle);
+  border-top-color: var(--border-glass-highlight);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-dialog);
+  padding: 24px;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+/* Scrollbar estilizado Glass */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.20);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
