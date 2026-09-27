@@ -418,82 +418,254 @@
 }
 
 /* ==========================================================================
-   5. POS TICKETS Y SUBFAMILIAS
+   5. POS TICKETS Y VISTA PARTICIONADA (2 COLUMNAS MASTER-DETAIL)
    ========================================================================== */
-.pos-ticket-section {
+.pos-split-layout {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   width: 100%;
 }
 
-.sf-pills-scroll-container {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 4px 2px 14px;
-  scrollbar-width: thin;
+@media (min-width: 920px) {
+  .pos-split-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 22px;
+    align-items: start;
+  }
 }
 
-.sf-pill-item {
-  padding: 12px 20px;
-  border-radius: var(--radius-pill);
+@media (min-width: 1200px) {
+  .pos-split-layout {
+    grid-template-columns: 360px 1fr;
+    gap: 26px;
+  }
+}
+
+/* Columna Izquierda: Panel Maestro de Subfamilias */
+.pos-master-col {
+  padding: 18px;
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   background: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  font-size: 0.88rem;
-  font-weight: 600;
-  white-space: nowrap;
+}
+
+@media (min-width: 920px) {
+  .pos-master-col {
+    position: sticky;
+    top: 84px;
+    max-height: calc(100vh - 110px);
+  }
+}
+
+.pos-master-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.master-header-title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  justify-content: space-between;
 }
 
-.sf-pill-item:hover {
-  background: var(--surface-card-hover);
+.pos-master-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.pos-master-sub {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.pos-master-search-box {
+  margin-top: 6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.glass-input-search.sm {
+  padding: 8px 12px 8px 34px;
+  font-size: 0.82rem;
+}
+
+.pos-master-search-box .search-icon {
+  left: 10px;
+}
+
+.pos-master-list-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 480px;
+  padding-right: 2px;
+}
+
+@media (max-width: 919px) {
+  .pos-master-list-scroll {
+    max-height: 280px;
+  }
+}
+
+/* Item Individual de la Lista Maestra de Subfamilias */
+.pos-master-item {
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+  width: 100%;
+  position: relative;
+}
+
+[data-theme="light"] .pos-master-item {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.pos-master-item:hover {
+  background: var(--surface-subtle-hover);
   border-color: var(--border-subtle-hover);
-  color: var(--text-primary);
   transform: translateY(-2px);
 }
 
-.sf-pill-item.selected {
+.pos-master-item.selected {
   background: var(--surface-card-elevated);
   border-color: var(--border-neon-cyan);
+  box-shadow: 0 0 16px var(--color-primary-glow);
+}
+
+.master-item-icon-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.master-item-content-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.master-item-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.master-item-name {
+  font-size: 0.90rem;
+  font-weight: 800;
   color: var(--text-primary);
-  box-shadow: 0 6px 20px var(--color-primary-glow);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sf-pill-name {
-  font-weight: 700;
-}
-
-.sf-pill-badge {
-  font-size: 0.72rem;
-  padding: 3px 8px;
+.sf-item-check-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
   border-radius: var(--radius-pill);
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid var(--border-neon-emerald);
+  color: var(--color-emerald);
+  white-space: nowrap;
+}
+
+.master-item-sub-row {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.master-item-members-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.member-tag-mini {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.master-item-balance-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.master-item-balance {
+  font-size: 0.85rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
 }
 
-.sf-pill-check {
-  font-size: 0.80rem;
-  color: var(--color-emerald);
-  font-weight: 800;
+.master-item-status-text {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }
 
-.badge-refund { background: rgba(16, 185, 129, 0.20); color: var(--color-emerald); }
-.badge-owed { background: rgba(244, 63, 94, 0.20); color: var(--color-coral); }
-.badge-even { background: rgba(255, 255, 255, 0.10); color: var(--text-muted); }
+.pos-master-footer {
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn-block-sm {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
+/* Columna Derecha: Ticket de Cobro POS Detallado */
+.pos-detail-col {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
 
 .pos-ticket-card {
-  padding: 26px;
+  padding: 24px 26px;
   border-radius: var(--radius-2xl);
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
 }
 
 .ticket-header {
@@ -511,7 +683,7 @@
 }
 
 .ticket-badge-tag {
-  font-size: 0.72rem;
+  font-size: 0.70rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--color-primary);
@@ -519,13 +691,13 @@
 }
 
 .ticket-family-name {
-  font-size: 1.45rem;
+  font-size: 1.40rem;
   font-weight: 900;
   letter-spacing: -0.02em;
 }
 
 .ticket-family-sub {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-secondary);
 }
 
@@ -565,6 +737,10 @@
   border: 1px solid var(--border-subtle);
 }
 
+[data-theme="light"] .ticket-metrics-row {
+  background: rgba(255, 255, 255, 0.50);
+}
+
 @media (min-width: 680px) {
   .ticket-metrics-row {
     grid-template-columns: repeat(3, 1fr);
@@ -579,7 +755,7 @@
 }
 
 .metric-mini-label {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -630,10 +806,18 @@
   letter-spacing: 0.06em;
 }
 
+[data-theme="light"] .pos-table th {
+  background: rgba(241, 245, 249, 0.85);
+}
+
 .pos-table td {
   padding: 14px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;
+}
+
+[data-theme="light"] .pos-table td {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .pos-table tr:hover td {
@@ -649,11 +833,32 @@
 .col-member-name {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+}
+
+.member-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-meta-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .member-category-chip {
-  font-size: 0.70rem;
+  font-size: 0.68rem;
+  color: var(--color-primary);
+  font-weight: 700;
+  background: var(--surface-subtle);
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+}
+
+.member-days-chip {
+  font-size: 0.68rem;
   color: var(--text-muted);
   font-weight: 600;
 }
@@ -663,7 +868,6 @@
   font-size: 0.68rem;
   font-weight: 700;
   color: var(--color-coral);
-  margin-top: 2px;
 }
 
 .member-row.row-absent {
@@ -696,3 +900,49 @@
   flex-wrap: wrap;
 }
 
+/* ==========================================================================
+   6. BOTÓN FLOTANTE PERMANENTE (+ GASTO RÁPIDO FAB)
+   ========================================================================== */
+.floating-fab-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 990;
+  padding: 14px 24px;
+  border-radius: var(--radius-pill);
+  font-size: 0.95rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 10px 30px rgba(0, 240, 255, 0.40), 0 0 16px rgba(0, 240, 255, 0.25);
+  animation: pulseFabGlow 3s ease-in-out infinite alternate;
+  cursor: pointer;
+  border: 1.5px solid rgba(255, 255, 255, 0.60);
+  background: linear-gradient(135deg, #00F0FF, #0284C7);
+  color: #070D18;
+  transition: transform var(--transition-bounce), box-shadow var(--transition-fast);
+}
+
+.floating-fab-btn:hover {
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 14px 38px rgba(0, 240, 255, 0.60), 0 0 24px var(--color-primary);
+}
+
+.floating-fab-btn:active {
+  transform: scale(0.96);
+}
+
+@keyframes pulseFabGlow {
+  0% { box-shadow: 0 10px 30px rgba(0, 240, 255, 0.35); }
+  100% { box-shadow: 0 12px 34px rgba(0, 240, 255, 0.55), 0 0 18px var(--color-primary); }
+}
+
+@media (max-width: 767px) {
+  .floating-fab-btn {
+    bottom: 76px;
+    right: 16px;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+  }
+}

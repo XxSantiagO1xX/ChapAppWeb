@@ -442,7 +442,8 @@ class App {
       // 16. Abrir Modal de Gasto Rápido
       if (
         e.target.closest('#btn-open-expense-modal') || 
-        e.target.closest('#btn-add-expense-tab')
+        e.target.closest('#btn-add-expense-tab') ||
+        e.target.closest('#btn-fab-add-expense')
       ) {
         this.openQuickExpenseModal();
         return;
@@ -732,6 +733,18 @@ class App {
           const payer = card.getAttribute('data-payer-name') || '';
           const match = !q || title.includes(q) || payer.includes(q);
           card.style.display = match ? 'flex' : 'none';
+        });
+      }
+
+      // Búsqueda en Lista Maestra de Subfamilias POS
+      if (e.target.id === 'pos-master-search') {
+        const q = e.target.value.toLowerCase().trim();
+        const items = document.querySelectorAll('.pos-master-item');
+        items.forEach((item) => {
+          const sf = (item.getAttribute('data-subfamily') || '').toLowerCase();
+          const members = (item.getAttribute('data-members') || '').toLowerCase();
+          const match = !q || sf.includes(q) || members.includes(q);
+          item.style.display = match ? 'flex' : 'none';
         });
       }
     });

@@ -166,7 +166,7 @@ export const renderEventDashboard = (event) => {
         <!-- Cuentas y Tickets de Cobro POS -->
         <div class="section-title-box">
           <h3 class="section-heading">Cuentas y Tickets de Cobro POS</h3>
-          <p class="section-subheading">Selecciona una subfamilia para ajustar asistencia, liquidar o enviar su ticket individual.</p>
+          <p class="section-subheading">Panel interactivo de subfamilias y emisión de tickets de cobro individuales.</p>
         </div>
 
         ${renderPosTicketView(event, selectedSubFamily)}
@@ -416,13 +416,21 @@ export const renderEventDashboard = (event) => {
     `;
   }
 
+  // Botón de Acción Flotante (+ Gasto Rápido) Fijo Permanentemente en la esquina inferior derecha
+  const floatingFabHtml = `
+    <button id="btn-fab-add-expense" class="floating-fab-btn btn-pill-cyan" title="Registrar Gasto Rápido con IA">
+      ${renderIcon('plus', { size: 18 })}
+      <span>+ Gasto Rápido</span>
+    </button>
+  `;
+
   return `
     <div class="dashboard-layout-container">
       ${capsuleSidebarHtml}
       <main class="dashboard-main-content">
         ${tabContentHtml}
       </main>
+      ${floatingFabHtml}
     </div>
   `;
 };
-
