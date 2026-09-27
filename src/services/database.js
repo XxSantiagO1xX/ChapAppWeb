@@ -514,6 +514,9 @@ export const addExpense = async (eventId, expenseData) => {
     event.expenses.unshift(exp);
     saveLocalEvents(list);
   }
+  return exp;
+};
+
 /**
  * Agregar Lote de Gastos (Importación CSV)
  */
