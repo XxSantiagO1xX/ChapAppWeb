@@ -473,7 +473,47 @@ export const addExpense = async (eventId, expenseData) => {
     event.expenses.unshift(exp);
     saveLocalEvents(list);
   }
-  return exp;
+/**
+ * Agregar Lote de Gastos (Importación CSV)
+ */
+export const batchAddExpenses = async (eventId, expensesList) => {
+  if (!expensesList || expensesList.length === 0) return [];
+
+  const prepared = expensesList.map((exp) => ({
+    id: exp.id || generateUUID(),
+    title: exp.title.trim(),
+    amount: typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount) || 0,
+    category: exp.category || 'Comida',
+    paidBy: exp.paidBy,
+    splitBetween: exp.splitBetween || [],
+  }));
+
+  const supabase = await initSupabaseClient();
+  if (supabase) {
+    try {
+      const rows = prepared.map((exp) => ({
+        id: exp.id,
+        event_id: eventId,
+        title: exp.title,
+        amount: exp.amount,
+        expense_category: exp.category,
+        paid_by: exp.paidBy,
+        split_between: exp.splitBetween,
+      }));
+      await supabase.from('expenses').insert(rows);
+    } catch (e) {
+      console.error('[Database] Error batch insert expenses:', e);
+    }
+  }
+
+  const list = loadLocalEvents();
+  const event = list.find((e) => e.id === eventId);
+  if (event) {
+    event.expenses = event.expenses || [];
+    event.expenses.unshift(...prepared);
+    saveLocalEvents(list);
+  }
+  return prepared;
 };
 
 /**

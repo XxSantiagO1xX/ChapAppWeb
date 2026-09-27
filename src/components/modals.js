@@ -1,12 +1,13 @@
 /**
  * ChapApp - Modales Nativos HTML5 (<dialog>)
- * Soporte para cierre nativo, light-dismiss, formularios accesibles y Gemini AI Scanner
+ * Soporte para cierre nativo, light-dismiss, formularios accesibles, Gemini AI Scanner y Csv Import
  */
 
 import { renderIcon } from '../utils/icons.js';
 import { formatCurrency, calculateEventTotals } from '../utils/calculations.js';
 import { extractDataFromReceipt } from '../services/geminiScanner.js';
 import { getGlobalDirectory, saveGlobalDirectory } from '../services/database.js';
+import { parseExpensesCsv, SAMPLE_CSV_TEMPLATE } from '../utils/csvParser.js';
 import { showToast } from './toast.js';
 
 /**
@@ -181,7 +182,62 @@ export const mountModals = () => {
       </div>
     </dialog>
 
-    <!-- 4. Modal Directorio Global -->
+    <!-- 4. Modal Importar Gastos por CSV (Completo con Preview) -->
+    <dialog id="modal-csv-import" class="glass-dialog modal-lg">
+      <div class="dialog-content">
+        <div class="dialog-header">
+          <div class="dialog-title-group">
+            <span class="dialog-badge badge-cyan">IMPORTACIÓN MASIVA</span>
+            <h3 class="dialog-title">Importar Gastos e Insumos por CSV</h3>
+          </div>
+          <button class="btn-icon-glass btn-close-dialog" aria-label="Cerrar">${renderIcon('close', { size: 16 })}</button>
+        </div>
+
+        <div class="csv-import-modal-body">
+          <div class="ai-scanner-banner glass-panel">
+            <div class="ai-scanner-info">
+              <span class="ai-badge">${renderIcon('file', { size: 14 })} Formato CSV</span>
+              <p class="ai-scanner-desc">Columnas: <strong>Nombre, Categoría, Monto, PagadoPor</strong> (se vincula automáticamente al integrante).</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" id="btn-load-sample-csv" class="btn-pill-glass" style="font-size: 0.8rem;">
+                <span>📋 Cargar Ejemplo</span>
+              </button>
+              <label class="btn-pill-cyan" style="font-size: 0.8rem; cursor: pointer;">
+                ${renderIcon('upload', { size: 14 })}
+                <span>Subir .CSV</span>
+                <input type="file" id="input-csv-file" accept=".csv,.txt" style="display: none;" />
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="csv-text-input">Pega o edita el contenido CSV aquí:</label>
+            <textarea id="csv-text-input" class="glass-input" rows="5" placeholder="Nombre,Categoría,Monto,PagadoPor..."></textarea>
+          </div>
+
+          <div id="csv-preview-section" style="margin-top: 14px;">
+            <div class="picker-header">
+              <span class="picker-title" id="csv-preview-title">Vista Previa de Gastos (0 detectados)</span>
+              <span class="badge-pill badge-emerald" id="csv-preview-total">$0.00</span>
+            </div>
+            <div id="csv-preview-table-container" class="cut-table-scroll" style="max-height: 200px;">
+              <p style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">Pega datos CSV para generar la vista previa.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dialog-footer">
+          <button type="button" class="btn-pill-glass btn-close-dialog">Cancelar</button>
+          <button type="button" id="btn-confirm-import-csv" class="btn-pill-primary" disabled>
+            ${renderIcon('check', { size: 16 })}
+            <span>Confirmar e Importar</span>
+          </button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- 5. Modal Directorio Global -->
     <dialog id="modal-global-directory" class="glass-dialog modal-lg">
       <div class="dialog-content">
         <div class="dialog-header">
@@ -195,26 +251,58 @@ export const mountModals = () => {
         <div class="directory-modal-body">
           <div class="directory-top-actions">
             <input type="text" id="directory-search-input" class="glass-input" placeholder="Buscar participante o subfamilia..." />
-            <button id="btn-create-directory-contact" class="btn-pill-primary">
+            <button type="button" id="btn-toggle-add-contact-form" class="btn-pill-primary">
               ${renderIcon('user-plus', { size: 16 })}
-              <span>Nuevo Contacto</span>
+              <span>+ Nuevo Contacto</span>
             </button>
           </div>
 
-          <div id="directory-items-list" class="directory-cards-list-container"></div>
+          <!-- Formulario Plegable para Agregar Contacto -->
+          <div id="form-inline-add-contact-wrapper" class="glass-panel" style="display: none; padding: 16px; margin: 12px 0;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 12px;">Agregar Nuevo Integrante al Directorio</h4>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="dir-contact-name">Nombre Completo *</label>
+                <input type="text" id="dir-contact-name" class="glass-input" placeholder="ej. Carlos Santiago" />
+              </div>
+              <div class="form-group">
+                <label for="dir-contact-subfamily">Subfamilia *</label>
+                <input type="text" id="dir-contact-subfamily" class="glass-input" placeholder="ej. Familia Santiago Morales" list="subfamily-suggestions" />
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="dir-contact-category">Categoría</label>
+                <select id="dir-contact-category" class="glass-select">
+                  <option value="adulto">Adulto (1.0)</option>
+                  <option value="nino">Niño (0.5)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="dir-contact-weight">Ponderación</label>
+                <input type="number" step="0.1" id="dir-contact-weight" class="glass-input" value="1.0" />
+              </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;">
+              <button type="button" id="btn-cancel-inline-contact" class="btn-pill-glass">Cancelar</button>
+              <button type="button" id="btn-save-inline-contact" class="btn-pill-cyan">Guardar en Directorio</button>
+            </div>
+          </div>
+
+          <div id="directory-items-list" class="directory-cards-list-container" style="margin-top: 12px;"></div>
         </div>
 
         <div class="dialog-footer">
           <button type="button" class="btn-pill-glass btn-close-dialog">Cerrar</button>
           <button type="button" id="btn-import-selected-to-active-event" class="btn-pill-cyan" style="display: none;">
             ${renderIcon('check', { size: 16 })}
-            <span>Importar Seleccionados al Evento</span>
+            <span id="btn-import-count-text">Importar Seleccionados</span>
           </button>
         </div>
       </div>
     </dialog>
 
-    <!-- 5. Modal Corte General del Evento -->
+    <!-- 6. Modal Corte General del Evento -->
     <dialog id="modal-event-cut" class="glass-dialog modal-lg">
       <div class="dialog-content">
         <div class="dialog-header">
@@ -245,15 +333,15 @@ export const mountModals = () => {
       </div>
     </dialog>
 
-    <!-- 6. Modal Confirmación Estilizado -->
+    <!-- 7. Modal Confirmación Estilizado -->
     <dialog id="modal-confirm" class="glass-dialog modal-sm">
-      <div class="dialog-content">
-        <div class="confirm-icon-box" id="confirm-icon-mount">
-          ${renderIcon('alert', { size: 32 })}
+      <div class="dialog-content" style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px;">
+        <div class="confirm-icon-box" id="confirm-icon-mount" style="color: var(--color-coral); margin-top: 8px;">
+          ${renderIcon('alert', { size: 40 })}
         </div>
-        <h3 class="confirm-title" id="confirm-title">¿Estás seguro?</h3>
-        <p class="confirm-message" id="confirm-message">Esta acción no se puede deshacer.</p>
-        <div class="dialog-footer confirm-footer">
+        <h3 class="confirm-title" id="confirm-title" style="font-size: 1.25rem; font-weight: 800;">¿Estás seguro?</h3>
+        <p class="confirm-message" id="confirm-message" style="font-size: 0.88rem; color: var(--text-secondary);">Esta acción no se puede deshacer.</p>
+        <div class="dialog-footer confirm-footer" style="width: 100%; justify-content: center;">
           <button type="button" class="btn-pill-glass" id="btn-confirm-cancel">Cancelar</button>
           <button type="button" class="btn-pill-danger" id="btn-confirm-accept">Confirmar</button>
         </div>

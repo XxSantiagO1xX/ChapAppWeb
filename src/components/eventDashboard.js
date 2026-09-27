@@ -12,7 +12,9 @@ export const renderEventDashboard = (event) => {
   if (!event) {
     return `
       <div class="empty-state-box glass-panel">
-        <h3>Evento no encontrado</h3>
+        <div class="empty-icon-circle">${renderIcon('alert', { size: 36 })}</div>
+        <h3 class="empty-title">Evento no encontrado</h3>
+        <p class="empty-description">El evento seleccionado no existe o fue eliminado.</p>
         <a href="#/" class="btn-pill-primary">Volver al inicio</a>
       </div>
     `;
@@ -112,7 +114,7 @@ export const renderEventDashboard = (event) => {
           </button>
         </div>
 
-        <!-- 2 Gráficas HUD: Dial Circular + 3D Bar Cylinders -->
+        <!-- 2 Gráficas HUD Liquid Glass 3D -->
         <div class="charts-row-grid">
           ${renderCollectionDial(totals.totalCollected, totals.totalExpenses, collectionPercent)}
           ${renderCategory3DBars(event.expenses, totals.totalExpenses)}
@@ -160,7 +162,7 @@ export const renderEventDashboard = (event) => {
         }).join('');
 
         return `
-          <div class="participant-card-item glass-panel ${!p.isAttending ? 'item-absent' : ''}">
+          <div class="participant-card-item glass-panel ${!p.isAttending ? 'item-absent' : ''}" data-member-name="${p.name.toLowerCase()}">
             <div class="participant-info-col">
               <div class="participant-name-row">
                 <span class="participant-name">👤 ${p.name}</span>
@@ -195,7 +197,7 @@ export const renderEventDashboard = (event) => {
       }).join('');
 
       return `
-        <div class="subfamily-group-card glass-panel">
+        <div class="subfamily-group-card glass-panel" data-sf-name="${sfName.toLowerCase()}">
           <div class="sf-group-header">
             <div>
               <h4 class="sf-group-title">🏡 ${sfName}</h4>
@@ -228,6 +230,17 @@ export const renderEventDashboard = (event) => {
           </div>
         </div>
 
+        <!-- Buscador de Integrantes y Familias -->
+        <div class="search-input-box" style="margin-bottom: 16px;">
+          <span class="search-icon">${renderIcon('search', { size: 18 })}</span>
+          <input 
+            type="text" 
+            id="subfamilies-search-input" 
+            class="glass-input-search" 
+            placeholder="Buscar integrante o subfamilia..." 
+          />
+        </div>
+
         <div class="subfamilies-grid">
           ${sfCardsHtml || '<p class="empty-text">No hay integrantes registrados en este evento.</p>'}
         </div>
@@ -243,7 +256,7 @@ export const renderEventDashboard = (event) => {
       const payerName = payer ? payer.name : 'Caja General';
 
       return `
-        <div class="expense-card-item glass-panel animate-fade-in">
+        <div class="expense-card-item glass-panel animate-fade-in" data-expense-title="${exp.title.toLowerCase()}" data-payer-name="${payerName.toLowerCase()}">
           <div class="expense-icon-box">
             ${renderIcon('receipt', { size: 20 })}
           </div>
@@ -278,15 +291,26 @@ export const renderEventDashboard = (event) => {
             <p class="section-subheading">Total gastado: ${formatCurrency(totals.totalExpenses)} en ${expenses.length} compras.</p>
           </div>
           <div class="tab-buttons-group">
-            <button id="btn-open-csv-import" class="btn-pill-glass">
+            <button id="btn-open-csv-modal" class="btn-pill-glass">
               ${renderIcon('upload', { size: 16 })}
               <span>Importar CSV</span>
             </button>
             <button id="btn-add-expense-tab" class="btn-pill-cyan">
               ${renderIcon('plus', { size: 16 })}
-              <span>+ Gasto Rápido con IA</span>
+              <span>+ Gasto con IA</span>
             </button>
           </div>
+        </div>
+
+        <!-- Buscador de Gastos y Compras -->
+        <div class="search-input-box" style="margin-bottom: 16px;">
+          <span class="search-icon">${renderIcon('search', { size: 18 })}</span>
+          <input 
+            type="text" 
+            id="expenses-search-input" 
+            class="glass-input-search" 
+            placeholder="Buscar por concepto o quien pagó..." 
+          />
         </div>
 
         <div class="expenses-list-container">

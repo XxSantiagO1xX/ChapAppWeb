@@ -14,6 +14,7 @@ import {
   deleteParticipant, 
   settleSubFamily,
   addExpense,
+  batchAddExpenses,
   deleteExpense,
   getGlobalDirectory,
   saveGlobalDirectory,
@@ -21,6 +22,7 @@ import {
 } from './services/database.js';
 import { formatCurrency, calculateEventTotals } from './utils/calculations.js';
 import { renderIcon } from './utils/icons.js';
+import { parseExpensesCsv, SAMPLE_CSV_TEMPLATE } from './utils/csvParser.js';
 import { renderHeader } from './components/header.js';
 import { renderDrawer } from './components/drawer.js';
 import { renderEventList } from './components/eventList.js';
@@ -38,6 +40,7 @@ import {
 class App {
   constructor() {
     this.rootEl = document.getElementById('app');
+    this.parsedCsvExpenses = [];
   }
 
   async init() {
@@ -61,11 +64,10 @@ class App {
 
     // 6. Configurar suscripción Realtime con Supabase
     subscribeToEventsListRealtime(async () => {
-      console.log('[Realtime] Cambio detectado en Supabase, sincronizando...');
+      console.log('[Realtime] Sincronizando con Supabase...');
       const updatedEvents = await getAllEvents();
       store.setState({ events: updatedEvents });
 
-      // Si hay un evento activo, recargarlo
       const { activeEvent } = store.getState();
       if (activeEvent) {
         const refreshed = updatedEvents.find((e) => e.id === activeEvent.id);
@@ -75,13 +77,14 @@ class App {
       }
     });
 
-    // 7. Configurar listeners de interacción global
+    // 7. Configurar listeners globales
     this.setupGlobalListeners();
+    this.setupCsvModalListeners();
 
     // 8. Enrutar ruta actual
     this.handleRoute();
 
-    // 9. Comprobar iPad y pantalla completa
+    // 9. Configurar soporte iPad
     this.setupIPadFullscreen();
   }
 
@@ -90,7 +93,6 @@ class App {
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
     if (isIPad) {
-      console.log('[ChapApp] Dispositivo iPad detectado. Configurando soporte a pantalla completa.');
       const tryFullscreen = () => {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
           document.documentElement.requestFullscreen().catch(() => {});
@@ -121,7 +123,6 @@ class App {
     const { activeEvent, isDrawerOpen, theme } = store.getState();
     const isDashboard = Boolean(activeEvent);
 
-    // Renderizar fondo ambiental
     const wallpaperImg = theme === 'dark' ? './assets/backgrounds/dark_bg.jpg' : './assets/backgrounds/light_bg.jpg';
 
     this.rootEl.innerHTML = `
@@ -139,7 +140,7 @@ class App {
       ${renderDrawer()}
     `;
 
-    // Sincronizar estado del Drawer
+    // Estado del Drawer
     const drawerEl = document.getElementById('app-drawer');
     const backdropEl = document.getElementById('drawer-backdrop');
     if (drawerEl && backdropEl) {
@@ -161,7 +162,7 @@ class App {
         return;
       }
 
-      // 2. Abrir / Cerrar Drawer
+      // 2. Drawer
       if (e.target.closest('#btn-open-drawer')) {
         store.setState({ isDrawerOpen: true });
         return;
@@ -171,7 +172,7 @@ class App {
         return;
       }
 
-      // 3. Abrir Modal Nuevo Evento
+      // 3. Nuevo Evento Modal
       if (
         e.target.closest('#btn-open-new-event') || 
         e.target.closest('#btn-drawer-new-event') || 
@@ -182,14 +183,14 @@ class App {
         return;
       }
 
-      // 4. Abrir Modal Directorio Global
+      // 4. Directorio Global Modal
       if (
         e.target.closest('#btn-open-directory') || 
         e.target.closest('#btn-drawer-directory') ||
         e.target.closest('#btn-open-directory-import')
       ) {
         store.setState({ isDrawerOpen: false });
-        this.openDirectoryModal(e.target.closest('#btn-open-directory-import') ? 'import' : 'view');
+        this.openDirectoryModal(e.target.closest('#btn-open-directory-import') ? 'import' : 'manage');
         return;
       }
 
@@ -213,13 +214,13 @@ class App {
         return;
       }
 
-      // 6. Limpiar búsqueda
+      // 6. Limpiar búsqueda en Home
       if (e.target.closest('#btn-clear-search')) {
         store.setState({ searchQuery: '' });
         return;
       }
 
-      // 7. Archivar / Desarchivar evento
+      // 7. Archivar / Desarchivar
       const archiveBtn = e.target.closest('.btn-toggle-archive-card');
       if (archiveBtn) {
         const eventId = archiveBtn.getAttribute('data-event-id');
@@ -231,7 +232,7 @@ class App {
         return;
       }
 
-      // 8. Eliminar evento (con confirmación)
+      // 8. Eliminar evento
       const deleteEventBtn = e.target.closest('.btn-delete-event-card');
       if (deleteEventBtn) {
         const eventId = deleteEventBtn.getAttribute('data-event-id');
@@ -375,7 +376,13 @@ class App {
         return;
       }
 
-      // 17. Eliminar Gasto
+      // 17. Abrir Modal de Importar CSV
+      if (e.target.closest('#btn-open-csv-modal')) {
+        this.openCsvImportModal();
+        return;
+      }
+
+      // 18. Eliminar Gasto
       const deleteExpBtn = e.target.closest('.btn-delete-expense');
       if (deleteExpBtn) {
         const expId = deleteExpBtn.getAttribute('data-expense-id');
@@ -396,7 +403,7 @@ class App {
         return;
       }
 
-      // 18. Abrir Modal Corte General
+      // 19. Abrir Modal Corte General
       if (
         e.target.closest('#btn-open-cut-modal') || 
         e.target.closest('#btn-open-cut-modal-shortcut')
@@ -405,7 +412,7 @@ class App {
         return;
       }
 
-      // 19. Compartir Reporte por WhatsApp
+      // 20. Compartir Reporte por WhatsApp
       if (e.target.closest('#btn-share-whatsapp-summary') || e.target.closest('#btn-share-whatsapp-cut')) {
         const { activeEvent } = store.getState();
         if (activeEvent) {
@@ -415,7 +422,7 @@ class App {
         return;
       }
 
-      // 20. Compartir Ticket POS de Subfamilia por WhatsApp
+      // 21. Compartir Ticket POS de Subfamilia por WhatsApp
       const shareSfBtn = e.target.closest('#btn-share-sf-whatsapp');
       if (shareSfBtn) {
         const sfName = shareSfBtn.getAttribute('data-subfamily');
@@ -427,7 +434,7 @@ class App {
         return;
       }
 
-      // 21. Descargar CSV del Corte
+      // 22. Descargar CSV del Corte
       if (e.target.closest('#btn-download-csv-cut')) {
         const { activeEvent } = store.getState();
         if (activeEvent) {
@@ -437,7 +444,7 @@ class App {
         return;
       }
 
-      // 22. Imprimir Corte General / PDF
+      // 23. Imprimir Corte General / PDF
       if (e.target.closest('#btn-print-cut-pdf')) {
         const { activeEvent } = store.getState();
         if (activeEvent) {
@@ -477,47 +484,72 @@ class App {
         return;
       }
 
-      // 23. Abrir Modal Agregar Integrante
+      // 24. Abrir Modal Agregar Integrante
       if (e.target.closest('#btn-add-participant-modal')) {
         const dialog = document.getElementById('modal-add-participant');
         if (dialog) dialog.showModal();
         return;
       }
 
-      // 24. Eliminar Contacto del Directorio
+      // 25. Eliminar Contacto del Directorio
       const delDirBtn = e.target.closest('.btn-delete-dir-contact');
       if (delDirBtn) {
         const id = delDirBtn.getAttribute('data-id');
-        let dir = getGlobalDirectory();
-        dir = dir.filter((d) => d.id !== id);
-        saveGlobalDirectory(dir);
-        this.openDirectoryModal();
-        showToast('Contacto eliminado del directorio', 'info');
+        const name = delDirBtn.getAttribute('data-name');
+        openConfirmModal({
+          title: `¿Eliminar a ${name}?`,
+          message: 'Se removerá del directorio global maestro.',
+          variant: 'danger',
+          onConfirm: () => {
+            let dir = getGlobalDirectory();
+            dir = dir.filter((d) => d.id !== id);
+            saveGlobalDirectory(dir);
+            this.openDirectoryModal('manage');
+            showToast('Contacto eliminado del directorio', 'info');
+          }
+        });
         return;
       }
 
-      // 25. Crear Contacto en el Directorio
-      if (e.target.closest('#btn-create-directory-contact')) {
-        const name = prompt('Nombre completo del nuevo integrante:');
-        if (name && name.trim()) {
-          const subFamily = prompt('Subfamilia (ej. Familia Santiago Morales):', 'Familia General') || 'Familia General';
-          const isNino = confirm('¿Es menor/niño (ponderación 0.5)? Cancela para Adulto (1.0)');
-          const dir = getGlobalDirectory();
-          dir.push({
-            id: 'dir_' + Date.now(),
-            name: name.trim(),
-            category: isNino ? 'nino' : 'adulto',
-            weight: isNino ? 0.5 : 1.0,
-            subFamily: subFamily.trim(),
-          });
-          saveGlobalDirectory(dir);
-          this.openDirectoryModal();
-          showToast(`Contacto ${name.trim()} guardado en el directorio`, 'success');
+      // 26. Formulario Inline Directorio (Abrir/Cerrar/Guardar)
+      if (e.target.closest('#btn-toggle-add-contact-form')) {
+        const f = document.getElementById('form-inline-add-contact-wrapper');
+        if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        return;
+      }
+      if (e.target.closest('#btn-cancel-inline-contact')) {
+        const f = document.getElementById('form-inline-add-contact-wrapper');
+        if (f) f.style.display = 'none';
+        return;
+      }
+      if (e.target.closest('#btn-save-inline-contact')) {
+        const name = document.getElementById('dir-contact-name').value.trim();
+        const sf = document.getElementById('dir-contact-subfamily').value.trim() || 'Familia General';
+        const cat = document.getElementById('dir-contact-category').value;
+        const weight = parseFloat(document.getElementById('dir-contact-weight').value) || (cat === 'nino' ? 0.5 : 1.0);
+
+        if (!name) {
+          showToast('Ingresa el nombre completo del participante', 'error');
+          return;
         }
+
+        const dir = getGlobalDirectory();
+        dir.push({
+          id: 'dir_' + Date.now(),
+          name,
+          category: cat,
+          weight,
+          subFamily: sf,
+        });
+        saveGlobalDirectory(dir);
+        document.getElementById('dir-contact-name').value = '';
+        document.getElementById('form-inline-add-contact-wrapper').style.display = 'none';
+        this.openDirectoryModal('manage');
+        showToast(`"${name}" agregado al directorio`, 'success');
         return;
       }
 
-      // 26. Importar Participantes del Directorio al Evento Activo
+      // 27. Importar Seleccionados del Directorio al Evento Activo
       if (e.target.closest('#btn-import-selected-to-active-event')) {
         const { activeEvent } = store.getState();
         if (!activeEvent) return;
@@ -529,7 +561,6 @@ class App {
         for (const cb of checkedBoxes) {
           const contact = directory.find((d) => d.id === cb.value);
           if (contact) {
-            // Verificar si ya existe en el evento
             const exists = (activeEvent.participants || []).some(
               (p) => p.name.toLowerCase() === contact.name.toLowerCase()
             );
@@ -557,7 +588,7 @@ class App {
         return;
       }
 
-      // 27. Imprimir Ticket POS Individual
+      // 28. Imprimir Ticket POS Individual
       const printSfBtn = e.target.closest('#btn-print-sf-ticket');
       if (printSfBtn) {
         const sfName = printSfBtn.getAttribute('data-subfamily');
@@ -583,17 +614,52 @@ class App {
       }
     });
 
-    // Eventos de Búsqueda de Eventos
+    // Filtros de búsqueda en tiempo real
     document.addEventListener('input', (e) => {
+      // Búsqueda de Eventos en Home
       if (e.target.id === 'events-search-input') {
         store.setState({ searchQuery: e.target.value });
       }
+
+      // Búsqueda en Directorio
       if (e.target.id === 'directory-search-input') {
         const q = e.target.value.toLowerCase().trim();
         const contactCards = document.querySelectorAll('.directory-contact-card');
         contactCards.forEach((card) => {
           const text = card.textContent.toLowerCase();
           card.style.display = text.includes(q) ? 'flex' : 'none';
+        });
+      }
+
+      // Búsqueda en Subfamilias (Tab 2)
+      if (e.target.id === 'subfamilies-search-input') {
+        const q = e.target.value.toLowerCase().trim();
+        const sfCards = document.querySelectorAll('.subfamily-group-card');
+        sfCards.forEach((card) => {
+          const sfName = card.getAttribute('data-sf-name') || '';
+          const members = card.querySelectorAll('.participant-card-item');
+          let hasVisibleMember = false;
+
+          members.forEach((m) => {
+            const mName = m.getAttribute('data-member-name') || '';
+            const match = !q || mName.includes(q) || sfName.includes(q);
+            m.style.display = match ? 'flex' : 'none';
+            if (match) hasVisibleMember = true;
+          });
+
+          card.style.display = hasVisibleMember ? 'flex' : 'none';
+        });
+      }
+
+      // Búsqueda en Gastos (Tab 3)
+      if (e.target.id === 'expenses-search-input') {
+        const q = e.target.value.toLowerCase().trim();
+        const expCards = document.querySelectorAll('.expense-card-item');
+        expCards.forEach((card) => {
+          const title = card.getAttribute('data-expense-title') || '';
+          const payer = card.getAttribute('data-payer-name') || '';
+          const match = !q || title.includes(q) || payer.includes(q);
+          card.style.display = match ? 'flex' : 'none';
         });
       }
     });
@@ -609,7 +675,6 @@ class App {
 
         const availableDays = Array.from({ length: daysCount }, (_, i) => `Día ${i + 1}`);
 
-        // Participantes seleccionados del checklist
         const checkedBoxes = document.querySelectorAll('#new-event-directory-list input[type="checkbox"]:checked');
         const directory = getGlobalDirectory();
         const selectedParts = Array.from(checkedBoxes).map((cb) => {
@@ -705,6 +770,128 @@ class App {
         showToast(`Integrante "${name}" agregado con éxito`, 'success');
       });
     }
+  }
+
+  setupCsvModalListeners() {
+    const csvInput = document.getElementById('csv-text-input');
+    const loadSampleBtn = document.getElementById('btn-load-sample-csv');
+    const uploadFileInput = document.getElementById('input-csv-file');
+    const confirmImportBtn = document.getElementById('btn-confirm-import-csv');
+
+    const updatePreview = (text) => {
+      const { activeEvent } = store.getState();
+      const participants = activeEvent?.participants || [];
+      const res = parseExpensesCsv(text, participants);
+      this.parsedCsvExpenses = res.expenses;
+
+      const titleEl = document.getElementById('csv-preview-title');
+      const totalEl = document.getElementById('csv-preview-total');
+      const containerEl = document.getElementById('csv-preview-table-container');
+
+      if (titleEl) titleEl.textContent = `Vista Previa de Gastos (${res.expenses.length} detectados)`;
+      if (totalEl) totalEl.textContent = formatCurrency(res.totalAmount);
+
+      if (confirmImportBtn) {
+        confirmImportBtn.disabled = res.expenses.length === 0;
+      }
+
+      if (containerEl) {
+        if (res.expenses.length === 0) {
+          containerEl.innerHTML = `<p style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">Pega datos CSV válidos para generar la vista previa.</p>`;
+          return;
+        }
+
+        containerEl.innerHTML = `
+          <table class="pos-table">
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th>Categoría</th>
+                <th>Pagador</th>
+                <th class="col-num">Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${res.expenses.map((exp) => `
+                <tr>
+                  <td><strong>${exp.title}</strong></td>
+                  <td><span class="badge-pill badge-category">${exp.category}</span></td>
+                  <td>👤 ${exp.payerName}</td>
+                  <td class="col-num text-primary"><strong>${formatCurrency(exp.amount)}</strong></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    };
+
+    if (csvInput) {
+      csvInput.addEventListener('input', (e) => updatePreview(e.target.value));
+    }
+
+    if (loadSampleBtn) {
+      loadSampleBtn.addEventListener('click', () => {
+        if (csvInput) {
+          csvInput.value = SAMPLE_CSV_TEMPLATE;
+          updatePreview(SAMPLE_CSV_TEMPLATE);
+        }
+      });
+    }
+
+    if (uploadFileInput) {
+      uploadFileInput.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const content = evt.target.result;
+          if (csvInput) {
+            csvInput.value = content;
+            updatePreview(content);
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    if (confirmImportBtn) {
+      confirmImportBtn.addEventListener('click', async () => {
+        const { activeEvent } = store.getState();
+        if (!activeEvent || this.parsedCsvExpenses.length === 0) return;
+
+        await batchAddExpenses(activeEvent.id, this.parsedCsvExpenses);
+
+        const dialog = document.getElementById('modal-csv-import');
+        if (dialog) dialog.close();
+
+        const refreshed = await getEventById(activeEvent.id);
+        store.setState({ activeEvent: refreshed });
+        showToast(`Se importaron ${this.parsedCsvExpenses.length} compras exitosamente`, 'success');
+        this.parsedCsvExpenses = [];
+        if (csvInput) csvInput.value = '';
+      });
+    }
+  }
+
+  openCsvImportModal() {
+    const dialog = document.getElementById('modal-csv-import');
+    const csvInput = document.getElementById('csv-text-input');
+    if (csvInput) csvInput.value = '';
+    const confirmImportBtn = document.getElementById('btn-confirm-import-csv');
+    if (confirmImportBtn) confirmImportBtn.disabled = true;
+
+    const titleEl = document.getElementById('csv-preview-title');
+    const totalEl = document.getElementById('csv-preview-total');
+    const containerEl = document.getElementById('csv-preview-table-container');
+    if (titleEl) titleEl.textContent = 'Vista Previa de Gastos (0 detectados)';
+    if (totalEl) totalEl.textContent = '$0.00';
+    if (containerEl) {
+      containerEl.innerHTML = `<p style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">Pega datos CSV para generar la vista previa.</p>`;
+    }
+
+    if (dialog) dialog.showModal();
   }
 
   openNewEventModal() {
@@ -824,7 +1011,7 @@ class App {
     dialog.showModal();
   }
 
-  openDirectoryModal(mode = 'view') {
+  openDirectoryModal(mode = 'import') {
     const dialog = document.getElementById('modal-global-directory');
     const listMount = document.getElementById('directory-items-list');
     const importBtn = document.getElementById('btn-import-selected-to-active-event');
@@ -834,26 +1021,49 @@ class App {
       importBtn.style.display = mode === 'import' ? 'inline-flex' : 'none';
     }
 
+    // Agrupar directorio por subfamilia
+    const grouped = {};
+    directory.forEach((d) => {
+      const sf = d.subFamily || 'Familia General';
+      if (!grouped[sf]) grouped[sf] = [];
+      grouped[sf].push(d);
+    });
+
     if (listMount) {
-      listMount.innerHTML = directory.map((d) => `
-        <div class="directory-contact-card glass-panel">
-          ${mode === 'import' ? `<input type="checkbox" value="${d.id}" checked class="dir-import-checkbox" />` : ''}
-          <div class="contact-info-col">
-            <span class="contact-name">👤 ${d.name}</span>
-            <span class="contact-sub">${d.subFamily} • ${d.category.toUpperCase()} (${d.weight || 1.0})</span>
+      listMount.innerHTML = Object.keys(grouped).sort().map((sfName) => {
+        const contacts = grouped[sfName];
+        return `
+          <div class="subfamily-group-card glass-panel" style="padding: 14px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <strong style="font-size: 0.95rem; color: var(--color-primary);">🏡 ${sfName}</strong>
+              <span class="badge-pill badge-neutral">${contacts.length} contacto${contacts.length === 1 ? '' : 's'}</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              ${contacts.map((d) => `
+                <div class="directory-contact-card glass-panel" style="padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    ${mode === 'import' ? `<input type="checkbox" value="${d.id}" checked class="dir-import-checkbox" style="accent-color: var(--color-primary); width: 16px; height: 16px;" />` : ''}
+                    <div class="contact-info-col">
+                      <span class="contact-name" style="font-weight: 700;">👤 ${d.name}</span>
+                      <span class="contact-sub" style="font-size: 0.75rem; color: var(--text-muted);">${d.category.toUpperCase()} (${d.weight || (d.category === 'nino' ? 0.5 : 1.0)})</span>
+                    </div>
+                  </div>
+                  <button class="btn-icon-danger btn-delete-dir-contact" data-id="${d.id}" data-name="${d.name}" title="Eliminar del directorio">
+                    ${renderIcon('trash', { size: 16 })}
+                  </button>
+                </div>
+              `).join('')}
+            </div>
           </div>
-          <button class="btn-icon-danger btn-delete-dir-contact" data-id="${d.id}" title="Eliminar del directorio">
-            ${renderIcon('trash', { size: 16 })}
-          </button>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     if (dialog) dialog.showModal();
   }
 }
 
-// Iniciar aplicación al cargar el DOM
+// Iniciar aplicación
 document.addEventListener('DOMContentLoaded', () => {
   const app = new App();
   app.init();
