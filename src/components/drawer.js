@@ -16,7 +16,7 @@ export const renderDrawer = () => {
       <div class="drawer-header">
         <div class="drawer-brand">
           <div class="drawer-logo-badge">
-            <img src="./assets/logo_tree.png" alt="Logo" class="emblem-tree-img" />
+            <img src="/assets/logo_tree.png" alt="Logo" class="emblem-tree-img" onerror="this.src='./assets/logo_tree.png'" />
           </div>
           <div>
             <h2 class="drawer-title">ChapApp</h2>

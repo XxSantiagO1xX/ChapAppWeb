@@ -31,7 +31,7 @@ export const renderHeader = ({ isDashboard = false, event = null } = {}) => {
         <!-- Emblema Central Flotante y Sobrepuesto 100% Simétrico -->
         <div class="header-center-emblem-wrapper" pointer-events="none">
           <a href="#/" class="center-floating-emblem" aria-label="Ir al Inicio - ChapApp" title="ChapApp - Inicio">
-            <img src="./assets/logo_tree.png" alt="ChapApp Logo" class="emblem-tree-img" />
+            <img src="/assets/logo_tree.png" alt="ChapApp Logo" class="emblem-tree-img" onerror="this.src='./assets/logo_tree.png'" />
           </a>
         </div>
 
@@ -62,7 +62,7 @@ export const renderHeader = ({ isDashboard = false, event = null } = {}) => {
         
         <!-- Emblema Flotante de ChapApp -->
         <div class="logo-floating-badge">
-          <img src="./assets/logo_tree.png" alt="ChapApp Logo" class="emblem-tree-img" />
+          <img src="/assets/logo_tree.png" alt="ChapApp Logo" class="emblem-tree-img" onerror="this.src='./assets/logo_tree.png'" />
         </div>
 
         <div class="header-title-box">

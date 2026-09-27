@@ -40,6 +40,38 @@ export const SEED_DIRECTORY = [
   { id: 'dir_10', name: 'Alejandro Ruiz', category: 'adulto', weight: 1.0, subFamily: 'Amigos y Primos' },
 ];
 
+export const INITIAL_SEED_EVENTS = [
+  {
+    id: 'chapantongo-2026',
+    slug: 'vacaciones-chapantongo-2026',
+    title: 'Vacaciones Chapantongo 2026',
+    year: 2026,
+    availableDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'],
+    isArchived: false,
+    createdAt: new Date().toISOString(),
+    participants: [
+      { id: 'p1', name: 'Don Carlos Santiago', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
+      { id: 'p2', name: 'Doña María Bustamante', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
+      { id: 'p3', name: 'Juanito Santiago', category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Chapantongo', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
+      { id: 'p4', name: 'Roberto Santiago', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Velázquez', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
+      { id: 'p5', name: 'Patricia Velázquez', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Velázquez', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
+      { id: 'p6', name: 'Mateo Santiago', category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Velázquez', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
+      { id: 'p7', name: 'Fernando Santiago', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
+      { id: 'p8', name: 'Carmen Morales', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
+      { id: 'p9', name: 'Lucía Santiago', category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Morales', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
+      { id: 'p10', name: 'Alejandro Ruiz', category: 'adulto', weight: 1.0, subFamily: 'Amigos y Primos', activeDays: ['Día 1', 'Día 2', 'Día 3'], isAttending: true, isSettled: false }
+    ],
+    expenses: [
+      { id: 'e1', title: 'Supermercado Despensa Familiar', amount: 2850.00, category: 'Comida', paidBy: 'p1' },
+      { id: 'e2', title: 'Carbón, Carnicería y Asado', amount: 1680.50, category: 'Comida', paidBy: 'p4' },
+      { id: 'e3', title: 'Gasolina y Casetas Viaje', amount: 1250.00, category: 'Transporte', paidBy: 'p4' },
+      { id: 'e4', title: 'Hospedaje Cabañas del Bosque', amount: 6400.00, category: 'Hospedaje', paidBy: 'p1' },
+      { id: 'e5', title: 'Entradas Balneario y Parque', amount: 980.00, category: 'Varios', paidBy: 'p8' },
+      { id: 'e6', title: 'Bebidas, Refrescos y Hielo', amount: 750.00, category: 'Bebidas', paidBy: 'p1' }
+    ]
+  }
+];
+
 export const inferSubFamily = (name, fallback = 'Familia General') => {
   const lower = (name || '').toLowerCase();
   if (lower.includes('chapantongo')) return 'Familia Santiago Chapantongo';
@@ -156,7 +188,7 @@ export const getAllEvents = async () => {
         .order('year', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
+      if (!error && Array.isArray(data) && data.length > 0) {
         const formatted = data.map(formatEventRow);
         saveLocalEvents(formatted);
         return formatted;
@@ -165,7 +197,13 @@ export const getAllEvents = async () => {
       console.warn('[Database] Error cargando de Supabase, usando local:', err);
     }
   }
-  return loadLocalEvents();
+  const localList = loadLocalEvents();
+  if (localList && localList.length > 0) {
+    return localList;
+  }
+  // Semilla predeterminada si no hay datos en la nube ni en caché local
+  saveLocalEvents(INITIAL_SEED_EVENTS);
+  return INITIAL_SEED_EVENTS;
 };
 
 /**
@@ -190,7 +228,10 @@ export const getEventById = async (id) => {
   }
 
   const localList = loadLocalEvents();
-  return localList.find((e) => e.id === id || e.slug === id) || null;
+  const matched = localList.find((e) => e.id === id || e.slug === id);
+  if (matched) return matched;
+
+  return INITIAL_SEED_EVENTS.find((e) => e.id === id || e.slug === id) || INITIAL_SEED_EVENTS[0] || null;
 };
 
 /**

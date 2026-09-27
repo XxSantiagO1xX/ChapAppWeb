@@ -123,7 +123,7 @@ class App {
     const { activeEvent, isDrawerOpen, theme } = store.getState();
     const isDashboard = Boolean(activeEvent);
 
-    const wallpaperImg = theme === 'dark' ? './assets/backgrounds/dark_bg.jpg' : './assets/backgrounds/light_bg.jpg';
+    const wallpaperImg = theme === 'dark' ? '/assets/backgrounds/dark_bg.jpg' : '/assets/backgrounds/light_bg.jpg';
 
     this.rootEl.innerHTML = `
       <div class="ambient-background-layer">
@@ -1063,8 +1063,20 @@ class App {
   }
 }
 
-// Iniciar aplicación
-document.addEventListener('DOMContentLoaded', () => {
-  const app = new App();
-  app.init();
-});
+// Iniciar aplicación de forma inmediata y resiliente
+const initApp = () => {
+  try {
+    const app = new App();
+    app.init().catch((err) => {
+      console.error('[ChapApp] Error fatal durante init():', err);
+    });
+  } catch (err) {
+    console.error('[ChapApp] Error instanciando App:', err);
+  }
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
