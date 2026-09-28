@@ -18,6 +18,10 @@ export const renderEventList = () => {
     `;
   }
 
+  const totalCount = events.length;
+  const activeCount = events.filter((e) => !e.isArchived).length;
+  const archivedCount = events.filter((e) => e.isArchived).length;
+
   // Filtrado de eventos
   const filteredEvents = events.filter((evt) => {
     if (filterTab === 'active' && evt.isArchived) return false;
@@ -49,34 +53,45 @@ export const renderEventList = () => {
       </div>
 
       <div class="filter-chips-group">
-        <button class="filter-chip-btn ${filterTab === 'active' ? 'active' : ''}" data-filter="active">
+        <button class="filter-chip-btn ${filterTab === 'active' ? 'active' : ''}" data-filter="active" title="Ver eventos activos">
           <span class="filter-dot active-dot"></span>
-          <span>Activos</span>
+          <span>Activos (${activeCount})</span>
         </button>
-        <button class="filter-chip-btn ${filterTab === 'archived' ? 'active' : ''}" data-filter="archived">
+        <button class="filter-chip-btn ${filterTab === 'archived' ? 'active' : ''}" data-filter="archived" title="Ver eventos archivados">
           <span class="filter-dot archived-dot"></span>
-          <span>Archivados</span>
+          <span>Archivados (${archivedCount})</span>
         </button>
-        <button class="filter-chip-btn ${filterTab === 'all' ? 'active' : ''}" data-filter="all">
-          <span>Todos</span>
+        <button class="filter-chip-btn ${filterTab === 'all' ? 'active' : ''}" data-filter="all" title="Ver todos los eventos">
+          <span>Todos (${totalCount})</span>
         </button>
       </div>
     </div>
   `;
 
   if (filteredEvents.length === 0) {
+    let emptyMessage = 'Crea tu primer evento anual para comenzar a controlar gastos y prorrateo.';
+    let emptyTitle = 'No hay eventos para mostrar';
+    if (searchQuery) {
+      emptyTitle = 'Sin resultados de búsqueda';
+      emptyMessage = `No se encontraron eventos que coincidan con "${searchQuery}".`;
+    } else if (filterTab === 'archived') {
+      emptyTitle = 'No hay eventos archivados';
+      emptyMessage = 'Los eventos que archives aparecerán aquí para consulta histórica.';
+    } else if (filterTab === 'active' && totalCount > 0) {
+      emptyTitle = 'No hay eventos activos';
+      emptyMessage = 'Todos tus eventos están archivados actualmente.';
+    }
+
     return `
       <div class="events-view-container">
         ${searchFilterBarHtml}
         <div class="empty-state-box glass-panel animate-fade-in">
           <div class="empty-icon-circle">${renderIcon('calendar', { size: 36 })}</div>
-          <h3 class="empty-title">No hay eventos para mostrar</h3>
-          <p class="empty-description">
-            ${searchQuery ? 'No se encontraron eventos que coincidan con la búsqueda.' : 'Crea tu primer evento anual para comenzar a controlar gastos y prorrateo.'}
-          </p>
+          <h3 class="empty-title">${emptyTitle}</h3>
+          <p class="empty-description">${emptyMessage}</p>
           <button id="btn-empty-new-event" class="btn-pill-primary">
             ${renderIcon('plus', { size: 16 })}
-            <span>Crear Primer Evento</span>
+            <span>Crear Nuevo Evento</span>
           </button>
         </div>
       </div>

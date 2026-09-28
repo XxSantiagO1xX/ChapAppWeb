@@ -305,15 +305,18 @@ export const createEvent = async ({ title, year, availableDays = [], participant
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      await supabase.from('events').insert({
+      const { error: insertError } = await supabase.from('events').insert({
         id: newEvent.id,
-        slug: newEvent.slug,
         title: newEvent.title,
         year: newEvent.year,
         available_days: newEvent.availableDays,
         is_archived: false,
         created_at: now,
       });
+
+      if (insertError) {
+        console.error('[Database] Error guardando evento en Supabase:', insertError);
+      }
 
       if (initialParticipants.length > 0) {
         const rows = initialParticipants.map((p) => ({

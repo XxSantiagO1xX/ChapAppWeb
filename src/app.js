@@ -304,6 +304,16 @@ class App {
         return;
       }
 
+      // 8.1 Clic directo en tarjeta de evento para abrir dashboard
+      const eventCardEl = e.target.closest('.event-card');
+      if (eventCardEl && !e.target.closest('.event-card-menu-group') && !e.target.closest('button')) {
+        const eventId = eventCardEl.getAttribute('data-event-id');
+        if (eventId) {
+          window.location.hash = `#/event/${eventId}`;
+          return;
+        }
+      }
+
       // 9. Pestañas del Dashboard y Menú Cápsula
       const dashTabBtn = e.target.closest('.dash-tab-btn');
       if (dashTabBtn) {
