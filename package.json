@@ -5,7 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "echo 'Static build ready'",
+    "build": "node build-env.js",
     "start": "npx serve ."
   },
   "dependencies": {}

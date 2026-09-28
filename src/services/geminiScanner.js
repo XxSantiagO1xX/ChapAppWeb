@@ -37,9 +37,16 @@ const VALID_CATEGORIES = ['Comida', 'Hospedaje', 'Transporte', 'Bebidas', 'Vario
 export const getGeminiApiKey = () => {
   if (typeof window === 'undefined') return '';
   const localKey = localStorage.getItem('chapapp_gemini_api_key');
-  if (localKey && localKey.trim()) return localKey.trim();
-  if (window.__ENV && window.__ENV.GEMINI_API_KEY) return window.__ENV.GEMINI_API_KEY.trim();
-  if (CONFIG.GEMINI.API_KEY && !CONFIG.GEMINI.API_KEY.includes('EXAMPLE')) return CONFIG.GEMINI.API_KEY.trim();
+  if (localKey && localKey.trim() && localKey.trim() !== 'undefined' && localKey.trim() !== 'null') {
+    return localKey.trim();
+  }
+  const envKey = window.__ENV && window.__ENV.GEMINI_API_KEY ? window.__ENV.GEMINI_API_KEY.trim() : '';
+  if (envKey && envKey !== 'undefined' && envKey !== 'null') {
+    return envKey;
+  }
+  if (CONFIG.GEMINI.API_KEY && !CONFIG.GEMINI.API_KEY.includes('EXAMPLE')) {
+    return CONFIG.GEMINI.API_KEY.trim();
+  }
   return '';
 };
 
@@ -120,8 +127,75 @@ export const extractDataFromReceipt = async (fileOrBase64, mimeType = 'image/jpe
     base64Data = fileOrBase64.replace(/^data:image\/[a-zA-Z0-9.+]+;base64,/, '');
   }
 
-  // 1. Intentar primero con la función serverless de Vercel (/api/scan-receipt)
-  // que lee automáticamente la variable GEMINI_API_KEY configurada en el panel de Vercel
+  const apiKey = getGeminiApiKey();
+
+  // 1. Si tenemos API Key disponible en el cliente (desde Vercel env.js o localStorage)
+  if (apiKey) {
+    const candidateModels = CONFIG.GEMINI.FALLBACK_MODELS;
+    let lastError = null;
+
+    for (const model of candidateModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const requestBody = {
+          contents: [
+            {
+              parts: [
+                { text: SYSTEM_PROMPT },
+                {
+                  inline_data: {
+                    mime_type: finalMime,
+                    data: base64Data,
+                  },
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            response_mime_type: 'application/json',
+            temperature: 0.1,
+          },
+        };
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const message = errorData?.error?.message || `HTTP ${response.status}`;
+          lastError = new Error(`Gemini (${model}): ${message}`);
+          continue;
+        }
+
+        const data = await response.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) continue;
+
+        const parsed = parseJsonResponse(rawText);
+        let category = 'Comida';
+        if (parsed.category) {
+          const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(parsed.category).toLowerCase());
+          if (matched) category = matched;
+        }
+
+        return {
+          title: String(parsed.title || 'Gasto General').slice(0, 50),
+          amount: typeof parsed.amount === 'number' ? Math.max(0, parsed.amount) : parseFloat(parsed.amount) || 0,
+          category,
+          confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.9,
+        };
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    if (lastError) throw lastError;
+  }
+
+  // 2. Fallback con la función serverless de Vercel (/api/scan-receipt)
   try {
     const apiRes = await fetch('/api/scan-receipt', {
       method: 'POST',
@@ -141,77 +215,9 @@ export const extractDataFromReceipt = async (fileOrBase64, mimeType = 'image/jpe
       }
     }
   } catch (serverErr) {
-    if (serverErr.message && !serverErr.message.includes('404') && !serverErr.message.includes('fetch')) {
-      console.warn('[Gemini Scanner] Serverless intento:', serverErr.message);
-    }
+    console.warn('[Gemini Scanner] Serverless intento:', serverErr);
   }
 
-  // 2. Fallback de cliente directo (por si se ejecuta en local o con clave guardada en el navegador)
-  const apiKey = getGeminiApiKey();
-  if (!apiKey) {
-    throw new Error('MISSING_API_KEY');
-  }
-
-  const candidateModels = CONFIG.GEMINI.FALLBACK_MODELS;
-  let lastError = null;
-
-  for (const model of candidateModels) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const requestBody = {
-        contents: [
-          {
-            parts: [
-              { text: SYSTEM_PROMPT },
-              {
-                inline_data: {
-                  mime_type: finalMime,
-                  data: base64Data,
-                },
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          response_mime_type: 'application/json',
-          temperature: 0.1,
-        },
-      };
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const message = errorData?.error?.message || `HTTP ${response.status}`;
-        lastError = new Error(`Gemini (${model}): ${message}`);
-        continue;
-      }
-
-      const data = await response.json();
-      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) continue;
-
-      const parsed = parseJsonResponse(rawText);
-      let category = 'Comida';
-      if (parsed.category) {
-        const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(parsed.category).toLowerCase());
-        if (matched) category = matched;
-      }
-
-      return {
-        title: String(parsed.title || 'Gasto General').slice(0, 50),
-        amount: typeof parsed.amount === 'number' ? Math.max(0, parsed.amount) : parseFloat(parsed.amount) || 0,
-        category,
-        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.9,
-      };
-    } catch (err) {
-      lastError = err;
-    }
-  }
-
-  throw lastError || new Error('No se pudo procesar el comprobante con Google Gemini.');
+  // 3. Si no hay clave ni en cliente ni funcionó serverless, solicitar al usuario
+  throw new Error('MISSING_API_KEY');
 };
