@@ -269,96 +269,102 @@
 }
 
 .cylinder-amount-text {
-  font-size: 0.68rem;
+  font-size: 0.70rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
   white-space: nowrap;
 }
 
-.cylinder-ray-emitter {
-  width: 100%;
-  height: 16px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.laser-vertical-ray {
-  width: 3px;
-  height: 100%;
-  background: linear-gradient(180deg, transparent, var(--cat-color));
-  box-shadow: 0 0 12px var(--cat-color);
-  border-radius: var(--radius-pill);
-  animation: laserRayGlow 1.8s ease-in-out infinite alternate;
-}
-
-@keyframes laserRayGlow {
-  0% { opacity: 0.4; transform: scaleY(0.7); }
-  100% { opacity: 1; transform: scaleY(1.1); box-shadow: 0 0 18px var(--cat-color); }
-}
-
 .liquid-cylinder-chamber {
-  width: 34px;
-  height: 130px;
-  background: rgba(0, 0, 0, 0.40);
+  width: 38px;
+  height: 140px;
+  background: rgba(0, 0, 0, 0.45);
   border-radius: var(--radius-pill);
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   align-items: flex-end;
-  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.7), 0 4px 14px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.75), 0 6px 18px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
 [data-theme="light"] .liquid-cylinder-chamber {
   background: rgba(15, 23, 42, 0.08);
-  border: 1.5px solid rgba(15, 23, 42, 0.14);
-  box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.15);
+  border: 1.5px solid rgba(15, 23, 42, 0.16);
+  box-shadow: inset 0 2px 8px rgba(15, 23, 42, 0.15);
 }
 
-.chamber-level-marks {
+/* Aro 3D superior del tubo de cristal */
+.chamber-top-rim {
   position: absolute;
-  inset: 0;
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.38);
+  z-index: 8;
+  background: rgba(255, 255, 255, 0.06);
   pointer-events: none;
-  z-index: 5;
 }
 
-.level-mark {
-  position: absolute;
-  left: 4px;
-  right: 4px;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.18);
+[data-theme="light"] .chamber-top-rim {
+  border-color: rgba(15, 23, 42, 0.30);
 }
 
-.mark-75 { top: 25%; }
-.mark-50 { top: 50%; }
-.mark-25 { top: 75%; }
-
+/* Reflejo de cristal */
 .chamber-glass-shine {
   position: absolute;
-  top: 0;
+  top: 4px;
   left: 3px;
   width: 5px;
-  height: 100%;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.50), transparent);
+  bottom: 4px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.45), transparent);
   border-radius: var(--radius-pill);
   z-index: 6;
   pointer-events: none;
 }
 
+/* Hilo / Rayo láser eléctrico que desciende desde el tope al menisco */
+.cylinder-laser-thread {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+
+.laser-thread-svg {
+  width: 8px;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px currentColor);
+  animation: laserFlicker 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes laserFlicker {
+  0% { opacity: 0.65; transform: scaleX(0.9); }
+  50% { opacity: 1; transform: scaleX(1.15); }
+  100% { opacity: 0.75; transform: scaleX(0.95); }
+}
+
+/* Columna de fluido líquido */
 .liquid-fluid-stream {
   width: 100%;
-  border-radius: var(--radius-pill);
+  border-radius: 0 0 var(--radius-pill) var(--radius-pill);
   position: relative;
-  background: linear-gradient(180deg, var(--cat-color) 0%, rgba(var(--bg-app-rgb), 0.85) 100%);
-  box-shadow: 0 0 20px var(--cat-glow), inset 0 2px 6px rgba(255, 255, 255, 0.6);
+  background: linear-gradient(180deg, var(--cat-color) 0%, rgba(var(--bg-app-rgb), 0.88) 100%);
+  box-shadow: 0 0 22px var(--cat-glow), inset 0 2px 6px rgba(255, 255, 255, 0.5);
   transition: height 1s cubic-bezier(0.16, 1, 0.3, 1);
   animation: liquidRise 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   animation-delay: var(--anim-delay, 0s);
+  overflow: visible;
 }
 
 @keyframes liquidRise {
@@ -366,35 +372,44 @@
   to { height: var(--target-h); opacity: 1; }
 }
 
+/* Perla / Esfera Luminosa Flotante en la superficie del líquido (Image 1 & 2) */
+.fluid-luminous-pearl {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1.5px solid #FFFFFF;
+  z-index: 7;
+  animation: pearlPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes pearlPulse {
+  0% { transform: translateX(-50%) scale(0.9); opacity: 0.85; }
+  100% { transform: translateX(-50%) scale(1.15); opacity: 1; }
+}
+
+/* Menisco de superficie */
 .fluid-meniscus-cap {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 8px;
-  background: #FFFFFF;
+  background: var(--cat-color);
   border-radius: 50%;
-  box-shadow: 0 0 14px #FFFFFF, 0 0 22px var(--cat-color);
+  opacity: 0.85;
   z-index: 4;
-}
-
-.meniscus-flare {
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--cat-color) 40%, transparent 80%);
-  filter: blur(2px);
-}
-
-.liquid-cylinder-col:hover .fluid-meniscus-cap {
-  box-shadow: 0 0 20px #FFFFFF, 0 0 32px var(--cat-color);
 }
 
 .cylinder-bottom-pedestal {
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .pedestal-dot {
@@ -415,6 +430,24 @@
 .liquid-cylinder-col:hover .pedestal-label {
   color: var(--text-primary);
   text-shadow: 0 0 8px var(--cat-glow);
+}
+
+/* Barra Resumen Inferior (Image 2) */
+.chart-summary-footer-bar {
+  margin-top: 16px;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+[data-theme="light"] .chart-summary-footer-bar {
+  background: rgba(255, 255, 255, 0.70);
 }
 
 /* ==========================================================================

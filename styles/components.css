@@ -1417,3 +1417,369 @@ button:active {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   14. COMPONENTES INTERACTIVOS DE TICKET POS (IMAGE 4 & 5)
+   ========================================================================== */
+.ticket-settled-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid var(--border-neon-emerald);
+  color: var(--color-emerald);
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin: 12px 0 6px;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
+}
+
+.settled-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-emerald);
+  box-shadow: 0 0 8px var(--color-emerald);
+  flex-shrink: 0;
+}
+
+.ticket-section-block {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ticket-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.ticket-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.ticket-section-hint {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.ticket-members-list, .ticket-guests-list, .guests-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pos-member-row, .pos-guest-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+  gap: 12px;
+}
+
+[data-theme="light"] .pos-member-row, [data-theme="light"] .pos-guest-row {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.pos-member-row:hover, .pos-guest-row:hover {
+  background: var(--surface-card-hover);
+  border-color: var(--border-glass);
+}
+
+.pos-member-row.is-absent {
+  opacity: 0.50;
+  filter: grayscale(0.5);
+}
+
+.member-name-col, .guest-name-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.member-title-line, .guest-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-display-name {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+[data-theme="light"] .member-display-name {
+  color: #0F172A;
+}
+
+.badge-absent-mini {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--color-coral);
+  border: 1px solid var(--border-neon-coral);
+}
+
+.member-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.member-days-text {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.member-amount-col, .guest-amount-col {
+  font-size: 1.05rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  text-align: right;
+  min-width: 80px;
+}
+
+.member-switch-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Switch Toggle iOS Style (Image 5) */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-toggle .slider {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.switch-toggle .slider::before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.switch-toggle input:checked + .slider {
+  background-color: var(--color-primary);
+  border-color: var(--border-neon-cyan);
+  box-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+.switch-toggle input:checked + .slider::before {
+  transform: translateX(20px);
+  background-color: #070D18;
+}
+
+/* Formulario Inline Agregar Invitado */
+.inline-guest-form {
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  background: rgba(0, 240, 255, 0.05);
+  border: 1.5px solid var(--border-neon-cyan);
+  margin: 6px 0 10px;
+}
+
+.inline-form-title {
+  font-size: 0.90rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 12px;
+}
+
+.inline-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 600px) {
+  .inline-form-grid {
+    grid-template-columns: 2fr 1.2fr 1fr;
+    gap: 12px;
+  }
+}
+
+.inline-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.empty-guest-text {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.20);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+/* Tarjeta de Desglose Matemático (Image 5) */
+.math-breakdown-card {
+  padding: 18px 20px;
+  border-radius: var(--radius-xl);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
+}
+
+[data-theme="light"] .math-breakdown-card {
+  background: rgba(255, 255, 255, 0.70);
+}
+
+.breakdown-header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.breakdown-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.breakdown-table-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breakdown-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.breakdown-item-row strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.breakdown-item-row.total-gross-row {
+  font-size: 0.98rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  padding: 8px 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  margin: 4px 0;
+}
+
+.breakdown-item-row.total-gross-row strong {
+  font-size: 1.12rem;
+}
+
+/* Gran Caja de Liquidación al Fondo (Image 5) */
+.settlement-bottom-card {
+  margin-top: 24px;
+  padding: 24px 20px;
+  border-radius: var(--radius-2xl);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: all var(--transition-normal);
+}
+
+.settlement-bottom-card.settled-card {
+  background: rgba(16, 185, 129, 0.10);
+  border: 1.5px solid var(--border-neon-emerald);
+  box-shadow: 0 12px 36px rgba(16, 185, 129, 0.18);
+}
+
+.settlement-bottom-card.pending-card {
+  background: rgba(244, 63, 94, 0.08);
+  border: 1.5px solid var(--border-neon-coral);
+  box-shadow: 0 12px 36px rgba(244, 63, 94, 0.15);
+}
+
+.settlement-badge-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.settlement-card-amount {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.settlement-card-subtext {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  max-width: 480px;
+  line-height: 1.4;
+}
+
+.settlement-card-action-box {
+  margin-top: 12px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-settle-account, .btn-reopen-account {
+  padding: 12px 28px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  border-radius: var(--radius-pill);
+}

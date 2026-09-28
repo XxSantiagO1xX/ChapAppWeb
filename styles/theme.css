@@ -32,13 +32,13 @@
   --bg-app-rgb: 7, 13, 24;
 
   /* Superficies Liquid Glass con Profundidad y Translucidez */
-  --surface-header: rgba(10, 18, 34, 0.78);
-  --surface-card: rgba(12, 20, 36, 0.48);
-  --surface-card-hover: rgba(16, 26, 48, 0.65);
-  --surface-card-elevated: rgba(18, 28, 50, 0.80);
+  --surface-header: rgba(10, 18, 34, 0.72);
+  --surface-card: rgba(12, 20, 36, 0.44);
+  --surface-card-hover: rgba(16, 26, 48, 0.58);
+  --surface-card-elevated: rgba(18, 28, 50, 0.75);
   --surface-subtle: rgba(255, 255, 255, 0.05);
-  --surface-subtle-hover: rgba(255, 255, 255, 0.10);
-  --surface-input: rgba(11, 19, 36, 0.70);
+  --surface-subtle-hover: rgba(255, 255, 255, 0.09);
+  --surface-input: rgba(11, 19, 36, 0.65);
   --surface-dialog: rgba(9, 16, 30, 0.94);
   --surface-drawer: rgba(7, 13, 24, 0.96);
 

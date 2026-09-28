@@ -1,9 +1,9 @@
 /**
  * ChapApp - Vista Particionada de Cuentas y Tickets de Cobro POS por Subfamilia
- * Master-Detail 2 Columnas: Panel Interactivo de Subfamilias (Izquierda) + Ticket POS (Derecha)
+ * Master-Detail 2 Columnas: Panel Interactivo de Subfamilias (Izquierda) + Ticket POS con Invitados y Switches (Derecha)
  */
 
-import { formatCurrency, calculateEventTotals } from '../utils/calculations.js';
+import { formatCurrency, calculateEventTotals, roundToTwoDecimals } from '../utils/calculations.js';
 import { renderIcon } from '../utils/icons.js';
 import { store } from '../state/store.js';
 
@@ -33,19 +33,51 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
 
   const activeSf = totals.bySubFamily[activeSubFamilyName] || subFamilies[0];
 
+  // Invitados temporales del store
+  const ticketGuests = (store.getState().ticketGuests || {})[activeSubFamilyName] || [];
+  const costPerUnit = totals.costPerUnit || 0;
+  const calculatedGuests = ticketGuests.map((g) => {
+    const weight = g.category === 'nino' ? 0.5 : 1.0;
+    const cost = roundToTwoDecimals(g.daysCount * weight * costPerUnit);
+    return { ...g, weight, cost };
+  });
+  const guestsTotalCost = roundToTwoDecimals(calculatedGuests.reduce((sum, g) => sum + g.cost, 0));
+
+  // Desglose matemático
+  const baseProportionalShare = activeSf.proportionalShare;
+  const baseTotalPaid = activeSf.totalPaid;
+  const grossTotalQuota = roundToTwoDecimals(baseProportionalShare + guestsTotalCost);
+  const finalBalance = roundToTwoDecimals(grossTotalQuota - baseTotalPaid);
+
+  const isRefund = finalBalance < 0;
+  const isOwed = finalBalance > 0;
+  const balanceTitle = isRefund
+    ? 'Reembolso a Devolver'
+    : isOwed
+    ? 'Saldo a Entregar en Caja'
+    : 'Cuenta en Tablas ($0.00)';
+  const balanceColorClass = isRefund ? 'text-refund' : isOwed ? 'text-owed' : 'text-even';
+
   // 1. Items de la Columna Izquierda (Master List de Subfamilias)
   const masterItemsHtml = subFamilies.map((sf) => {
     const isSelected = sf.subFamilyName === activeSubFamilyName;
-    const isRefund = sf.finalBalance < 0;
-    const isOwed = sf.finalBalance > 0;
-    const badgeText = isRefund
-      ? `-${formatCurrency(Math.abs(sf.finalBalance))}`
-      : isOwed
-      ? `+${formatCurrency(sf.finalBalance)}`
+    const sfGuests = (store.getState().ticketGuests || {})[sf.subFamilyName] || [];
+    const sfGuestsCost = sfGuests.reduce((sum, g) => {
+      const w = g.category === 'nino' ? 0.5 : 1.0;
+      return sum + roundToTwoDecimals(g.daysCount * w * costPerUnit);
+    }, 0);
+    const sfFinalBal = roundToTwoDecimals(sf.proportionalShare + sfGuestsCost - sf.totalPaid);
+
+    const sfIsRefund = sfFinalBal < 0;
+    const sfIsOwed = sfFinalBal > 0;
+    const badgeText = sfIsRefund
+      ? `-${formatCurrency(Math.abs(sfFinalBal))}`
+      : sfIsOwed
+      ? `+${formatCurrency(sfFinalBal)}`
       : '$0.00';
 
-    const badgeClass = isRefund ? 'badge-refund' : isOwed ? 'badge-owed' : 'badge-even';
-    const statusLabel = isRefund ? 'Reembolso' : isOwed ? 'Por pagar' : 'Al día';
+    const badgeClass = sfIsRefund ? 'badge-refund' : sfIsOwed ? 'badge-owed' : 'badge-even';
+    const statusLabel = sfIsRefund ? 'Reembolso' : sfIsOwed ? 'Por pagar' : 'Al día';
 
     // Nombres de los integrantes para facilitar la búsqueda
     const memberNames = (sf.participantIds || [])
@@ -88,60 +120,65 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
     `;
   }).join('');
 
-  // 2. Estado contable de la subfamilia activa
-  const isRefund = activeSf.finalBalance < 0;
-  const isOwed = activeSf.finalBalance > 0;
-  const balanceTitle = isRefund
-    ? 'Reembolso a Devolver'
-    : isOwed
-    ? 'Saldo a Entregar en Caja'
-    : 'Cuenta en Tablas ($0.00)';
-
-  const balanceColorClass = isRefund ? 'text-refund' : isOwed ? 'text-owed' : 'text-even';
-
-  // 3. Tabla de integrantes de la subfamilia activa
-  const membersRowsHtml = activeSf.participantIds.map((pId) => {
+  // 2. Filas de Integrantes Registrados con Switch de Asistencia
+  const membersListHtml = activeSf.participantIds.map((pId) => {
     const p = totals.byParticipantId[pId];
     if (!p) return '';
 
-    const pIsRefund = p.finalBalance < 0;
-    const pIsOwed = p.finalBalance > 0;
-    const pBalClass = pIsRefund ? 'text-refund' : pIsOwed ? 'text-owed' : 'text-even';
-    const pBalText = pIsRefund
-      ? `Reembolso ${formatCurrency(Math.abs(p.finalBalance))}`
-      : pIsOwed
-      ? `Debe ${formatCurrency(p.finalBalance)}`
-      : 'En tablas ($0.00)';
-
     return `
-      <tr class="member-row ${!p.isAttending ? 'row-absent' : ''}">
-        <td class="col-member-name">
-          <div class="member-title-box">
-            <strong>👤 ${p.participantName}</strong>
-            ${!p.isAttending ? '<span class="badge-absent">❌ No Asistió</span>' : ''}
+      <div class="pos-member-row glass-panel ${!p.isAttending ? 'is-absent' : ''}">
+        <div class="member-name-col">
+          <div class="member-title-line">
+            <strong class="member-display-name">👤 ${p.participantName}</strong>
+            ${!p.isAttending ? '<span class="badge-absent-mini">No Asiste</span>' : ''}
           </div>
-          <div class="member-meta-chips">
-            <span class="member-category-chip">${p.category.toUpperCase()} (${p.weight || (p.category === 'nino' ? 0.5 : 1.0)} ud)</span>
-            <span class="member-days-chip">📅 ${p.activeDaysCount} días</span>
+          <div class="member-badges-row">
+            <span class="badge-pill badge-neutral">${p.category.toUpperCase()} (${p.weight} ud)</span>
+            <span class="member-days-text">${p.activeDaysCount} días asistidos</span>
           </div>
-        </td>
-        <td class="col-num">${formatCurrency(p.proportionalShare)}</td>
-        <td class="col-num">${formatCurrency(p.totalPaid)}</td>
-        <td class="col-num ${pBalClass}"><strong>${pBalText}</strong></td>
-        <td class="col-action" style="text-align: center;">
-          <button 
-            class="btn-toggle-settle ${p.isSettled ? 'settled' : 'pending'}"
-            data-participant-id="${p.participantId}"
-            data-event-id="${event.id}"
-            data-settled="${p.isSettled}"
-            title="${p.isSettled ? 'Marcar como pendiente' : 'Marcar como pagado/liquidado'}"
-          >
-            ${p.isSettled ? '✓ Liquidado' : '⏳ Pendiente'}
-          </button>
-        </td>
-      </tr>
+        </div>
+        <div class="member-amount-col">
+          <span class="member-quota-val">${formatCurrency(p.proportionalShare)}</span>
+        </div>
+        <div class="member-switch-col">
+          <label class="switch-toggle" title="${p.isAttending ? 'Asiste al evento' : 'No asiste'}">
+            <input 
+              type="checkbox" 
+              class="toggle-member-attendance" 
+              data-participant-id="${p.participantId}"
+              data-event-id="${event.id}"
+              ${p.isAttending ? 'checked' : ''}
+            />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
     `;
   }).join('');
+
+  // 3. Filas de Invitados Temporales
+  const guestsListHtml = calculatedGuests.map((g) => `
+    <div class="pos-guest-row glass-panel">
+      <div class="guest-name-col">
+        <div class="guest-title-line">
+          <strong>🎟️ ${g.name}</strong>
+          <span class="badge-pill badge-cyan">Temporal</span>
+        </div>
+        <div class="member-badges-row">
+          <span class="badge-pill badge-neutral">${g.category.toUpperCase()} (${g.weight} ud)</span>
+          <span class="member-days-text">${g.daysCount} días</span>
+        </div>
+      </div>
+      <div class="guest-amount-col">
+        <span class="guest-quota-val">${formatCurrency(g.cost)}</span>
+      </div>
+      <div class="guest-remove-col">
+        <button type="button" class="btn-icon-danger btn-remove-guest" data-guest-id="${g.id}" data-subfamily="${activeSf.subFamilyName}" title="Eliminar invitado">
+          ${renderIcon('trash', { size: 14 })}
+        </button>
+      </div>
+    </div>
+  `).join('');
 
   return `
     <section class="pos-split-layout">
@@ -178,9 +215,10 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
         </div>
       </aside>
 
-      <!-- Columna Derecha: Ticket de Cobro POS de la Subfamilia Seleccionada -->
+      <!-- Columna Derecha: Ticket de Cobro POS de la Subfamilia Seleccionada (Image 4 & 5) -->
       <main class="pos-detail-col">
         <div class="pos-ticket-card glass-panel animate-fade-in">
+          <!-- Cabecera del Ticket POS -->
           <div class="ticket-header">
             <div class="ticket-family-title-group">
               <span class="ticket-badge-tag">TICKET DE COBRO POS</span>
@@ -191,15 +229,9 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             </div>
             
             <div class="ticket-status-group">
-              <button 
-                id="btn-toggle-sf-settle" 
-                class="btn-pill-action ${activeSf.isFullySettled ? 'btn-settled-success' : 'btn-settle-action'}"
-                data-subfamily="${activeSf.subFamilyName}"
-                data-event-id="${event.id}"
-                data-settled="${activeSf.isFullySettled}"
-              >
-                ${activeSf.isFullySettled ? '✓ Familia 100% Liquidada' : 'Marcar Familia como Liquidada'}
-              </button>
+              <span class="ticket-status-pill ${activeSf.isFullySettled ? 'settled' : 'pending'}">
+                ${activeSf.isFullySettled ? '✓ Familia 100% Liquidada' : '⏳ Pendiente de Liquidar'}
+              </span>
             </div>
           </div>
 
@@ -207,37 +239,157 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
           <div class="ticket-metrics-row">
             <div class="metric-mini-box">
               <span class="metric-mini-label">1. Cuota Proporcional</span>
-              <span class="metric-mini-val">${formatCurrency(activeSf.proportionalShare)}</span>
+              <span class="metric-mini-val">${formatCurrency(grossTotalQuota)}</span>
             </div>
             <div class="metric-mini-box">
               <span class="metric-mini-label">2. Compras de su Cartera</span>
-              <span class="metric-mini-val">${formatCurrency(activeSf.totalPaid)}</span>
+              <span class="metric-mini-val">${formatCurrency(baseTotalPaid)}</span>
             </div>
             <div class="metric-mini-box highlight-balance">
               <span class="metric-mini-label">3. ${balanceTitle}</span>
-              <span class="metric-mini-val ${balanceColorClass}">${formatCurrency(Math.abs(activeSf.finalBalance))}</span>
+              <span class="metric-mini-val ${balanceColorClass}">${formatCurrency(Math.abs(finalBalance))}</span>
             </div>
           </div>
 
-          <!-- Tabla detallada de integrantes -->
-          <div class="ticket-table-wrapper">
-            <table class="pos-table">
-              <thead>
-                <tr>
-                  <th>Integrante</th>
-                  <th class="col-num">Cuota</th>
-                  <th class="col-num">Compras Pagadas</th>
-                  <th class="col-num">Saldo Neto</th>
-                  <th style="text-align: center;">Estatus</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${membersRowsHtml}
-              </tbody>
-            </table>
+          <!-- Banner Informativo si la cuenta está 100% saldada (Image 5) -->
+          ${activeSf.isFullySettled ? `
+            <div class="ticket-settled-banner glass-panel">
+              <span class="settled-dot"></span>
+              <span>Esta cuenta familiar se encuentra 100% saldada y registrada en la caja común.</span>
+            </div>
+          ` : ''}
+
+          <!-- Sección 1: Integrantes Registrados y Switch de Asistencia (Image 5) -->
+          <div class="ticket-section-block">
+            <div class="ticket-section-header">
+              <span class="ticket-section-title">
+                ${renderIcon('users', { size: 16 })} Integrantes Registrados (${activeSf.membersCount})
+              </span>
+              <span class="ticket-section-hint">Switch de Asistencia</span>
+            </div>
+
+            <div class="ticket-members-list">
+              ${membersListHtml}
+            </div>
           </div>
 
-          <!-- Acciones rápidas de exportación del Ticket -->
+          <!-- Sección 2: Invitados Temporales (Image 5) -->
+          <div class="ticket-section-block">
+            <div class="ticket-section-header">
+              <span class="ticket-section-title">
+                ${renderIcon('user-plus', { size: 16 })} Invitados Temporales (${ticketGuests.length})
+              </span>
+              <button type="button" id="btn-open-add-guest-form" class="btn-pill-cyan btn-sm">
+                ${renderIcon('plus', { size: 14 })}
+                <span>Agregar Invitado</span>
+              </button>
+            </div>
+
+            <!-- Formulario Desplegable para Agregar Invitado Temporal -->
+            <div id="form-inline-add-guest" class="glass-panel inline-guest-form" style="display: none;">
+              <h5 class="inline-form-title">Sumar Invitado Temporal a ${activeSf.subFamilyName}</h5>
+              <div class="inline-form-grid">
+                <div class="form-group">
+                  <label for="input-guest-name">Nombre o Referencia *</label>
+                  <input type="text" id="input-guest-name" class="glass-input" placeholder="ej. Primo Carlos" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label for="select-guest-category">Categoría</label>
+                  <select id="select-guest-category" class="glass-select">
+                    <option value="adulto">Adulto (1.0 ud)</option>
+                    <option value="nino">Niño (0.5 ud)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="input-guest-days">Días Asistidos</label>
+                  <input type="number" id="input-guest-days" class="glass-input" value="${event.availableDays?.length || 4}" min="1" max="14" />
+                </div>
+              </div>
+              <div class="inline-form-actions">
+                <button type="button" id="btn-cancel-add-guest" class="btn-pill-glass btn-sm">Cancelar</button>
+                <button type="button" id="btn-save-add-guest" class="btn-pill-cyan btn-sm" data-subfamily="${activeSf.subFamilyName}">
+                  ${renderIcon('plus', { size: 14 })}
+                  <span>Sumar al Cálculo</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="ticket-guests-list">
+              ${ticketGuests.length === 0 
+                ? '<p class="empty-guest-text">Sin invitados adicionales. Toca "+ Agregar Invitado" para sumarlos al cálculo.</p>' 
+                : guestsListHtml}
+            </div>
+          </div>
+
+          <!-- Sección 3: Desglose Matemático (Image 5) -->
+          <div class="ticket-section-block">
+            <div class="math-breakdown-card glass-panel">
+              <div class="breakdown-header">
+                <span class="breakdown-tag">📊 DESGLOSE MATEMÁTICO</span>
+              </div>
+              <div class="breakdown-table-rows">
+                <div class="breakdown-item-row">
+                  <span class="breakdown-label">Cuota Integrantes Fijos</span>
+                  <strong class="breakdown-val">${formatCurrency(baseProportionalShare)}</strong>
+                </div>
+                ${guestsTotalCost > 0 ? `
+                  <div class="breakdown-item-row text-cyan">
+                    <span class="breakdown-label">+ Cuota Invitados Temporales (${ticketGuests.length})</span>
+                    <strong class="breakdown-val">+${formatCurrency(guestsTotalCost)}</strong>
+                  </div>
+                ` : ''}
+                <div class="breakdown-item-row total-gross-row">
+                  <span class="breakdown-label">Cuota Total Bruta</span>
+                  <strong class="breakdown-val">${formatCurrency(grossTotalQuota)}</strong>
+                </div>
+                <div class="breakdown-item-row text-emerald">
+                  <span class="breakdown-label">- Aportes en Compras (Bolsillo)</span>
+                  <strong class="breakdown-val">-${formatCurrency(baseTotalPaid)}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección 4: Gran Caja de Liquidación al Fondo (Image 5) -->
+          <div class="settlement-bottom-card ${activeSf.isFullySettled ? 'settled-card' : 'pending-card'} glass-panel">
+            <div class="settlement-card-header">
+              <span class="settlement-badge-label">
+                ${activeSf.isFullySettled 
+                  ? 'CUENTA SALDADA Y REGISTRADA' 
+                  : isRefund 
+                  ? 'REEMBOLSO A FAVOR DE LA FAMILIA' 
+                  : 'SALDO A ENTREGAR EN CAJA'}
+              </span>
+            </div>
+            
+            <div class="settlement-card-amount ${activeSf.isFullySettled ? 'text-emerald' : balanceColorClass}">
+              ${formatCurrency(Math.abs(finalBalance))}
+            </div>
+            
+            <p class="settlement-card-subtext">
+              ${activeSf.isFullySettled 
+                ? `El saldo de ${formatCurrency(Math.abs(finalBalance))} ya fue recibido/entregado y liquidado en caja.` 
+                : isRefund 
+                ? `Fondo común debe devolver ${formatCurrency(Math.abs(finalBalance))} a los integrantes de esta familia.` 
+                : `Pendiente de recibir ${formatCurrency(Math.abs(finalBalance))} para ingresar a la caja general.`}
+            </p>
+
+            <div class="settlement-card-action-box">
+              <button 
+                id="btn-toggle-sf-settle" 
+                class="${activeSf.isFullySettled ? 'btn-reopen-account btn-pill-glass' : 'btn-settle-account btn-pill-cyan'}"
+                data-subfamily="${activeSf.subFamilyName}"
+                data-event-id="${event.id}"
+                data-settled="${activeSf.isFullySettled}"
+              >
+                ${activeSf.isFullySettled 
+                  ? `${renderIcon('refresh', { size: 16 })} <span>Reabrir Cuenta</span>` 
+                  : `${renderIcon('check', { size: 18 })} <span>Liquidar Cuenta en Caja</span>`}
+              </button>
+            </div>
+          </div>
+
+          <!-- Sección 5: Acciones Rápidas de Exportación (Image 4 & 5) -->
           <div class="ticket-actions-bar">
             <button 
               id="btn-share-sf-whatsapp" 
@@ -245,7 +397,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
               data-subfamily="${activeSf.subFamilyName}"
             >
               ${renderIcon('whatsapp', { size: 18 })}
-              <span>Enviar Ticket por WhatsApp</span>
+              <span>Compartir WhatsApp</span>
             </button>
             <button 
               id="btn-print-sf-ticket" 

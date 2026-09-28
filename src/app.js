@@ -374,7 +374,7 @@ class App {
         return;
       }
 
-      // 13. Toggle de Asistencia (Asiste / Falta)
+      // 13. Toggle de Asistencia (Asiste / Falta desde botón clásico)
       const attendBtn = e.target.closest('.btn-toggle-attendance');
       if (attendBtn) {
         const pId = attendBtn.getAttribute('data-participant-id');
@@ -392,6 +392,79 @@ class App {
             showToast(part.isAttending ? `${part.name} marcado como asistente` : `${part.name} marcado como ausente`, 'info');
           }
         }
+        return;
+      }
+
+      // 13.1 Abrir / Cerrar Formulario de Invitado Temporal en POS Ticket
+      if (e.target.closest('#btn-open-add-guest-form')) {
+        const formEl = document.getElementById('form-inline-add-guest');
+        if (formEl) {
+          formEl.style.display = formEl.style.display === 'none' ? 'block' : 'none';
+          const nameInput = document.getElementById('input-guest-name');
+          if (nameInput && formEl.style.display === 'block') nameInput.focus();
+        }
+        return;
+      }
+
+      if (e.target.closest('#btn-cancel-add-guest')) {
+        const formEl = document.getElementById('form-inline-add-guest');
+        if (formEl) formEl.style.display = 'none';
+        return;
+      }
+
+      // 13.2 Guardar Invitado Temporal en POS Ticket
+      const saveGuestBtn = e.target.closest('#btn-save-add-guest');
+      if (saveGuestBtn) {
+        const sfName = saveGuestBtn.getAttribute('data-subfamily');
+        const nameInput = document.getElementById('input-guest-name');
+        const catSelect = document.getElementById('select-guest-category');
+        const daysInput = document.getElementById('input-guest-days');
+
+        const name = nameInput?.value?.trim();
+        if (!name) {
+          showToast('Ingresa un nombre o referencia para el invitado', 'error');
+          return;
+        }
+
+        const category = catSelect?.value || 'adulto';
+        const daysCount = parseInt(daysInput?.value, 10) || 1;
+
+        const { ticketGuests = {} } = store.getState();
+        const currentList = ticketGuests[sfName] || [];
+        const newGuest = {
+          id: generateUUID(),
+          name,
+          category,
+          daysCount: Math.max(1, daysCount),
+        };
+
+        const updated = {
+          ...ticketGuests,
+          [sfName]: [...currentList, newGuest],
+        };
+
+        store.setState({ ticketGuests: updated });
+        showToast(`Invitado temporal "${name}" agregado al cálculo`, 'success');
+        return;
+      }
+
+      // 13.3 Eliminar Invitado Temporal
+      const removeGuestBtn = e.target.closest('.btn-remove-guest');
+      if (removeGuestBtn) {
+        const guestId = removeGuestBtn.getAttribute('data-guest-id');
+        const sfName = removeGuestBtn.getAttribute('data-subfamily');
+
+        const { ticketGuests = {} } = store.getState();
+        const currentList = ticketGuests[sfName] || [];
+        const updatedList = currentList.filter((g) => g.id !== guestId);
+
+        const updated = {
+          ...ticketGuests,
+          [sfName]: updatedList,
+        };
+
+        store.setState({ ticketGuests: updated });
+        showToast('Invitado temporal eliminado del cálculo', 'info');
         return;
       }
 
@@ -684,7 +757,27 @@ class App {
             printReportHtml(`Ticket_${sf.subFamilyName}`, html);
           }
         }
-        return;
+    });
+
+    // Switches de Asistencia en Ticket POS y Formularios
+    document.addEventListener('change', async (e) => {
+      const attendanceSwitch = e.target.closest('.toggle-member-attendance');
+      if (attendanceSwitch) {
+        const pId = attendanceSwitch.getAttribute('data-participant-id');
+        const eventId = attendanceSwitch.getAttribute('data-event-id');
+        const isAttending = attendanceSwitch.checked;
+
+        const { activeEvent } = store.getState();
+        if (activeEvent) {
+          const part = activeEvent.participants?.find((p) => p.id === pId);
+          if (part) {
+            part.isAttending = isAttending;
+            await updateParticipant(eventId, part);
+            const refreshed = await getEventById(eventId);
+            store.setState({ activeEvent: refreshed });
+            showToast(isAttending ? `${part.name} marcado como asistente` : `${part.name} marcado como ausente`, 'info');
+          }
+        }
       }
     });
 

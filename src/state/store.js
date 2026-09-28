@@ -16,6 +16,8 @@ class Store {
       filterTab: 'active', // 'active' | 'archived' | 'all'
       searchQuery: '',
       isDrawerOpen: false,
+      isSidebarCollapsed: true, // Inicia oculto / colapsado por defecto
+      ticketGuests: {}, // { [subFamilyName]: [{ id, name, category, daysCount }] }
       loading: true,
     };
 

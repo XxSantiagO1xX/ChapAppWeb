@@ -133,15 +133,15 @@ export const renderCollectionDial = (collected, total, percentage) => {
 };
 
 /**
- * Renderiza la Distribución Presupuestaria con Cilindros 3D Liquid Glass y Rayos
+ * Renderiza la Distribución Presupuestaria con Cilindros 3D Liquid Glass y Rayos Eléctricos
  */
 export const renderCategory3DBars = (expenses = [], totalExpenses = 0) => {
   const catTotals = {
-    Comida: 0,
+    Varios: 0,
     Bebidas: 0,
     Transporte: 0,
     Hospedaje: 0,
-    Varios: 0,
+    Comida: 0,
   };
 
   expenses.forEach((exp) => {
@@ -154,7 +154,8 @@ export const renderCategory3DBars = (expenses = [], totalExpenses = 0) => {
     }
   });
 
-  const categories = Object.keys(catTotals);
+  // Ordenar por importe descendente o mantener los 5 rubros estándar
+  const categories = Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]);
 
   const barsHtml = categories.map((cat, idx) => {
     const amount = catTotals[cat];
@@ -162,7 +163,7 @@ export const renderCategory3DBars = (expenses = [], totalExpenses = 0) => {
     const catConfig = LUMINOUS_3D_CATEGORY_COLORS[cat] || LUMINOUS_3D_CATEGORY_COLORS.Varios;
     const color = catConfig.hex;
     const glow = catConfig.glow;
-    const heightPercent = Math.min(100, Math.max(8, percent));
+    const heightPercent = Math.min(94, Math.max(6, percent));
     const animDelay = (idx * 0.12).toFixed(2);
 
     return `
@@ -173,33 +174,43 @@ export const renderCategory3DBars = (expenses = [], totalExpenses = 0) => {
       >
         <!-- Telemetría Superior -->
         <div class="cylinder-top-stat">
-          <span class="cylinder-percent-text">${percent.toFixed(0)}%</span>
+          <span class="cylinder-percent-text">${percent.toFixed(1)}%</span>
           <span class="cylinder-amount-text">${formatCurrency(amount)}</span>
         </div>
 
-        <!-- Haz de Rayo de Luz Superior -->
-        <div class="cylinder-ray-emitter">
-          <div class="laser-vertical-ray" style="opacity: ${amount > 0 ? '0.85' : '0.15'};"></div>
-        </div>
-
-        <!-- Cámara del Cilindro 3D de Cristal Líquido -->
+        <!-- Cámara del Cilindro 3D de Cristal Líquido (Image 1 & 2) -->
         <div class="liquid-cylinder-chamber">
-          <!-- Marcas Holográficas de Nivel -->
-          <div class="chamber-level-marks">
-            <span class="level-mark mark-75"></span>
-            <span class="level-mark mark-50"></span>
-            <span class="level-mark mark-25"></span>
-          </div>
+          <!-- Borde / Aro 3D superior del cilindro de cristal -->
+          <div class="chamber-top-rim"></div>
 
-          <!-- Reflejo Lateral de Vidrio / Cristal Refractivo -->
+          <!-- Reflejo lateral de vidrio -->
           <div class="chamber-glass-shine"></div>
+
+          <!-- Rayo / Hilo eléctrico vertical animado que baja al menisco -->
+          <div class="cylinder-laser-thread" style="bottom: ${heightPercent}%;">
+            <svg class="laser-thread-svg" viewBox="0 0 10 100" preserveAspectRatio="none">
+              <path d="M5 0 Q3 25, 6 50 T5 100" fill="none" stroke="${color}" stroke-width="1.8" filter="url(#laserFilter_${idx})" />
+              <defs>
+                <filter id="laserFilter_${idx}">
+                  <feGaussianBlur stdDeviation="1.5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+            </svg>
+          </div>
 
           <!-- Fluido Líquido Animado -->
           <div 
             class="liquid-fluid-stream" 
             style="--target-h: ${heightPercent}%; height: ${heightPercent}%;"
           >
-            <!-- Menisco / Tapa Líquida Superior con Brillo Neón -->
+            <!-- Perla / Esfera Luminosa Flotante en la superficie del líquido -->
+            <div class="fluid-luminous-pearl" style="background: #FFFFFF; box-shadow: 0 0 8px #FFFFFF, 0 0 16px ${color};"></div>
+
+            <!-- Menisco / Tapa Líquida Superior -->
             <div class="fluid-meniscus-cap">
               <div class="meniscus-flare"></div>
             </div>
@@ -221,15 +232,15 @@ export const renderCategory3DBars = (expenses = [], totalExpenses = 0) => {
     <div class="glass-panel chart-liquid-card animate-fade-in">
       <div class="card-header-compact">
         <div class="header-icon-title-group">
-          <div class="chart-icon-box" style="color: #F59E0B;">
-            ${renderIcon('food', { size: 18 })}
+          <div class="chart-icon-box" style="color: #A855F7;">
+            ${renderIcon('receipt', { size: 18 })}
           </div>
           <div>
             <h4 class="card-header-title">Distribución Presupuestaria</h4>
             <span class="card-header-sub">Desglose por rubro y categoría</span>
           </div>
         </div>
-        <span class="badge-pill badge-neutral">${expenses.length} compra${expenses.length === 1 ? '' : 's'}</span>
+        <span class="badge-pill badge-neutral">${expenses.length} compras</span>
       </div>
 
       <!-- Cuadrícula de Cilindros 3D Liquid Glass -->
@@ -237,10 +248,9 @@ export const renderCategory3DBars = (expenses = [], totalExpenses = 0) => {
         ${barsHtml}
       </div>
 
-      <!-- Pie de Gasto Total -->
-      <div class="liquid-card-footer">
-        <span>Gasto Total: <strong class="text-primary">${formatCurrency(totalExpenses)}</strong></span>
-        <span>Rubros: <strong>5 Categorías</strong></span>
+      <!-- Barra Resumen Inferior Estilizada (Image 2) -->
+      <div class="chart-summary-footer-bar">
+        <span>Total <strong>${formatCurrency(totalExpenses)}</strong> • Promedio <strong class="text-purple">${formatCurrency(totalExpenses > 0 ? totalExpenses / 4 : 0)}/día</strong></span>
       </div>
     </div>
   `;

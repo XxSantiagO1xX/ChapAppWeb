@@ -30,9 +30,9 @@ export const renderEventDashboard = (event) => {
   // 1. Barra Lateral Flotante en Forma de Cápsula (Left Floating Capsule Sidebar)
   const capsuleSidebarHtml = `
     <aside id="floating-capsule-sidebar" class="floating-capsule-sidebar glass-panel ${isSidebarCollapsed ? 'collapsed' : ''}" aria-label="Navegación del evento">
-      <!-- Botón Colapsar / Expandir Barra Lateral (Desktop/Tablet) -->
-      <button id="btn-toggle-capsule-sidebar" class="capsule-toggle-btn" title="${isSidebarCollapsed ? 'Expandir menú lateral' : 'Colapsar menú lateral'}">
-        ${renderIcon(isSidebarCollapsed ? 'chevron-right' : 'chevron-left', { size: 14 })}
+      <!-- Botón Colapsar / Expandir Barra Lateral (Destacado Neón) -->
+      <button id="btn-toggle-capsule-sidebar" class="capsule-toggle-btn" title="${isSidebarCollapsed ? 'Expandir menú lateral' : 'Colapsar menú lateral'}" aria-label="${isSidebarCollapsed ? 'Expandir menú' : 'Contraer menú'}">
+        ${renderIcon(isSidebarCollapsed ? 'chevron-right' : 'chevron-left', { size: 16 })}
       </button>
 
       <!-- Grupo de Pestañas en Cápsula -->
@@ -44,7 +44,7 @@ export const renderEventDashboard = (event) => {
           title="1. Corte y Tickets POS"
         >
           <div class="capsule-icon-box">
-            ${renderIcon('chart', { size: 19 })}
+            ${renderIcon('grid', { size: 20 })}
           </div>
           <div class="capsule-text-box">
             <span class="capsule-tab-title">Corte y Tickets</span>
@@ -59,7 +59,7 @@ export const renderEventDashboard = (event) => {
           title="2. Subfamilias y Asistencia"
         >
           <div class="capsule-icon-box">
-            ${renderIcon('users', { size: 19 })}
+            ${renderIcon('users', { size: 20 })}
           </div>
           <div class="capsule-text-box">
             <span class="capsule-tab-title">Subfamilias</span>
@@ -75,7 +75,7 @@ export const renderEventDashboard = (event) => {
           title="3. Gastos Registrados"
         >
           <div class="capsule-icon-box">
-            ${renderIcon('receipt', { size: 19 })}
+            ${renderIcon('folder', { size: 20 })}
           </div>
           <div class="capsule-text-box">
             <span class="capsule-tab-title">Gastos</span>
@@ -87,13 +87,13 @@ export const renderEventDashboard = (event) => {
 
       <!-- Accesos Rápidos de Acción en la Cápsula -->
       <div class="capsule-shortcuts-group">
-        <button id="btn-capsule-add-expense" class="capsule-shortcut-btn btn-pill-cyan" title="Registrar Gasto con IA">
-          ${renderIcon('plus', { size: 15 })}
-          <span class="shortcut-label">Gasto IA</span>
-        </button>
         <button id="btn-capsule-directory" class="capsule-shortcut-btn btn-pill-glass" title="Directorio Global">
-          ${renderIcon('users', { size: 15 })}
+          <div class="capsule-icon-box">${renderIcon('user-plus', { size: 18 })}</div>
           <span class="shortcut-label">Directorio</span>
+        </button>
+        <button id="btn-capsule-add-expense" class="capsule-shortcut-btn btn-pill-cyan" title="Registrar Gasto con IA">
+          <div class="capsule-icon-box">${renderIcon('plus', { size: 18 })}</div>
+          <span class="shortcut-label">Gasto IA</span>
         </button>
       </div>
     </aside>
@@ -425,7 +425,7 @@ export const renderEventDashboard = (event) => {
   `;
 
   return `
-    <div class="dashboard-layout-container">
+    <div class="dashboard-layout-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}">
       ${capsuleSidebarHtml}
       <main class="dashboard-main-content">
         ${tabContentHtml}
