@@ -36,6 +36,9 @@ export const renderHeader = ({ isDashboard = false, event = null } = {}) => {
         </div>
 
         <div class="header-right">
+          <button id="btn-sync-cloud" class="btn-icon-glass sync-btn" title="Sincronizar con Supabase Cloud" aria-label="Sincronizar">
+            ${renderIcon('refresh', { size: 16 })}
+          </button>
           <button id="btn-toggle-theme" class="btn-icon-glass theme-toggle-btn" aria-label="Cambiar tema">
             ${renderIcon(isDark ? 'moon' : 'sun', { size: 18 })}
           </button>
@@ -72,6 +75,9 @@ export const renderHeader = ({ isDashboard = false, event = null } = {}) => {
       </div>
 
       <div class="header-right">
+        <button id="btn-sync-cloud" class="btn-icon-glass sync-btn" title="Sincronizar con Supabase Cloud" aria-label="Sincronizar">
+          ${renderIcon('refresh', { size: 16 })}
+        </button>
         <button id="btn-toggle-theme" class="btn-icon-glass theme-toggle-btn" aria-label="Cambiar tema">
           ${renderIcon(isDark ? 'moon' : 'sun', { size: 18 })}
         </button>

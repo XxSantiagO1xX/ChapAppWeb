@@ -70,19 +70,28 @@ class App {
     const events = await getAllEvents();
     store.setState({ events, loading: false });
 
-    // 6. Configurar suscripción Realtime con Supabase
+    // 6. Configurar suscripción Realtime y Auto-Sync en segundo plano
     subscribeToEventsListRealtime(async () => {
-      console.log('[Realtime] Sincronizando con Supabase...');
-      const updatedEvents = await getAllEvents();
-      store.setState({ events: updatedEvents });
+      console.log('[Realtime] Cambio detectado en Supabase, refrescando...');
+      await this.syncWithSupabase(false);
+    });
 
-      const { activeEvent } = store.getState();
-      if (activeEvent) {
-        const refreshed = updatedEvents.find((e) => e.id === activeEvent.id);
-        if (refreshed) {
-          store.setState({ activeEvent: refreshed });
-        }
+    // Auto-Sync periódico cada 4 segundos para mantener iPad, PC y móviles 100% sincronizados
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        this.syncWithSupabase(false);
       }
+    }, 4000);
+
+    // Sincronizar inmediatamente al volver a la pestaña o desbloquear iPad
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.syncWithSupabase(false);
+      }
+    });
+
+    window.addEventListener('focus', () => {
+      this.syncWithSupabase(false);
     });
 
     // 7. Configurar listeners globales
@@ -94,6 +103,27 @@ class App {
 
     // 9. Configurar soporte iPad
     this.setupIPadFullscreen();
+  }
+
+  async syncWithSupabase(showNotification = false) {
+    try {
+      const updatedEvents = await getAllEvents();
+      store.setState({ events: updatedEvents });
+
+      const { activeEvent } = store.getState();
+      if (activeEvent) {
+        const refreshed = updatedEvents.find((e) => e.id === activeEvent.id || e.slug === activeEvent.id);
+        if (refreshed) {
+          store.setState({ activeEvent: refreshed });
+        }
+      }
+
+      if (showNotification) {
+        showToast('Sincronizado con Supabase Cloud', 'success');
+      }
+    } catch (err) {
+      console.warn('[Sync] Error sincronizando con Supabase:', err);
+    }
   }
 
   setupIPadFullscreen() {
@@ -164,6 +194,12 @@ class App {
 
   setupGlobalListeners() {
     document.addEventListener('click', async (e) => {
+      // 0. Sincronización Manual con Supabase Cloud
+      if (e.target.closest('#btn-sync-cloud')) {
+        await this.syncWithSupabase(true);
+        return;
+      }
+
       // 1. Toggle de Tema
       if (e.target.closest('#btn-toggle-theme') || e.target.closest('#btn-drawer-theme')) {
         store.toggleTheme();
@@ -981,10 +1017,15 @@ class App {
         const { activeEvent } = store.getState();
         if (!activeEvent) return;
 
-        const name = document.getElementById('participant-name').value.trim();
+        const nameInput = document.getElementById('participant-name');
+        const name = nameInput ? nameInput.value.trim() : '';
         const category = document.getElementById('participant-category').value;
         const weight = parseFloat(document.getElementById('participant-weight').value) || (category === 'nino' ? 0.5 : 1.0);
         const subFamily = document.getElementById('participant-subfamily').value.trim() || 'Familia General';
+
+        if (!name) return;
+
+        showToast(`Guardando "${name}" en Supabase...`, 'info');
 
         await addParticipant(activeEvent.id, {
           name,
@@ -999,10 +1040,12 @@ class App {
         const dialog = document.getElementById('modal-add-participant');
         if (dialog) dialog.close();
 
+        if (nameInput) nameInput.value = '';
+
         const refreshed = await getEventById(activeEvent.id);
         const allEvents = await getAllEvents();
         store.setState({ activeEvent: refreshed, events: allEvents });
-        showToast(`Integrante "${name}" agregado con éxito`, 'success');
+        showToast(`✅ "${name}" agregado al evento y guardado en la nube`, 'success');
       });
     }
   }
