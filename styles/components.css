@@ -1297,6 +1297,320 @@ button:active {
   gap: 8px;
 }
 
+/* ==========================================================================
+   SELECTOR PREDICTIVO DE PAGADOR (70+ INTEGRANTES / FONDO COMÚN)
+   ========================================================================== */
+.payer-selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payer-main-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #CBD5E1;
+}
+
+[data-theme="light"] .payer-main-label {
+  color: #475569;
+}
+
+/* Toggle Segmentado (Fondo Común vs Integrante) */
+.payer-type-toggle-bar {
+  display: flex;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+}
+
+[data-theme="light"] .payer-type-toggle-bar {
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.payer-type-btn {
+  flex: 1;
+  height: 34px;
+  border-radius: var(--radius-pill);
+  font-size: 0.80rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.payer-type-btn:hover {
+  color: var(--text-primary);
+  background: var(--surface-subtle);
+}
+
+.payer-type-btn.active {
+  background: var(--surface-card-elevated);
+  border-color: var(--border-neon-cyan);
+  color: var(--color-primary);
+  font-weight: 800;
+  box-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+/* Banner de Fondo Común */
+.payer-common-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.common-banner-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.common-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.common-banner-text strong {
+  font-size: 0.86rem;
+  color: #FFFFFF;
+  font-weight: 800;
+}
+
+[data-theme="light"] .common-banner-text strong {
+  color: #0F172A;
+}
+
+.common-banner-text span {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.25;
+}
+
+/* Contenedor del Buscador de Integrantes */
+.payer-member-picker-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Tarjeta del Integrante Seleccionado */
+.payer-selected-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--radius-lg);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid var(--border-neon-emerald);
+  gap: 10px;
+}
+
+.selected-member-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.selected-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-emerald);
+  color: #070D18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.80rem;
+  flex-shrink: 0;
+}
+
+.selected-member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.selected-member-info strong {
+  font-size: 0.88rem;
+  color: #FFFFFF;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="light"] .selected-member-info strong {
+  color: #0F172A;
+}
+
+.selected-member-info span {
+  font-size: 0.70rem;
+  color: var(--text-secondary);
+}
+
+.btn-sm-pill {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 0.74rem;
+  flex-shrink: 0;
+}
+
+/* Buscador Predictivo */
+.payer-search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.payer-search-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.payer-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+}
+
+.payer-search-input {
+  padding-left: 32px !important;
+  height: 38px;
+  font-size: 0.84rem;
+  border-radius: var(--radius-md);
+}
+
+/* Chips de Subfamilias */
+.payer-subfamily-chips-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+  scrollbar-width: none;
+}
+
+.payer-subfamily-chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.subfamily-chip-btn {
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.subfamily-chip-btn:hover {
+  background: var(--surface-subtle-hover);
+  color: var(--text-primary);
+}
+
+.subfamily-chip-btn.active {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: var(--border-neon-cyan);
+  color: var(--color-primary);
+  box-shadow: 0 0 10px var(--color-primary-glow);
+}
+
+/* Lista de Resultados */
+.payer-results-list-scroll {
+  max-height: 130px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
+}
+
+[data-theme="light"] .payer-results-list-scroll {
+  background: rgba(255, 255, 255, 0.80);
+}
+
+.payer-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: transparent;
+  border: 1px solid transparent;
+  gap: 8px;
+}
+
+.payer-result-item:hover {
+  background: rgba(0, 240, 255, 0.14);
+  border-color: rgba(0, 240, 255, 0.30);
+  transform: translateX(2px);
+}
+
+.payer-item-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="light"] .payer-item-name {
+  color: #0F172A;
+}
+
+.payer-mini-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.payer-item-sf {
+  font-size: 0.70rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
 .directory-picker-section {
   display: flex;
   flex-direction: column;

@@ -114,9 +114,68 @@ export const mountModals = () => {
                 <input type="text" id="expense-title" class="glass-input" placeholder="ej. Supermercado, Gasolina" required />
               </div>
 
-              <div class="form-group">
-                <label for="expense-payer">¿Quién pagó este gasto? *</label>
-                <select id="expense-payer" class="glass-select" required></select>
+              <div class="form-group payer-selector-group">
+                <label class="payer-main-label">¿Quién pagó este gasto? *</label>
+                <input type="hidden" id="expense-payer" name="expensePayer" value="caja_comun" />
+
+                <!-- Selector de Tipo de Pago (Fondo Común vs Integrante) -->
+                <div class="payer-type-toggle-bar">
+                  <button type="button" class="payer-type-btn active" id="btn-payer-type-common" data-type="common">
+                    ${renderIcon('credit-card', { size: 14 })}
+                    <span>Fondo Común</span>
+                  </button>
+                  <button type="button" class="payer-type-btn" id="btn-payer-type-member" data-type="member">
+                    ${renderIcon('user', { size: 14 })}
+                    <span>Integrante</span>
+                  </button>
+                </div>
+
+                <!-- Estado 1: Tarjeta Informativa de Fondo Común -->
+                <div id="payer-common-box" class="payer-common-banner glass-panel">
+                  <div class="common-banner-icon">💳</div>
+                  <div class="common-banner-text">
+                    <strong>Gasto General / Fondo Común</strong>
+                    <span>Se divide entre todos sin generar saldo a favor personal.</span>
+                  </div>
+                </div>
+
+                <!-- Estado 2: Buscador Predictivo de Integrante (70+ personas) -->
+                <div id="payer-member-picker" class="payer-member-picker-box" style="display: none;">
+                  <!-- Tarjeta del integrante seleccionado -->
+                  <div id="payer-selected-card" class="payer-selected-card glass-panel" style="display: none;">
+                    <div class="selected-member-left">
+                      <div class="selected-avatar-circle" id="selected-payer-avatar">👤</div>
+                      <div class="selected-member-info">
+                        <strong id="selected-payer-name">Nombre</strong>
+                        <span id="selected-payer-subfamily">Subfamilia</span>
+                      </div>
+                    </div>
+                    <button type="button" id="btn-change-selected-payer" class="btn-pill-glass btn-sm-pill">
+                      Cambiar
+                    </button>
+                  </div>
+
+                  <!-- Buscador y Filtros -->
+                  <div id="payer-search-section" class="payer-search-section">
+                    <!-- Input de búsqueda con icono -->
+                    <div class="payer-search-input-box">
+                      <span class="payer-search-icon">${renderIcon('search', { size: 14 })}</span>
+                      <input 
+                        type="text" 
+                        id="payer-live-search" 
+                        class="glass-input payer-search-input" 
+                        placeholder="Escribe nombre o familia..." 
+                        autocomplete="off"
+                      />
+                    </div>
+
+                    <!-- Filtro Rápido de Chips de Subfamilias -->
+                    <div id="payer-subfamily-chips" class="payer-subfamily-chips-scroll"></div>
+
+                    <!-- Lista de resultados filtrables en tiempo real -->
+                    <div id="payer-results-list" class="payer-results-list-scroll"></div>
+                  </div>
+                </div>
               </div>
             </div>
 

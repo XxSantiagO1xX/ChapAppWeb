@@ -856,6 +856,101 @@ class App {
         }
         return;
       }
+
+      // 29. Toggle Pagador: Fondo Común vs Integrante
+      if (e.target.closest('#btn-payer-type-common')) {
+        const btnCommon = document.getElementById('btn-payer-type-common');
+        const btnMember = document.getElementById('btn-payer-type-member');
+        const commonBox = document.getElementById('payer-common-box');
+        const memberPicker = document.getElementById('payer-member-picker');
+        const payerInput = document.getElementById('expense-payer');
+
+        if (btnCommon) btnCommon.classList.add('active');
+        if (btnMember) btnMember.classList.remove('active');
+        if (commonBox) commonBox.style.display = 'flex';
+        if (memberPicker) memberPicker.style.display = 'none';
+        if (payerInput) payerInput.value = 'caja_comun';
+        return;
+      }
+
+      if (e.target.closest('#btn-payer-type-member')) {
+        const btnCommon = document.getElementById('btn-payer-type-common');
+        const btnMember = document.getElementById('btn-payer-type-member');
+        const commonBox = document.getElementById('payer-common-box');
+        const memberPicker = document.getElementById('payer-member-picker');
+        const payerInput = document.getElementById('expense-payer');
+
+        if (btnMember) btnMember.classList.add('active');
+        if (btnCommon) btnCommon.classList.remove('active');
+        if (commonBox) commonBox.style.display = 'none';
+        if (memberPicker) memberPicker.style.display = 'flex';
+
+        const searchInput = document.getElementById('payer-live-search');
+        if (searchInput && (!payerInput?.value || payerInput?.value === 'caja_comun')) {
+          searchInput.focus();
+        }
+        return;
+      }
+
+      // 30. Chips de Subfamilias en Selector de Pagador
+      const sfChip = e.target.closest('.subfamily-chip-btn');
+      if (sfChip) {
+        const chips = document.querySelectorAll('.subfamily-chip-btn');
+        chips.forEach((c) => c.classList.remove('active'));
+        sfChip.classList.add('active');
+
+        const sf = sfChip.getAttribute('data-sf') || 'all';
+        const searchVal = document.getElementById('payer-live-search')?.value || '';
+        const { activeEvent } = store.getState();
+        if (activeEvent) {
+          this.renderPayerSelector(activeEvent, sf, searchVal);
+        }
+        return;
+      }
+
+      // 31. Seleccionar Integrante de la lista predictiva
+      const payerItem = e.target.closest('.payer-result-item');
+      if (payerItem) {
+        const id = payerItem.getAttribute('data-id');
+        const name = payerItem.getAttribute('data-name');
+        const sf = payerItem.getAttribute('data-sf');
+
+        const payerInput = document.getElementById('expense-payer');
+        if (payerInput) payerInput.value = id;
+
+        const nameEl = document.getElementById('selected-payer-name');
+        const sfEl = document.getElementById('selected-payer-subfamily');
+        const avatarEl = document.getElementById('selected-payer-avatar');
+        const selectedCard = document.getElementById('payer-selected-card');
+        const searchSection = document.getElementById('payer-search-section');
+
+        if (nameEl) nameEl.textContent = name;
+        if (sfEl) sfEl.textContent = sf;
+        if (avatarEl) avatarEl.textContent = (name || 'U').charAt(0).toUpperCase();
+
+        if (selectedCard) selectedCard.style.display = 'flex';
+        if (searchSection) searchSection.style.display = 'none';
+        return;
+      }
+
+      // 32. Botón Cambiar Integrante Seleccionado
+      if (e.target.closest('#btn-change-selected-payer')) {
+        const selectedCard = document.getElementById('payer-selected-card');
+        const searchSection = document.getElementById('payer-search-section');
+        const searchInput = document.getElementById('payer-live-search');
+
+        if (selectedCard) selectedCard.style.display = 'none';
+        if (searchSection) searchSection.style.display = 'flex';
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+        }
+        const { activeEvent } = store.getState();
+        if (activeEvent) {
+          this.renderPayerSelector(activeEvent, 'all', '');
+        }
+        return;
+      }
     });
 
     // Switches de Asistencia en Ticket POS y Formularios
@@ -882,6 +977,16 @@ class App {
 
     // Filtros de búsqueda en tiempo real
     document.addEventListener('input', (e) => {
+      // Búsqueda Predictiva de Pagador (Modal Gastos)
+      if (e.target.id === 'payer-live-search') {
+        const activeChip = document.querySelector('.subfamily-chip-btn.active');
+        const sf = activeChip ? activeChip.getAttribute('data-sf') : 'all';
+        const { activeEvent } = store.getState();
+        if (activeEvent) {
+          this.renderPayerSelector(activeEvent, sf, e.target.value);
+        }
+      }
+
       // Búsqueda de Eventos en Home
       if (e.target.id === 'events-search-input') {
         store.setState({ searchQuery: e.target.value });
@@ -996,8 +1101,13 @@ class App {
         const activeCatPill = document.querySelector('#expense-category-pills .cat-pill-btn.active');
         const category = activeCatPill ? activeCatPill.getAttribute('data-cat') : 'Comida';
 
-        if (amount <= 0 || !title || !payerId) {
-          showToast('Por favor completa todos los campos del gasto', 'error');
+        if (amount <= 0 || !title) {
+          showToast('Por favor ingresa un monto y concepto válidos', 'error');
+          return;
+        }
+
+        if (!payerId) {
+          showToast('Selecciona quién pagó este gasto (o elige Fondo Común)', 'error');
           return;
         }
 
@@ -1214,34 +1324,40 @@ class App {
   openQuickExpenseModal() {
     const dialog = document.getElementById('modal-quick-expense');
     const { activeEvent } = store.getState();
-    const payerSelect = document.getElementById('expense-payer');
 
-    if (payerSelect && activeEvent) {
-      const attending = (activeEvent.participants || []).filter((p) => p.isAttending !== false);
-      const groupedBySf = {};
-      attending.forEach((p) => {
-        const sf = p.subFamily || 'Familia General';
-        if (!groupedBySf[sf]) groupedBySf[sf] = [];
-        groupedBySf[sf].push(p);
-      });
+    // Resetear campos del formulario
+    const amountInput = document.getElementById('expense-amount');
+    const titleInput = document.getElementById('expense-title');
+    const payerInput = document.getElementById('expense-payer');
+    if (amountInput) amountInput.value = '';
+    if (titleInput) titleInput.value = '';
+    if (payerInput) payerInput.value = 'caja_comun';
 
-      let optionsHtml = `
-        <option value="caja_comun">💳 Fondo Común / Gasto General (Sin reembolso individual)</option>
-      `;
+    // Resetear toggle de tipo de pago a "Fondo Común"
+    const btnCommon = document.getElementById('btn-payer-type-common');
+    const btnMember = document.getElementById('btn-payer-type-member');
+    if (btnCommon) btnCommon.classList.add('active');
+    if (btnMember) btnMember.classList.remove('active');
 
-      Object.keys(groupedBySf).sort().forEach((sf) => {
-        optionsHtml += `<optgroup label="📍 ${sf}">`;
-        groupedBySf[sf].forEach((p) => {
-          optionsHtml += `<option value="${p.id}">👤 ${p.name} (${sf})</option>`;
-        });
-        optionsHtml += `</optgroup>`;
-      });
+    const commonBox = document.getElementById('payer-common-box');
+    const memberPicker = document.getElementById('payer-member-picker');
+    const selectedCard = document.getElementById('payer-selected-card');
+    const searchSection = document.getElementById('payer-search-section');
 
-      payerSelect.innerHTML = optionsHtml;
+    if (commonBox) commonBox.style.display = 'flex';
+    if (memberPicker) memberPicker.style.display = 'none';
+    if (selectedCard) selectedCard.style.display = 'none';
+    if (searchSection) searchSection.style.display = 'flex';
+
+    const searchInput = document.getElementById('payer-live-search');
+    if (searchInput) searchInput.value = '';
+
+    // Poblar selector de pagadores con chips y lista filtrable
+    if (activeEvent) {
+      const chipsMount = document.getElementById('payer-subfamily-chips');
+      if (chipsMount) chipsMount.innerHTML = '';
+      this.renderPayerSelector(activeEvent, 'all', '');
     }
-
-    document.getElementById('expense-amount').value = '';
-    document.getElementById('expense-title').value = '';
 
     // Resetear categoría por defecto a "Comida"
     const catPills = document.querySelectorAll('#expense-category-pills .cat-pill-btn');
@@ -1254,6 +1370,55 @@ class App {
     });
 
     if (dialog && !dialog.open) dialog.showModal();
+  }
+
+  renderPayerSelector(activeEvent, selectedSubfamily = 'all', searchQuery = '') {
+    const chipsMount = document.getElementById('payer-subfamily-chips');
+    const resultsMount = document.getElementById('payer-results-list');
+    if (!resultsMount) return;
+
+    const attending = (activeEvent.participants || []).filter((p) => p.isAttending !== false);
+    
+    // Obtener subfamilias únicas
+    const subfamilies = Array.from(new Set(attending.map((p) => p.subFamily || 'Familia General'))).sort();
+
+    // Renderizar chips de subfamilia si no están renderizados
+    if (chipsMount && chipsMount.children.length === 0) {
+      chipsMount.innerHTML = `
+        <button type="button" class="subfamily-chip-btn active" data-sf="all">Todas (${attending.length})</button>
+        ${subfamilies.map((sf) => `
+          <button type="button" class="subfamily-chip-btn" data-sf="${sf}">${sf}</button>
+        `).join('')}
+      `;
+    }
+
+    // Filtrar participantes en tiempo real
+    const q = (searchQuery || '').toLowerCase().trim();
+    const filtered = attending.filter((p) => {
+      const pSf = p.subFamily || 'Familia General';
+      const matchSf = selectedSubfamily === 'all' || pSf === selectedSubfamily;
+      const matchQuery = !q || p.name.toLowerCase().includes(q) || pSf.toLowerCase().includes(q);
+      return matchSf && matchQuery;
+    });
+
+    if (filtered.length === 0) {
+      resultsMount.innerHTML = `
+        <p style="padding: 12px; font-size: 0.76rem; color: var(--text-muted); text-align: center;">
+          No se encontraron integrantes que coincidan con la búsqueda.
+        </p>
+      `;
+      return;
+    }
+
+    resultsMount.innerHTML = filtered.map((p) => `
+      <div class="payer-result-item" data-id="${p.id}" data-name="${p.name}" data-sf="${p.subFamily || 'Familia General'}">
+        <div class="payer-item-name">
+          <span class="payer-mini-avatar">${(p.name || 'U').charAt(0).toUpperCase()}</span>
+          <span>${p.name}</span>
+        </div>
+        <span class="payer-item-sf">${p.subFamily || 'Familia General'}</span>
+      </div>
+    `).join('');
   }
 
   openEventCutModal() {
