@@ -70,20 +70,13 @@ class App {
     const events = await getAllEvents();
     store.setState({ events, loading: false });
 
-    // 6. Configurar suscripción Realtime y Auto-Sync en segundo plano
+    // 6. Configurar suscripción Realtime con Supabase
     subscribeToEventsListRealtime(async () => {
-      console.log('[Realtime] Cambio detectado en Supabase, refrescando...');
+      console.log('[Realtime] Cambio detectado en Supabase, sincronizando...');
       await this.syncWithSupabase(false);
     });
 
-    // Auto-Sync periódico cada 4 segundos para mantener iPad, PC y móviles 100% sincronizados
-    setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        this.syncWithSupabase(false);
-      }
-    }, 4000);
-
-    // Sincronizar inmediatamente al volver a la pestaña o desbloquear iPad
+    // Sincronizar al volver a la pestaña o enfocar ventana
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         this.syncWithSupabase(false);
@@ -108,13 +101,17 @@ class App {
   async syncWithSupabase(showNotification = false) {
     try {
       const updatedEvents = await getAllEvents();
-      store.setState({ events: updatedEvents });
+      const currentEvents = store.getState().events || [];
+      const hasChanged = JSON.stringify(currentEvents) !== JSON.stringify(updatedEvents);
 
-      const { activeEvent } = store.getState();
-      if (activeEvent) {
-        const refreshed = updatedEvents.find((e) => e.id === activeEvent.id || e.slug === activeEvent.id);
-        if (refreshed) {
-          store.setState({ activeEvent: refreshed });
+      if (hasChanged) {
+        store.setState({ events: updatedEvents });
+        const { activeEvent } = store.getState();
+        if (activeEvent) {
+          const refreshed = updatedEvents.find((e) => e.id === activeEvent.id || e.slug === activeEvent.id);
+          if (refreshed) {
+            store.setState({ activeEvent: refreshed });
+          }
         }
       }
 
@@ -1169,7 +1166,7 @@ class App {
       containerEl.innerHTML = `<p style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem;">Pega datos CSV para generar la vista previa.</p>`;
     }
 
-    if (dialog) dialog.showModal();
+    if (dialog && !dialog.open) dialog.showModal();
   }
 
   openNewEventModal() {
@@ -1199,7 +1196,7 @@ class App {
       };
     }
 
-    if (dialog) dialog.showModal();
+    if (dialog && !dialog.open) dialog.showModal();
   }
 
   openQuickExpenseModal() {
@@ -1217,7 +1214,7 @@ class App {
     document.getElementById('expense-amount').value = '';
     document.getElementById('expense-title').value = '';
 
-    if (dialog) dialog.showModal();
+    if (dialog && !dialog.open) dialog.showModal();
   }
 
   openEventCutModal() {
@@ -1286,7 +1283,7 @@ class App {
       `;
     }
 
-    dialog.showModal();
+    if (dialog && !dialog.open) dialog.showModal();
   }
 
   renderDirectoryList(directory, mode = 'import') {
@@ -1383,7 +1380,7 @@ class App {
 
     // 1. Renderizado instantáneo desde memoria/caché
     this.renderDirectoryList(initialDirectory, mode);
-    if (dialog) dialog.showModal();
+    if (dialog && !dialog.open) dialog.showModal();
 
     // 2. Sincronización transparente en segundo plano desde Supabase
     fetchGlobalDirectoryFromSupabase().then((freshDirectory) => {

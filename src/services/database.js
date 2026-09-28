@@ -384,7 +384,11 @@ export const deleteEvent = async (id) => {
  */
 export const addParticipant = async (eventId, participantData) => {
   const localList = loadLocalEvents();
-  const currentEvent = localList.find((e) => e.id === eventId || e.slug === eventId);
+  let currentEvent = localList.find((e) => e.id === eventId || e.slug === eventId);
+  if (!currentEvent && localList.length > 0) {
+    currentEvent = localList[0];
+  }
+
   const defaultDays = currentEvent?.availableDays && currentEvent.availableDays.length > 0
     ? currentEvent.availableDays
     : ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
@@ -407,11 +411,19 @@ export const addParticipant = async (eventId, participantData) => {
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      const targetEventId = isUUID(eventId)
+      let targetEventId = isUUID(eventId)
         ? eventId
         : currentEvent && isUUID(currentEvent.id)
         ? currentEvent.id
         : null;
+
+      // Si no es UUID, buscar el evento correspondiente en Supabase
+      if (!targetEventId) {
+        const { data: dbEvents } = await supabase.from('events').select('id').limit(1);
+        if (dbEvents && dbEvents.length > 0) {
+          targetEventId = dbEvents[0].id;
+        }
+      }
 
       const { data, error } = await supabase.from('participants').insert({
         id: p.id,
@@ -430,7 +442,7 @@ export const addParticipant = async (eventId, participantData) => {
       if (error) {
         console.error('[Database] Error insertando participante en Supabase:', error);
       } else {
-        console.log('[Database] ✅ Participante guardado en Supabase:', p.name, p.id);
+        console.log('[Database] ✅ Participante guardado en Supabase:', p.name, p.id, 'en evento:', targetEventId);
       }
     } catch (e) {
       console.error('[Database] Excepción insertando participante en Supabase:', e);
@@ -438,7 +450,7 @@ export const addParticipant = async (eventId, participantData) => {
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId || e.slug === eventId);
+  const event = list.find((e) => e.id === eventId || e.slug === eventId) || list[0];
   if (event) {
     event.participants = event.participants || [];
     event.participants.push(p);
@@ -646,12 +658,8 @@ export const settleSubFamily = async (eventId, subFamilyName, isSettled) => {
  */
 export const addExpense = async (eventId, expenseData) => {
   const localList = loadLocalEvents();
-  const currentEvent = localList.find((e) => e.id === eventId || e.slug === eventId);
-  const targetEventId = isUUID(eventId)
-    ? eventId
-    : currentEvent && isUUID(currentEvent.id)
-    ? currentEvent.id
-    : null;
+  let currentEvent = localList.find((e) => e.id === eventId || e.slug === eventId);
+  if (!currentEvent && localList.length > 0) currentEvent = localList[0];
 
   const exp = {
     id: generateUUID(),
@@ -665,6 +673,17 @@ export const addExpense = async (eventId, expenseData) => {
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
+      let targetEventId = isUUID(eventId)
+        ? eventId
+        : currentEvent && isUUID(currentEvent.id)
+        ? currentEvent.id
+        : null;
+
+      if (!targetEventId) {
+        const { data: dbEvents } = await supabase.from('events').select('id').limit(1);
+        if (dbEvents && dbEvents.length > 0) targetEventId = dbEvents[0].id;
+      }
+
       const { error } = await supabase.from('expenses').insert({
         id: exp.id,
         event_id: targetEventId,
