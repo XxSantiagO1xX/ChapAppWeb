@@ -106,6 +106,10 @@
   width: 780px;
 }
 
+.glass-dialog.modal-md {
+  width: 640px;
+}
+
 .glass-dialog.modal-sm {
   width: 440px;
 }

@@ -1085,74 +1085,216 @@ button:active {
   margin-top: 8px;
 }
 
-/* Category Pills Selector */
-.category-pills-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.cat-pill-btn {
-  padding: 8px 16px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-subtle);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.cat-pill-btn.active {
-  background: var(--color-primary-glow);
-  border-color: var(--border-neon-cyan);
-  color: var(--color-primary);
-  font-weight: 800;
-  box-shadow: 0 0 12px var(--color-primary-glow);
-}
-
-/* AI Scanner Banner */
+/* ==========================================================================
+   FORMULARIO DE GASTO RÁPIDO & SPLIT GRID (MODAL GASTOS)
+   ========================================================================== */
 .ai-scanner-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
-  margin-bottom: 16px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
   border-radius: var(--radius-lg);
-  gap: 14px;
+  gap: 12px;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.20);
 }
 
 .ai-scanner-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  min-width: 0;
 }
 
 .ai-badge {
-  font-size: 0.72rem;
+  font-size: 0.70rem;
   font-weight: 800;
   color: var(--color-primary);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .ai-scanner-desc {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: var(--text-secondary);
+  line-height: 1.25;
+}
+
+.ai-upload-btn {
+  height: 36px;
+  padding: 0 14px;
+  font-size: 0.80rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .ai-loading-box {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: rgba(0, 240, 255, 0.10);
   border: 1px solid var(--border-neon-cyan);
   border-radius: var(--radius-md);
-  margin-bottom: 14px;
-  font-size: 0.85rem;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
   color: var(--color-primary);
+}
+
+.expense-form-split-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 520px) {
+  .expense-form-split-grid {
+    grid-template-columns: 1.28fr 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+}
+
+.expense-fields-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.amount-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.amount-currency-prefix {
+  position: absolute;
+  left: 14px;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--color-primary);
+  pointer-events: none;
+}
+
+.expense-amount-input {
+  padding-left: 30px !important;
+  font-size: 1.20rem !important;
+  font-weight: 800 !important;
+  color: var(--color-primary) !important;
+  font-variant-numeric: tabular-nums;
+  height: 44px;
+}
+
+.expense-category-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.category-col-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #CBD5E1;
+}
+
+[data-theme="light"] .category-col-label {
+  color: #475569;
+}
+
+.category-vertical-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.category-vertical-selector .cat-pill-btn {
+  width: 100%;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+  transition: all var(--transition-fast);
+}
+
+.category-vertical-selector .cat-pill-btn:hover {
+  background: var(--surface-subtle-hover);
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+.cat-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+/* Colores de Categorías Asignados a la Gráfica Presupuestaria */
+/* Comida (#F59E0B) */
+.category-vertical-selector .cat-pill-btn.cat-comida.active {
+  background: rgba(245, 158, 11, 0.16);
+  border-color: #F59E0B;
+  color: #FBBF24;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+}
+
+/* Bebidas (#00F0FF) */
+.category-vertical-selector .cat-pill-btn.cat-bebidas.active {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: #00F0FF;
+  color: #00F0FF;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+}
+
+/* Transporte (#38BDF8) */
+.category-vertical-selector .cat-pill-btn.cat-transporte.active {
+  background: rgba(56, 189, 248, 0.16);
+  border-color: #38BDF8;
+  color: #38BDF8;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+}
+
+/* Hospedaje (#FF7A00) */
+.category-vertical-selector .cat-pill-btn.cat-hospedaje.active {
+  background: rgba(255, 122, 0, 0.16);
+  border-color: #FF7A00;
+  color: #FFA54F;
+  box-shadow: 0 0 14px rgba(255, 122, 0, 0.35);
+}
+
+/* Varios (#A855F7) */
+.category-vertical-selector .cat-pill-btn.cat-varios.active {
+  background: rgba(168, 85, 247, 0.16);
+  border-color: #A855F7;
+  color: #C084FC;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.35);
+}
+
+/* Fallback horizontal pills */
+.category-pills-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .directory-picker-section {

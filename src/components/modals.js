@@ -68,7 +68,8 @@ export const mountModals = () => {
     </dialog>
 
     <!-- 2. Modal Gasto Rápido (+ Escáner con IA Google Gemini) -->
-    <dialog id="modal-quick-expense" class="glass-dialog">
+    <!-- 2. Modal Gasto Rápido (+ Escáner con IA Google Gemini) -->
+    <dialog id="modal-quick-expense" class="glass-dialog modal-md">
       <div class="dialog-content">
         <div class="dialog-header">
           <div class="dialog-title-group">
@@ -78,14 +79,14 @@ export const mountModals = () => {
           <button class="btn-icon-glass btn-close-dialog" aria-label="Cerrar">${renderIcon('close', { size: 16 })}</button>
         </div>
 
-        <!-- Botón de Escaneo Inteligente con IA -->
+        <!-- Botón de Escaneo Inteligente con IA (Compacto y Elegante) -->
         <div class="ai-scanner-banner glass-panel">
           <div class="ai-scanner-info">
-            <span class="ai-badge">${renderIcon('sparkles', { size: 14 })} Google Gemini Vision</span>
-            <p class="ai-scanner-desc">Sube la foto de tu ticket o nota manuscrita para extraer monto y concepto automáticamente.</p>
+            <span class="ai-badge">${renderIcon('sparkles', { size: 13 })} Google Gemini Vision</span>
+            <p class="ai-scanner-desc">Sube foto de tu ticket o nota para autocompletar monto y concepto.</p>
           </div>
           <label class="btn-pill-cyan ai-upload-btn" id="lbl-scan-ticket">
-            ${renderIcon('camera', { size: 16 })}
+            ${renderIcon('camera', { size: 14 })}
             <span>Escanear Ticket</span>
             <input type="file" id="input-receipt-file" accept="image/*" capture="environment" style="display: none;" />
           </label>
@@ -97,27 +98,54 @@ export const mountModals = () => {
         </div>
 
         <form id="form-quick-expense" class="dialog-form">
-          <div class="form-group">
-            <label for="expense-amount">Monto Total ($ MXN) *</label>
-            <input type="number" step="0.01" id="expense-amount" class="glass-input input-highlight-lg" placeholder="0.00" required inputmode="decimal" />
-          </div>
-          <div class="form-group">
-            <label for="expense-title">Concepto / Comercio *</label>
-            <input type="text" id="expense-title" class="glass-input" placeholder="ej. Supermercado, Cena día 1, Gasolina" required />
-          </div>
-          <div class="form-group">
-            <label>Categoría del Gasto</label>
-            <div class="category-pills-selector" id="expense-category-pills">
-              <button type="button" class="cat-pill-btn active" data-cat="Comida">Comida</button>
-              <button type="button" class="cat-pill-btn" data-cat="Bebidas">Bebidas</button>
-              <button type="button" class="cat-pill-btn" data-cat="Transporte">Transporte</button>
-              <button type="button" class="cat-pill-btn" data-cat="Hospedaje">Hospedaje</button>
-              <button type="button" class="cat-pill-btn" data-cat="Varios">Varios</button>
+          <div class="expense-form-split-grid">
+            <!-- Columna Izquierda: Datos del Gasto -->
+            <div class="expense-fields-col">
+              <div class="form-group">
+                <label for="expense-amount">Monto Total ($ MXN) *</label>
+                <div class="amount-input-wrapper">
+                  <span class="amount-currency-prefix">$</span>
+                  <input type="number" step="0.01" id="expense-amount" class="glass-input expense-amount-input" placeholder="10000.50" required inputmode="decimal" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="expense-title">Concepto / Comercio *</label>
+                <input type="text" id="expense-title" class="glass-input" placeholder="ej. Supermercado, Gasolina" required />
+              </div>
+
+              <div class="form-group">
+                <label for="expense-payer">¿Quién pagó este gasto? *</label>
+                <select id="expense-payer" class="glass-select" required></select>
+              </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label for="expense-payer">Pagado por (de su bolsillo) *</label>
-            <select id="expense-payer" class="glass-select" required></select>
+
+            <!-- Columna Derecha: Selector Vertical de Categorías con Colores Presupuestarios -->
+            <div class="expense-category-col">
+              <label class="category-col-label">Categoría del Gasto</label>
+              <div class="category-vertical-selector" id="expense-category-pills">
+                <button type="button" class="cat-pill-btn cat-comida active" data-cat="Comida">
+                  <span class="cat-color-dot" style="background: #F59E0B; box-shadow: 0 0 8px rgba(245, 158, 11, 0.65);"></span>
+                  <span>Comida</span>
+                </button>
+                <button type="button" class="cat-pill-btn cat-bebidas" data-cat="Bebidas">
+                  <span class="cat-color-dot" style="background: #00F0FF; box-shadow: 0 0 8px rgba(0, 240, 255, 0.65);"></span>
+                  <span>Bebidas</span>
+                </button>
+                <button type="button" class="cat-pill-btn cat-transporte" data-cat="Transporte">
+                  <span class="cat-color-dot" style="background: #38BDF8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.65);"></span>
+                  <span>Transporte</span>
+                </button>
+                <button type="button" class="cat-pill-btn cat-hospedaje" data-cat="Hospedaje">
+                  <span class="cat-color-dot" style="background: #FF7A00; box-shadow: 0 0 8px rgba(255, 122, 0, 0.65);"></span>
+                  <span>Hospedaje</span>
+                </button>
+                <button type="button" class="cat-pill-btn cat-varios" data-cat="Varios">
+                  <span class="cat-color-dot" style="background: #A855F7; box-shadow: 0 0 8px rgba(168, 85, 247, 0.65);"></span>
+                  <span>Varios</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="dialog-footer">

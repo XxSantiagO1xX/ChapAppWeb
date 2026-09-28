@@ -1005,7 +1005,7 @@ class App {
           title,
           amount,
           category,
-          paidBy: payerId,
+          paidBy: payerId === 'caja_comun' ? null : payerId,
         });
 
         const dialog = document.getElementById('modal-quick-expense');
@@ -1217,14 +1217,41 @@ class App {
     const payerSelect = document.getElementById('expense-payer');
 
     if (payerSelect && activeEvent) {
-      const attending = (activeEvent.participants || []).filter((p) => p.isAttending);
-      payerSelect.innerHTML = attending.map((p) => `
-        <option value="${p.id}">${p.name} (${p.subFamily})</option>
-      `).join('');
+      const attending = (activeEvent.participants || []).filter((p) => p.isAttending !== false);
+      const groupedBySf = {};
+      attending.forEach((p) => {
+        const sf = p.subFamily || 'Familia General';
+        if (!groupedBySf[sf]) groupedBySf[sf] = [];
+        groupedBySf[sf].push(p);
+      });
+
+      let optionsHtml = `
+        <option value="caja_comun">💳 Fondo Común / Gasto General (Sin reembolso individual)</option>
+      `;
+
+      Object.keys(groupedBySf).sort().forEach((sf) => {
+        optionsHtml += `<optgroup label="📍 ${sf}">`;
+        groupedBySf[sf].forEach((p) => {
+          optionsHtml += `<option value="${p.id}">👤 ${p.name} (${sf})</option>`;
+        });
+        optionsHtml += `</optgroup>`;
+      });
+
+      payerSelect.innerHTML = optionsHtml;
     }
 
     document.getElementById('expense-amount').value = '';
     document.getElementById('expense-title').value = '';
+
+    // Resetear categoría por defecto a "Comida"
+    const catPills = document.querySelectorAll('#expense-category-pills .cat-pill-btn');
+    catPills.forEach((p) => {
+      if (p.getAttribute('data-cat') === 'Comida') {
+        p.classList.add('active');
+      } else {
+        p.classList.remove('active');
+      }
+    });
 
     if (dialog && !dialog.open) dialog.showModal();
   }
