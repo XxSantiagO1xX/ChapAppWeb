@@ -3,27 +3,6 @@
  */
 
 /* ==========================================================================
-   ÍCONOS VECTORIALES ESCULPIDOS (THIN OUTLINE ICONS)
-   ========================================================================== */
-.sculpted-svg-icon {
-  display: inline-block;
-  vertical-align: middle;
-  flex-shrink: 0;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  shape-rendering: geometricPrecision;
-  transition: transform var(--transition-fast), stroke var(--transition-fast), filter var(--transition-fast);
-}
-
-.inline-user-icon,
-.sf-icon-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-}
-
-/* ==========================================================================
    1. BOTONES Y ACCIONES
    ========================================================================== */
 button {
