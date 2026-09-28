@@ -1015,6 +1015,16 @@ button:active {
   font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .dialog-title {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .dialog-title {
+  color: #0F172A !important;
 }
 
 .dialog-form {
@@ -1059,8 +1069,34 @@ button:active {
   box-shadow: 0 0 16px var(--color-primary-glow);
 }
 
+.input-currency-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-currency-wrapper .currency-prefix {
+  position: absolute;
+  left: 14px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.input-highlight-md {
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: var(--color-primary) !important;
+  font-variant-numeric: tabular-nums;
+  padding-left: 32px !important;
+  height: 48px;
+}
+
 .input-highlight-lg {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--color-primary);
   font-variant-numeric: tabular-nums;
@@ -1076,7 +1112,118 @@ button:active {
   margin-top: 8px;
 }
 
-/* Category Pills Selector */
+/* Modal de Gasto: Split Grid Monto/Concepto (Izq) + Categorías Verticales (Der) */
+.expense-form-split-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 540px) {
+  .expense-form-split-grid {
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 16px;
+    align-items: flex-start;
+  }
+}
+
+.expense-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.expense-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label-category {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.category-vertical-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.cat-pill-vertical {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.cat-pill-vertical:hover {
+  background: var(--surface-subtle-hover);
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+.cat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-comida { background: #f97316; box-shadow: 0 0 6px rgba(249, 115, 22, 0.7); }
+.dot-bebidas { background: #06b6d4; box-shadow: 0 0 6px rgba(6, 182, 212, 0.7); }
+.dot-transporte { background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.7); }
+.dot-hospedaje { background: #a855f7; box-shadow: 0 0 6px rgba(168, 85, 247, 0.7); }
+.dot-varios { background: #f43f5e; box-shadow: 0 0 6px rgba(244, 63, 94, 0.7); }
+
+.cat-pill-vertical.active[data-cat="Comida"] {
+  background: rgba(249, 115, 22, 0.18);
+  border-color: #f97316;
+  color: #fed7aa;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.35);
+}
+
+.cat-pill-vertical.active[data-cat="Bebidas"] {
+  background: rgba(6, 182, 212, 0.18);
+  border-color: #00f0ff;
+  color: #cffafe;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+}
+
+.cat-pill-vertical.active[data-cat="Transporte"] {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #10b981;
+  color: #d1fae5;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+}
+
+.cat-pill-vertical.active[data-cat="Hospedaje"] {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: #a855f7;
+  color: #f3e8ff;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.35);
+}
+
+.cat-pill-vertical.active[data-cat="Varios"] {
+  background: rgba(244, 63, 94, 0.18);
+  border-color: #f43f5e;
+  color: #ffe4e6;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
+}
+
+/* Category Pills Selector Legacy */
 .category-pills-selector {
   display: flex;
   flex-wrap: wrap;
@@ -1100,6 +1247,158 @@ button:active {
   color: var(--color-primary);
   font-weight: 800;
   box-shadow: 0 0 12px var(--color-primary-glow);
+}
+
+/* AI Scanner Banner Compacto */
+.ai-scanner-banner-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-md);
+  gap: 10px;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.20);
+}
+
+.ai-scanner-info-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ai-upload-btn-compact {
+  padding: 6px 14px !important;
+  font-size: 0.78rem !important;
+  gap: 6px !important;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Payer Modern Interactive Grid */
+.payer-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.payer-picker-box {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+
+.payer-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.payer-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.payer-cards-grid-scroll {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.payer-card-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  position: relative;
+}
+
+.payer-card-chip:hover {
+  background: var(--surface-subtle-hover);
+  border-color: rgba(0, 240, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.payer-card-chip.selected {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 14px var(--color-primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.payer-avatar-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(168, 85, 247, 0.3));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.payer-card-chip.selected .payer-avatar-circle {
+  background: var(--color-primary);
+  color: #070d18;
+  border-color: #fff;
+}
+
+.payer-card-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.payer-card-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.payer-card-sf {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.payer-check-icon {
+  display: none;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.payer-card-chip.selected .payer-check-icon {
+  display: flex;
 }
 
 /* AI Scanner Banner */

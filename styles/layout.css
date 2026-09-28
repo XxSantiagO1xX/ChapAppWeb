@@ -548,19 +548,21 @@ body {
   flex: 1;
 }
 
-/* Barra Lateral Flotante en Forma de Cápsula (Image 3) */
+/* Barra Lateral Flotante en Forma de Cápsula */
 .floating-capsule-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   background: var(--surface-card);
   border: 1px solid var(--border-glass);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  border-left: 1.5px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-xl);
-  padding: 16px 12px;
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  padding: 18px 14px;
+  backdrop-filter: blur(32px) saturate(210%);
+  -webkit-backdrop-filter: blur(32px) saturate(210%);
   box-shadow: var(--shadow-card);
-  transition: width var(--transition-normal), transform var(--transition-fast), border-radius var(--transition-normal);
+  transition: width var(--transition-normal), transform var(--transition-fast), border-radius var(--transition-normal), min-height var(--transition-normal);
 }
 
 @media (min-width: 860px) {
@@ -570,23 +572,37 @@ body {
     align-self: flex-start;
     width: 240px;
     min-width: 240px;
+    min-height: 420px;
     z-index: 40;
   }
 
   .floating-capsule-sidebar.collapsed {
-    width: 66px;
-    min-width: 66px;
-    padding: 14px 6px;
+    width: 64px;
+    min-width: 64px;
+    min-height: 390px;
+    padding: 22px 6px;
     border-radius: var(--radius-pill);
     border: 1.5px solid rgba(0, 240, 255, 0.40);
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 18px rgba(0, 240, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    border-top: 2px solid rgba(255, 255, 255, 0.50);
+    border-left: 1.5px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.70), 0 0 22px rgba(0, 240, 255, 0.20), inset 0 1.5px 2px rgba(255, 255, 255, 0.35);
     align-items: center;
+    gap: 16px;
   }
 
   .floating-capsule-sidebar.collapsed .capsule-text-box,
   .floating-capsule-sidebar.collapsed .capsule-count-badge,
   .floating-capsule-sidebar.collapsed .shortcut-label {
     display: none !important;
+  }
+
+  .floating-capsule-sidebar.collapsed .capsule-toggle-btn {
+    align-self: center;
+    margin-bottom: 6px;
+  }
+
+  .floating-capsule-sidebar.collapsed .capsule-tabs-group {
+    gap: 14px;
   }
 
   .floating-capsule-sidebar.collapsed .capsule-tab-item {
@@ -612,9 +628,11 @@ body {
   }
 
   .floating-capsule-sidebar.collapsed .capsule-shortcuts-group {
-    padding-top: 8px;
-    margin-top: 4px;
+    padding-top: 14px;
+    margin-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
     align-items: center;
+    gap: 12px;
   }
 }
 
