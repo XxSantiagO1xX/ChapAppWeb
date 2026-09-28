@@ -33,21 +33,13 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
 
   const activeSf = totals.bySubFamily[activeSubFamilyName] || subFamilies[0];
 
-  // Invitados temporales del store
-  const ticketGuests = (store.getState().ticketGuests || {})[activeSubFamilyName] || [];
-  const costPerUnit = totals.costPerUnit || 0;
-  const calculatedGuests = ticketGuests.map((g) => {
-    const weight = g.category === 'nino' ? 0.5 : 1.0;
-    const cost = roundToTwoDecimals(g.daysCount * weight * costPerUnit);
-    return { ...g, weight, cost };
-  });
-  const guestsTotalCost = roundToTwoDecimals(calculatedGuests.reduce((sum, g) => sum + g.cost, 0));
-
-  // Desglose matemático
-  const baseProportionalShare = activeSf.proportionalShare;
-  const baseTotalPaid = activeSf.totalPaid;
-  const grossTotalQuota = roundToTwoDecimals(baseProportionalShare + guestsTotalCost);
-  const finalBalance = roundToTwoDecimals(grossTotalQuota - baseTotalPaid);
+  // Invitados calculados y métricas directamente del motor contable
+  const calculatedGuests = activeSf.guests || [];
+  const guestsTotalCost = activeSf.guestsTotalCost || 0;
+  const baseProportionalShare = activeSf.membersProportionalShare || 0;
+  const baseTotalPaid = activeSf.totalPaid || 0;
+  const grossTotalQuota = activeSf.proportionalShare || 0;
+  const finalBalance = activeSf.finalBalance || 0;
 
   const isRefund = finalBalance < 0;
   const isOwed = finalBalance > 0;
@@ -61,13 +53,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
   // 1. Items de la Columna Izquierda (Master List de Subfamilias)
   const masterItemsHtml = subFamilies.map((sf) => {
     const isSelected = sf.subFamilyName === activeSubFamilyName;
-    const sfGuests = (store.getState().ticketGuests || {})[sf.subFamilyName] || [];
-    const sfGuestsCost = sfGuests.reduce((sum, g) => {
-      const w = g.category === 'nino' ? 0.5 : 1.0;
-      return sum + roundToTwoDecimals(g.daysCount * w * costPerUnit);
-    }, 0);
-    const sfFinalBal = roundToTwoDecimals(sf.proportionalShare + sfGuestsCost - sf.totalPaid);
-
+    const sfFinalBal = sf.finalBalance;
     const sfIsRefund = sfFinalBal < 0;
     const sfIsOwed = sfFinalBal > 0;
     const badgeText = sfIsRefund
@@ -215,7 +201,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
         </div>
       </aside>
 
-      <!-- Columna Derecha: Ticket de Cobro POS de la Subfamilia Seleccionada (Image 4 & 5) -->
+      <!-- Columna Derecha: Ticket de Cobro POS de la Subfamilia Seleccionada -->
       <main class="pos-detail-col">
         <div class="pos-ticket-card glass-panel animate-fade-in">
           <!-- Cabecera del Ticket POS -->
@@ -224,7 +210,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
               <span class="ticket-badge-tag">TICKET DE COBRO POS</span>
               <h2 class="ticket-family-name">${activeSf.subFamilyName}</h2>
               <p class="ticket-family-sub">
-                ${activeSf.attendingCount} asistentes de ${activeSf.membersCount} integrantes • ${activeSf.totalWeightedUnits} uds ponderadas
+                ${activeSf.attendingCount} asistentes (${activeSf.membersCount} integrantes${calculatedGuests.length > 0 ? ` + ${calculatedGuests.length} invitados` : ''}) • ${activeSf.totalWeightedUnits} uds ponderadas
               </p>
             </div>
             
@@ -251,7 +237,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             </div>
           </div>
 
-          <!-- Banner Informativo si la cuenta está 100% saldada (Image 5) -->
+          <!-- Banner Informativo si la cuenta está 100% saldada -->
           ${activeSf.isFullySettled ? `
             <div class="ticket-settled-banner glass-panel">
               <span class="settled-dot"></span>
@@ -259,7 +245,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             </div>
           ` : ''}
 
-          <!-- Sección 1: Integrantes Registrados y Switch de Asistencia (Image 5) -->
+          <!-- Sección 1: Integrantes Registrados y Switch de Asistencia -->
           <div class="ticket-section-block">
             <div class="ticket-section-header">
               <span class="ticket-section-title">
@@ -273,11 +259,11 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             </div>
           </div>
 
-          <!-- Sección 2: Invitados Temporales (Image 5) -->
+          <!-- Sección 2: Invitados Temporales -->
           <div class="ticket-section-block">
             <div class="ticket-section-header">
               <span class="ticket-section-title">
-                ${renderIcon('user-plus', { size: 16 })} Invitados Temporales (${ticketGuests.length})
+                ${renderIcon('user-plus', { size: 16 })} Invitados Temporales (${calculatedGuests.length})
               </span>
               <button type="button" id="btn-open-add-guest-form" class="btn-pill-cyan btn-sm">
                 ${renderIcon('plus', { size: 14 })}
@@ -315,13 +301,13 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             </div>
 
             <div class="ticket-guests-list">
-              ${ticketGuests.length === 0 
+              ${calculatedGuests.length === 0 
                 ? '<p class="empty-guest-text">Sin invitados adicionales. Toca "+ Agregar Invitado" para sumarlos al cálculo.</p>' 
                 : guestsListHtml}
             </div>
           </div>
 
-          <!-- Sección 3: Desglose Matemático (Image 5) -->
+          <!-- Sección 3: Desglose Matemático -->
           <div class="ticket-section-block">
             <div class="math-breakdown-card glass-panel">
               <div class="breakdown-header">
@@ -329,12 +315,12 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
               </div>
               <div class="breakdown-table-rows">
                 <div class="breakdown-item-row">
-                  <span class="breakdown-label">Cuota Integrantes Fijos</span>
+                  <span class="breakdown-label">Cuota Integrantes Fijos (${activeSf.attendingCount - calculatedGuests.length} activos)</span>
                   <strong class="breakdown-val">${formatCurrency(baseProportionalShare)}</strong>
                 </div>
                 ${guestsTotalCost > 0 ? `
                   <div class="breakdown-item-row text-cyan">
-                    <span class="breakdown-label">+ Cuota Invitados Temporales (${ticketGuests.length})</span>
+                    <span class="breakdown-label">+ Cuota Invitados Temporales (${calculatedGuests.length})</span>
                     <strong class="breakdown-val">+${formatCurrency(guestsTotalCost)}</strong>
                   </div>
                 ` : ''}
@@ -350,7 +336,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             </div>
           </div>
 
-          <!-- Sección 4: Gran Caja de Liquidación al Fondo (Image 5) -->
+          <!-- Sección 4: Gran Caja de Liquidación al Fondo -->
           <div class="settlement-bottom-card ${activeSf.isFullySettled ? 'settled-card' : 'pending-card'} glass-panel">
             <div class="settlement-card-header">
               <span class="settlement-badge-label">
@@ -389,7 +375,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             </div>
           </div>
 
-          <!-- Sección 5: Acciones Rápidas de Exportación (Image 4 & 5) -->
+          <!-- Sección 5: Acciones Rápidas de Exportación -->
           <div class="ticket-actions-bar">
             <button 
               id="btn-share-sf-whatsapp" 

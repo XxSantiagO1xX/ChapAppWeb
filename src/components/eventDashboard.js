@@ -261,7 +261,7 @@ export const renderEventDashboard = (event) => {
             <div class="sf-title-info-group">
               <h4 class="sf-group-title">${renderIcon('users', { size: 16 })} ${sfName}</h4>
               <span class="sf-group-stats">
-                ${attendingCount} de ${parts.length} asisten • Saldo: <strong class="${sfCalc && sfCalc.finalBalance > 0 ? 'text-amber' : sfCalc && sfCalc.finalBalance < 0 ? 'text-emerald' : 'text-cyan'}">${sfCalc ? formatCurrency(sfCalc.finalBalance) : '$0.00'}</strong>
+                ${attendingCount} de ${parts.length} asisten${sfCalc?.guests?.length > 0 ? ` (+${sfCalc.guests.length} inv)` : ''} • Saldo: <strong class="${sfCalc && sfCalc.finalBalance > 0 ? 'text-amber' : sfCalc && sfCalc.finalBalance < 0 ? 'text-emerald' : 'text-cyan'}">${sfCalc ? (sfCalc.finalBalance < 0 ? `Reembolso ${formatCurrency(Math.abs(sfCalc.finalBalance))}` : formatCurrency(sfCalc.finalBalance)) : '$0.00'}</strong>
               </span>
             </div>
 
@@ -301,6 +301,21 @@ export const renderEventDashboard = (event) => {
           <div class="sf-members-list">
             ${membersListHtml}
           </div>
+
+          ${sfCalc?.guests?.length > 0 ? `
+            <div class="sf-guests-sublist" style="margin-top: 10px; padding: 8px 12px; background: rgba(6, 182, 212, 0.06); border-radius: 8px; border: 1px solid rgba(6, 182, 212, 0.15);">
+              <div style="font-size: 0.78rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+                ${renderIcon('user-plus', { size: 13 })} Invitados Temporales Asignados (${sfCalc.guests.length})
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                ${sfCalc.guests.map(g => `
+                  <span class="badge-pill badge-cyan" style="font-size: 0.75rem; padding: 3px 8px;">
+                    ${g.name} (${g.category} • ${g.daysCount} días) => ${formatCurrency(g.cost)}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');

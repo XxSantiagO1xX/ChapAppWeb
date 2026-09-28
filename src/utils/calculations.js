@@ -1,7 +1,10 @@
 /**
  * ChapApp - Motor Financiero y Contable
- * Implementación 100% fiel de las 4 columnas contables, cuotas proporcionales y cuadre de caja.
+ * Implementación 100% fiel de las 4 columnas contables, cuotas proporcionales,
+ * soporte para invitados temporales prorrateados y cuadre de caja de doble partida.
  */
+
+import { store } from '../state/store.js';
 
 /**
  * Redondea un número a 2 decimales evitando errores de coma flotante.
@@ -57,12 +60,88 @@ export const calculateParticipantWeightedUnits = (participant) => {
 };
 
 /**
- * Calcula los totales financieros, distribución proporcional, cuadre de caja
- * y estado de corte/liquidación de un evento.
+ * Normaliza y extrae la lista de invitados para un evento dado.
  */
-export const calculateEventTotals = (event) => {
+export const resolveEventGuests = (event, guestsInput = null) => {
+  const guestsList = [];
+
+  const addGuest = (g, defaultSf = 'Familia General') => {
+    if (!g || !g.name) return;
+    const category = g.category || 'adulto';
+    const weight = typeof g.weight === 'number' ? g.weight : (category === 'nino' ? 0.5 : 1.0);
+    const daysCount = Math.max(1, parseInt(g.daysCount, 10) || 1);
+    const subFamily = g.subFamily || g.subfamily || defaultSf;
+    const weightedUnits = roundToTwoDecimals(daysCount * weight);
+
+    guestsList.push({
+      id: g.id || `guest_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      name: String(g.name).trim(),
+      category,
+      weight,
+      daysCount,
+      weightedUnits,
+      subFamily,
+    });
+  };
+
+  if (Array.isArray(guestsInput)) {
+    guestsInput.forEach((g) => addGuest(g));
+    return guestsList;
+  }
+
+  if (guestsInput && typeof guestsInput === 'object') {
+    if (event?.id && guestsInput[event.id]) {
+      const eventMap = guestsInput[event.id];
+      Object.entries(eventMap).forEach(([sf, arr]) => {
+        if (Array.isArray(arr)) arr.forEach((g) => addGuest(g, sf));
+      });
+    } else {
+      Object.entries(guestsInput).forEach(([sf, arr]) => {
+        if (Array.isArray(arr)) arr.forEach((g) => addGuest(g, sf));
+      });
+    }
+    if (guestsList.length > 0) return guestsList;
+  }
+
+  if (Array.isArray(event?.temporaryGuests)) {
+    event.temporaryGuests.forEach((g) => addGuest(g));
+    return guestsList;
+  }
+
+  if (Array.isArray(event?.guests)) {
+    event.guests.forEach((g) => addGuest(g));
+    return guestsList;
+  }
+
+  // Fallback a store
+  try {
+    if (typeof store !== 'undefined' && store?.getState) {
+      const st = store.getState();
+      const allGuests = st?.ticketGuests || {};
+      if (event?.id && allGuests[event.id]) {
+        const eventMap = allGuests[event.id];
+        Object.entries(eventMap).forEach(([sf, arr]) => {
+          if (Array.isArray(arr)) arr.forEach((g) => addGuest(g, sf));
+        });
+      } else {
+        Object.entries(allGuests).forEach(([sf, arr]) => {
+          if (Array.isArray(arr)) arr.forEach((g) => addGuest(g, sf));
+        });
+      }
+    }
+  } catch (e) {}
+
+  return guestsList;
+};
+
+/**
+ * Calcula los totales financieros, distribución proporcional, cuadre de caja
+ * y estado de corte/liquidación de un evento incluyendo invitados temporales.
+ */
+export const calculateEventTotals = (event, guestsInput = null) => {
   const participants = event?.participants ?? [];
   const expenses = event?.expenses ?? [];
+  const guestsList = resolveEventGuests(event, guestsInput);
 
   // 1. Total general gastado en el evento
   const totalExpenses = roundToTwoDecimals(
@@ -81,27 +160,35 @@ export const calculateEventTotals = (event) => {
 
   // 3. Unidades ponderadas por participante (sólo asistentes)
   const unitsMap = new Map();
-  let totalWeightedUnitsRaw = 0;
-  let totalAttendingCount = 0;
+  let totalParticipantsUnitsRaw = 0;
+  let totalAttendingParticipantsCount = 0;
 
   for (const participant of participants) {
     const isAttending = participant.isAttending !== false;
     if (isAttending) {
-      totalAttendingCount++;
+      totalAttendingParticipantsCount++;
     }
 
     const units = calculateParticipantWeightedUnits(participant);
     unitsMap.set(participant.id, units);
-    totalWeightedUnitsRaw += units;
+    totalParticipantsUnitsRaw += units;
   }
 
-  const totalWeightedUnits = roundToTwoDecimals(totalWeightedUnitsRaw);
+  // 4. Unidades de Invitados Temporales
+  let totalGuestsUnitsRaw = 0;
+  for (const guest of guestsList) {
+    totalGuestsUnitsRaw += guest.weightedUnits;
+  }
 
-  // 4. Costo por unidad de asistencia
+  const totalWeightedUnitsRaw = totalParticipantsUnitsRaw + totalGuestsUnitsRaw;
+  const totalWeightedUnits = roundToTwoDecimals(totalWeightedUnitsRaw);
+  const totalAttendingCount = totalAttendingParticipantsCount + guestsList.length;
+
+  // 5. Costo por unidad de asistencia
   const costPerUnit =
     totalWeightedUnits > 0 ? roundToTwoDecimals(totalExpenses / totalWeightedUnits) : 0;
 
-  // 5. Desglose detallado por participante (Las 4 columnas contables)
+  // 6. Desglose detallado por participante (Las 4 columnas contables)
   const participantCalculations = [];
   const byParticipantId = {};
 
@@ -139,9 +226,22 @@ export const calculateEventTotals = (event) => {
     byParticipantId[participant.id] = calculation;
   }
 
-  // 6. Agrupación y Consolidación por Subfamilia
+  // 7. Desglose de Invitados calculados
+  const calculatedGuests = guestsList.map((g) => {
+    let cost = 0;
+    if (totalWeightedUnits > 0 && totalExpenses > 0) {
+      cost = roundToTwoDecimals((g.weightedUnits / totalWeightedUnits) * totalExpenses);
+    }
+    return {
+      ...g,
+      cost,
+    };
+  });
+
+  // 8. Agrupación y Consolidación por Subfamilia
   const subFamilyMap = new Map();
 
+  // 8.1 Agregar integrantes fijos a sus subfamilias
   for (const calc of participantCalculations) {
     const sfName = calc.subFamily || 'Familia General';
     const existing = subFamilyMap.get(sfName) || {
@@ -149,10 +249,13 @@ export const calculateEventTotals = (event) => {
       attendingCount: 0,
       totalWeightedUnits: 0,
       totalPaid: 0,
+      membersProportionalShare: 0,
+      guestsTotalCost: 0,
       proportionalShare: 0,
       finalBalance: 0,
       isFullySettled: true,
       participantIds: [],
+      guests: [],
     };
 
     existing.membersCount += 1;
@@ -161,8 +264,7 @@ export const calculateEventTotals = (event) => {
     }
     existing.totalWeightedUnits += calc.weightedUnits;
     existing.totalPaid += calc.totalPaid;
-    existing.proportionalShare += calc.proportionalShare;
-    existing.finalBalance += calc.finalBalance;
+    existing.membersProportionalShare += calc.proportionalShare;
     existing.participantIds.push(calc.participantId);
 
     if (!calc.isSettled) {
@@ -172,20 +274,51 @@ export const calculateEventTotals = (event) => {
     subFamilyMap.set(sfName, existing);
   }
 
+  // 8.2 Sumar invitados a sus respectivas subfamilias
+  for (const guest of calculatedGuests) {
+    const sfName = guest.subFamily || 'Familia General';
+    const existing = subFamilyMap.get(sfName) || {
+      membersCount: 0,
+      attendingCount: 0,
+      totalWeightedUnits: 0,
+      totalPaid: 0,
+      membersProportionalShare: 0,
+      guestsTotalCost: 0,
+      proportionalShare: 0,
+      finalBalance: 0,
+      isFullySettled: true,
+      participantIds: [],
+      guests: [],
+    };
+
+    existing.attendingCount += 1;
+    existing.totalWeightedUnits += guest.weightedUnits;
+    existing.guestsTotalCost += guest.cost;
+    existing.guests.push(guest);
+
+    subFamilyMap.set(sfName, existing);
+  }
+
   const subFamilies = [];
   const bySubFamily = {};
 
   subFamilyMap.forEach((val, key) => {
+    const grossTotalQuota = roundToTwoDecimals(val.membersProportionalShare + val.guestsTotalCost);
+    const finalBalance = roundToTwoDecimals(grossTotalQuota - val.totalPaid);
+
     const subFamilyCalc = {
       subFamilyName: key,
       membersCount: val.membersCount,
       attendingCount: val.attendingCount,
       totalWeightedUnits: roundToTwoDecimals(val.totalWeightedUnits),
       totalPaid: roundToTwoDecimals(val.totalPaid),
-      proportionalShare: roundToTwoDecimals(val.proportionalShare),
-      finalBalance: roundToTwoDecimals(val.finalBalance),
+      membersProportionalShare: roundToTwoDecimals(val.membersProportionalShare),
+      guestsTotalCost: roundToTwoDecimals(val.guestsTotalCost),
+      proportionalShare: grossTotalQuota,
+      finalBalance,
       isFullySettled: val.isFullySettled,
       participantIds: val.participantIds,
+      guests: val.guests,
     };
 
     subFamilies.push(subFamilyCalc);
@@ -194,7 +327,7 @@ export const calculateEventTotals = (event) => {
 
   subFamilies.sort((a, b) => a.subFamilyName.localeCompare(b.subFamilyName));
 
-  // 7. Cálculo Consolidado de Recaudación y Cuadre de Caja
+  // 9. Cálculo Consolidado de Recaudación y Cuadre de Caja
   let totalCollectedRaw = 0;
   let totalToCollectRaw = 0;
   let totalToRefundRaw = 0;
@@ -250,14 +383,15 @@ export const calculateEventTotals = (event) => {
   const cashInHand = roundToTwoDecimals(cashInflowRaw - cashOutflowRaw);
 
   const isCashBalanced =
-    Math.abs(totalToCollectRaw - totalToRefundRaw) < 0.05 ||
-    (totalToRefundRaw === 0 && Math.abs(totalCollected - totalExpenses) < 0.05);
+    Math.abs(totalToCollectRaw - totalToRefundRaw) < 0.10 ||
+    (totalToRefundRaw === 0 && Math.abs(totalCollected - totalExpenses) < 0.10);
 
   return {
     totalExpenses,
     totalWeightedUnits,
     totalParticipantsCount: participants.length,
     totalAttendingCount,
+    totalGuestsCount: guestsList.length,
     costPerUnit,
     totalToCollect,
     totalCollected,
@@ -270,6 +404,7 @@ export const calculateEventTotals = (event) => {
     isFullySettled: participants.length > 0 && subFamilies.every((sf) => sf.isFullySettled),
     participants: participantCalculations,
     byParticipantId,
+    guests: calculatedGuests,
     subFamilies,
     bySubFamily,
   };

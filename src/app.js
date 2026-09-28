@@ -21,7 +21,8 @@ import {
   deleteExpense,
   getGlobalDirectory,
   saveGlobalDirectory,
-  subscribeToEventsListRealtime
+  subscribeToEventsListRealtime,
+  generateUUID
 } from './services/database.js';
 import { formatCurrency, calculateEventTotals } from './utils/calculations.js';
 import { renderIcon } from './utils/icons.js';
@@ -399,9 +400,13 @@ class App {
       if (e.target.closest('#btn-open-add-guest-form')) {
         const formEl = document.getElementById('form-inline-add-guest');
         if (formEl) {
-          formEl.style.display = formEl.style.display === 'none' ? 'block' : 'none';
+          const isCurrentlyHidden = formEl.style.display === 'none' || !formEl.style.display;
+          formEl.style.display = isCurrentlyHidden ? 'block' : 'none';
           const nameInput = document.getElementById('input-guest-name');
-          if (nameInput && formEl.style.display === 'block') nameInput.focus();
+          if (nameInput && isCurrentlyHidden) {
+            nameInput.value = '';
+            nameInput.focus();
+          }
         }
         return;
       }
@@ -423,27 +428,47 @@ class App {
         const name = nameInput?.value?.trim();
         if (!name) {
           showToast('Ingresa un nombre o referencia para el invitado', 'error');
+          if (nameInput) nameInput.focus();
           return;
         }
 
         const category = catSelect?.value || 'adulto';
-        const daysCount = parseInt(daysInput?.value, 10) || 1;
+        const weight = category === 'nino' ? 0.5 : 1.0;
+        const daysCount = Math.max(1, parseInt(daysInput?.value, 10) || 1);
 
-        const { ticketGuests = {} } = store.getState();
-        const currentList = ticketGuests[sfName] || [];
+        const { ticketGuests = {}, activeEvent } = store.getState();
+        const eventKey = activeEvent?.id || 'default';
+        const currentEventMap = ticketGuests[eventKey] || {};
+        const currentList = currentEventMap[sfName] || ticketGuests[sfName] || [];
+
         const newGuest = {
           id: generateUUID(),
           name,
           category,
-          daysCount: Math.max(1, daysCount),
+          weight,
+          daysCount,
+          subFamily: sfName
         };
 
-        const updated = {
+        const updatedSfList = [...currentList, newGuest];
+        const updatedEventMap = {
+          ...currentEventMap,
+          [sfName]: updatedSfList,
+        };
+
+        const updatedTicketGuests = {
           ...ticketGuests,
-          [sfName]: [...currentList, newGuest],
+          [eventKey]: updatedEventMap,
+          [sfName]: updatedSfList, // Mantener acceso plano compatible
         };
 
-        store.setState({ ticketGuests: updated });
+        store.setState({ ticketGuests: updatedTicketGuests });
+
+        // Limpiar inputs y cerrar formulario
+        if (nameInput) nameInput.value = '';
+        const formEl = document.getElementById('form-inline-add-guest');
+        if (formEl) formEl.style.display = 'none';
+
         showToast(`Invitado temporal "${name}" agregado al cálculo`, 'success');
         return;
       }
@@ -454,16 +479,24 @@ class App {
         const guestId = removeGuestBtn.getAttribute('data-guest-id');
         const sfName = removeGuestBtn.getAttribute('data-subfamily');
 
-        const { ticketGuests = {} } = store.getState();
-        const currentList = ticketGuests[sfName] || [];
-        const updatedList = currentList.filter((g) => g.id !== guestId);
+        const { ticketGuests = {}, activeEvent } = store.getState();
+        const eventKey = activeEvent?.id || 'default';
+        const currentEventMap = ticketGuests[eventKey] || {};
+        const currentList = currentEventMap[sfName] || ticketGuests[sfName] || [];
+        const updatedSfList = currentList.filter((g) => g.id !== guestId);
 
-        const updated = {
-          ...ticketGuests,
-          [sfName]: updatedList,
+        const updatedEventMap = {
+          ...currentEventMap,
+          [sfName]: updatedSfList,
         };
 
-        store.setState({ ticketGuests: updated });
+        const updatedTicketGuests = {
+          ...ticketGuests,
+          [eventKey]: updatedEventMap,
+          [sfName]: updatedSfList,
+        };
+
+        store.setState({ ticketGuests: updatedTicketGuests });
         showToast('Invitado temporal eliminado del cálculo', 'info');
         return;
       }

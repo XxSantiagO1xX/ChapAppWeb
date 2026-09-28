@@ -22,7 +22,7 @@ export const generateEventReportPlainText = (event, totals = null) => {
 
   text += `📊 TOTALES DEL EVENTO:\n`;
   text += `• Total Gastado: ${formatCurrency(t.totalExpenses)}\n`;
-  text += `• Asistencia: ${t.totalAttendingCount} de ${t.totalParticipantsCount} personas\n`;
+  text += `• Asistencia: ${t.totalAttendingCount} personas (${t.totalParticipantsCount} registrados${t.totalGuestsCount > 0 ? ` + ${t.totalGuestsCount} invitados` : ''})\n`;
   text += `• Unidades Ponderadas: ${t.totalWeightedUnits}\n`;
   text += `• Costo por Día (1.0): ${formatCurrency(t.costPerUnit)}\n\n`;
 
@@ -50,8 +50,10 @@ export const generateEventReportPlainText = (event, totals = null) => {
     }
     const settleMark = sf.isFullySettled ? '✅ [LIQUIDADA]' : '⏳ [PENDIENTE]';
 
+    const guestsDetail = sf.guestsTotalCost > 0 ? ` (Integrantes: ${formatCurrency(sf.membersProportionalShare)} + Invitados: ${formatCurrency(sf.guestsTotalCost)})` : '';
+
     text += `🏡 ${sf.subFamilyName.toUpperCase()}\n`;
-    text += `   • 1. Cuota Proporcional: ${formatCurrency(sf.proportionalShare)}\n`;
+    text += `   • 1. Cuota Proporcional: ${formatCurrency(sf.proportionalShare)}${guestsDetail}\n`;
     text += `   • 2. Aporte de su Bolsillo: ${formatCurrency(sf.totalPaid)}\n`;
     text += `   • 3. Saldo Neto: ${sfStatus}\n`;
     text += `   • 4. Estatus: ${settleMark}\n\n`;
@@ -89,6 +91,9 @@ export const generateSubfamilyWhatsAppText = (subFamilyName, event, totals = nul
 
   text += `📊 ESTADO FINANCIERO FAMILIAR:\n`;
   text += `• Cuota Proporcional: ${formatCurrency(sf.proportionalShare)}\n`;
+  if (sf.guestsTotalCost > 0) {
+    text += `  └ Fijos: ${formatCurrency(sf.membersProportionalShare)} | Invitados (${sf.guests.length}): +${formatCurrency(sf.guestsTotalCost)}\n`;
+  }
   text += `• Aporte de su Cartera: ${formatCurrency(sf.totalPaid)}\n`;
   text += `------------------------------------\n`;
   text += `${balanceHeader}\n`;
@@ -119,6 +124,15 @@ export const generateSubfamilyWhatsAppText = (subFamilyName, event, totals = nul
     text += `• ${p.participantName} (${p.category} - ${p.activeDaysCount} días)\n`;
     text += `  Cuota: ${formatCurrency(p.proportionalShare)} | Pagado: ${formatCurrency(p.totalPaid)}\n`;
     text += `  Saldo: ${pBal} ${p.isSettled ? '✅' : '⏳'}\n\n`;
+  }
+
+  if (sf.guests && sf.guests.length > 0) {
+    text += `🎟️ INVITADOS TEMPORALES:\n`;
+    text += `------------------------------------\n`;
+    for (const g of sf.guests) {
+      text += `• ${g.name} (${g.category} - ${g.daysCount} días)\n`;
+      text += `  Cuota: ${formatCurrency(g.cost)}\n\n`;
+    }
   }
 
   text += `====================================\n`;
@@ -187,16 +201,42 @@ export const downloadEventCsv = (event, totals = null) => {
     ].join(','));
   }
 
+  // 3. Invitados Temporales (si existen)
+  if (t.guests && t.guests.length > 0) {
+    lines.push('');
+    lines.push(`${escapeCsv('--- INVITADOS TEMPORALES ---')}`);
+    lines.push([
+      escapeCsv('Nombre / Referencia'),
+      escapeCsv('Subfamilia'),
+      escapeCsv('Categoría'),
+      escapeCsv('Días Asistidos'),
+      escapeCsv('Unidades Ponderadas'),
+      escapeCsv('Cuota Asignada')
+    ].join(','));
+
+    for (const g of t.guests) {
+      lines.push([
+        escapeCsv(g.name),
+        escapeCsv(g.subFamily),
+        escapeCsv(g.category.toUpperCase()),
+        escapeCsv(g.daysCount),
+        escapeCsv(g.weightedUnits),
+        escapeCsv(g.cost)
+      ].join(','));
+    }
+  }
+
   lines.push('');
 
-  // 3. Subfamilias
+  // 4. Subfamilias
   lines.push(`${escapeCsv('--- CONSOLIDADO POR SUBFAMILIA ---')}`);
   lines.push([
     escapeCsv('Subfamilia'),
-    escapeCsv('Asistentes'),
-    escapeCsv('Total Integrantes'),
-    escapeCsv('Unidades'),
-    escapeCsv('Cuota Familiar'),
+    escapeCsv('Asistentes Totales'),
+    escapeCsv('Integrantes Fijos'),
+    escapeCsv('Invitados'),
+    escapeCsv('Unidades Totales'),
+    escapeCsv('Cuota Familiar Bruta'),
     escapeCsv('Compras Pagadas'),
     escapeCsv('Saldo Neto'),
     escapeCsv('Estado')
@@ -207,6 +247,7 @@ export const downloadEventCsv = (event, totals = null) => {
       escapeCsv(sf.subFamilyName),
       escapeCsv(sf.attendingCount),
       escapeCsv(sf.membersCount),
+      escapeCsv(sf.guests ? sf.guests.length : 0),
       escapeCsv(sf.totalWeightedUnits),
       escapeCsv(sf.proportionalShare),
       escapeCsv(sf.totalPaid),

@@ -4,10 +4,29 @@
 
 import { CONFIG } from '../config.js';
 
+const getInitialTheme = () => {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(CONFIG.APP.STORAGE_KEYS.THEME) || CONFIG.APP.DEFAULT_THEME;
+    }
+  } catch (e) {}
+  return CONFIG.APP.DEFAULT_THEME;
+};
+
+const getInitialTicketGuests = () => {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem('chapapp_ticket_guests');
+      return raw ? JSON.parse(raw) : {};
+    }
+  } catch (e) {}
+  return {};
+};
+
 class Store {
   constructor() {
     this.state = {
-      theme: localStorage.getItem(CONFIG.APP.STORAGE_KEYS.THEME) || CONFIG.APP.DEFAULT_THEME,
+      theme: getInitialTheme(),
       events: [],
       activeEvent: null,
       activeEventTotals: null,
@@ -17,7 +36,7 @@ class Store {
       searchQuery: '',
       isDrawerOpen: false,
       isSidebarCollapsed: true, // Inicia oculto / colapsado por defecto
-      ticketGuests: {}, // { [subFamilyName]: [{ id, name, category, daysCount }] }
+      ticketGuests: getInitialTicketGuests(), // { [eventId]?: { [subFamilyName]: [{ id, name, category, weight, daysCount }] } }
       loading: true,
     };
 
@@ -29,6 +48,11 @@ class Store {
   }
 
   setState(partialState) {
+    if (partialState.ticketGuests && typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('chapapp_ticket_guests', JSON.stringify(partialState.ticketGuests));
+      } catch (e) {}
+    }
     this.state = { ...this.state, ...partialState };
     this.notify();
   }
@@ -46,14 +70,22 @@ class Store {
 
   toggleTheme() {
     const nextTheme = this.state.theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem(CONFIG.APP.STORAGE_KEYS.THEME, nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(CONFIG.APP.STORAGE_KEYS.THEME, nextTheme);
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', nextTheme);
+    }
     this.setState({ theme: nextTheme });
   }
 
   setTheme(theme) {
-    localStorage.setItem(CONFIG.APP.STORAGE_KEYS.THEME, theme);
-    document.documentElement.setAttribute('data-theme', theme);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(CONFIG.APP.STORAGE_KEYS.THEME, theme);
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
     this.setState({ theme });
   }
 }

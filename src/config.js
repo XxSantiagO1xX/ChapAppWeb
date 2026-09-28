@@ -9,8 +9,7 @@ export const CONFIG = {
     ANON_KEY: 'sb_publishable_tG7pPEaA-_d1I7V8TKiaGg_6tyuC2vt',
   },
   GEMINI: {
-    // API Key de Google Gemini para escaneo inteligente de tickets
-    API_KEY: window.__ENV?.GEMINI_API_KEY || 'AIzaSyA8_EXAMPLE_OR_USER_CONFIGURED',
+    API_KEY: (typeof window !== 'undefined' && window.__ENV?.GEMINI_API_KEY) || 'AIzaSyA8_EXAMPLE_OR_USER_CONFIGURED',
     MODEL: 'gemini-2.5-flash',
     FALLBACK_MODELS: [
       'gemini-2.5-flash',
