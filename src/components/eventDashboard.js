@@ -141,18 +141,6 @@ export const renderEventDashboard = (event) => {
           </div>
         </div>
 
-        <!-- Barra de Botones Rápidos de Reporte -->
-        <div class="summary-action-shortcuts">
-          <button id="btn-share-whatsapp-summary" class="btn-pill-whatsapp">
-            ${renderIcon('whatsapp', { size: 18 })}
-            <span>WhatsApp Resumen</span>
-          </button>
-          <button id="btn-open-cut-modal-shortcut" class="btn-pill-primary">
-            ${renderIcon('receipt', { size: 16 })}
-            <span>Resumen de Liquidación</span>
-          </button>
-        </div>
-
         <!-- 2 Gráficas HUD Liquid Glass 3D -->
         <div class="charts-row-grid">
           ${renderCollectionDial(totals.totalCollected, totals.totalExpenses, collectionPercent)}

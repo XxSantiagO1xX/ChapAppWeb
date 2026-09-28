@@ -409,10 +409,6 @@ export const mountModals = () => {
             ${renderIcon('download', { size: 16 })}
             <span>Descargar CSV</span>
           </button>
-          <button type="button" id="btn-share-whatsapp-cut" class="btn-pill-whatsapp">
-            ${renderIcon('whatsapp', { size: 18 })}
-            <span>Enviar por WhatsApp</span>
-          </button>
           <button type="button" id="btn-print-cut-pdf" class="btn-pill-primary">
             ${renderIcon('print', { size: 16 })}
             <span>Imprimir / PDF</span>
