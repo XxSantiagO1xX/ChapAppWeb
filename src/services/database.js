@@ -747,15 +747,102 @@ export const deleteExpense = async (eventId, expenseId) => {
 };
 
 /**
- * Directorio Global
+ * Directorio Global Maestro
+ * Obtiene y fusiona automáticamente los participantes de Supabase, eventos en memoria y caché local
  */
 export const getGlobalDirectory = () => {
-  try {
-    const raw = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.LOCAL_DIRECTORY);
-    return raw ? JSON.parse(raw) : SEED_DIRECTORY;
-  } catch (e) {
-    return SEED_DIRECTORY;
+  const localList = loadLocalEvents();
+  const cachedDir = (() => {
+    try {
+      const raw = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.LOCAL_DIRECTORY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  })();
+
+  const contactsMap = new Map();
+
+  // 1. Semilla base
+  SEED_DIRECTORY.forEach((d) => {
+    if (d && d.name) contactsMap.set(d.name.toLowerCase().trim(), { ...d });
+  });
+
+  // 2. Participantes de eventos en caché/memoria
+  localList.forEach((ev) => {
+    (ev.participants || []).forEach((p) => {
+      if (p && p.name) {
+        const key = p.name.toLowerCase().trim();
+        const existing = contactsMap.get(key);
+        contactsMap.set(key, {
+          id: p.id || existing?.id || generateUUID(),
+          name: p.name,
+          category: p.category || existing?.category || 'adulto',
+          weight: typeof p.weight === 'number' ? p.weight : (existing?.weight || 1.0),
+          subFamily: p.subFamily || existing?.subFamily || inferSubFamily(p.name),
+        });
+      }
+    });
+  });
+
+  // 3. Contactos personalizados guardados en directorio
+  if (Array.isArray(cachedDir)) {
+    cachedDir.forEach((d) => {
+      if (d && d.name) {
+        const key = d.name.toLowerCase().trim();
+        const existing = contactsMap.get(key);
+        contactsMap.set(key, {
+          id: d.id || existing?.id || generateUUID(),
+          name: d.name,
+          category: d.category || existing?.category || 'adulto',
+          weight: typeof d.weight === 'number' ? d.weight : (existing?.weight || 1.0),
+          subFamily: d.subFamily || existing?.subFamily || inferSubFamily(d.name),
+        });
+      }
+    });
   }
+
+  return Array.from(contactsMap.values());
+};
+
+export const fetchGlobalDirectoryFromSupabase = async () => {
+  const supabase = await initSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('participants').select('*');
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const contactsMap = new Map();
+
+        // 1. Cargar directorio actual
+        getGlobalDirectory().forEach((d) => {
+          contactsMap.set(d.name.toLowerCase().trim(), d);
+        });
+
+        // 2. Fusionar todos los participantes de Supabase
+        data.forEach((row) => {
+          const p = parseParticipantRow(row);
+          if (p && p.name) {
+            const key = p.name.toLowerCase().trim();
+            const existing = contactsMap.get(key);
+            contactsMap.set(key, {
+              id: p.id || existing?.id || generateUUID(),
+              name: p.name,
+              category: p.category || existing?.category || 'adulto',
+              weight: typeof p.weight === 'number' ? p.weight : (existing?.weight || 1.0),
+              subFamily: p.subFamily || existing?.subFamily || inferSubFamily(p.name),
+            });
+          }
+        });
+
+        const merged = Array.from(contactsMap.values());
+        saveGlobalDirectory(merged);
+        return merged;
+      }
+    } catch (err) {
+      console.warn('[Database] Error consultando participantes de Supabase para el directorio:', err);
+    }
+  }
+  return getGlobalDirectory();
 };
 
 export const saveGlobalDirectory = (directory) => {
