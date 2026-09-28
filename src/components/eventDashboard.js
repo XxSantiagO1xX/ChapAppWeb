@@ -91,10 +91,6 @@ export const renderEventDashboard = (event) => {
           <div class="capsule-icon-box">${renderIcon('user-plus', { size: 18 })}</div>
           <span class="shortcut-label">Directorio</span>
         </button>
-        <button id="btn-capsule-add-expense" class="capsule-shortcut-btn btn-pill-cyan" title="Registrar Gasto con IA">
-          <div class="capsule-icon-box">${renderIcon('plus', { size: 18 })}</div>
-          <span class="shortcut-label">Gasto IA</span>
-        </button>
       </div>
     </aside>
   `;

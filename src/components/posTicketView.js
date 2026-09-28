@@ -245,154 +245,163 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             </div>
           ` : ''}
 
-          <!-- Sección 1: Integrantes Registrados y Switch de Asistencia -->
-          <div class="ticket-section-block">
-            <div class="ticket-section-header">
-              <span class="ticket-section-title">
-                ${renderIcon('users', { size: 16 })} Integrantes Registrados (${activeSf.membersCount})
-              </span>
-              <span class="ticket-section-hint">Switch de Asistencia</span>
-            </div>
-
-            <div class="ticket-members-list">
-              ${membersListHtml}
-            </div>
-          </div>
-
-          <!-- Sección 2: Invitados Temporales -->
-          <div class="ticket-section-block">
-            <div class="ticket-section-header">
-              <span class="ticket-section-title">
-                ${renderIcon('user-plus', { size: 16 })} Invitados Temporales (${calculatedGuests.length})
-              </span>
-              <button type="button" id="btn-open-add-guest-form" class="btn-pill-cyan btn-sm">
-                ${renderIcon('plus', { size: 14 })}
-                <span>Agregar Invitado</span>
-              </button>
-            </div>
-
-            <!-- Formulario Desplegable para Agregar Invitado Temporal -->
-            <div id="form-inline-add-guest" class="glass-panel inline-guest-form" style="display: none;">
-              <h5 class="inline-form-title">Sumar Invitado Temporal a ${activeSf.subFamilyName}</h5>
-              <div class="inline-form-grid">
-                <div class="form-group">
-                  <label for="input-guest-name">Nombre o Referencia *</label>
-                  <input type="text" id="input-guest-name" class="glass-input" placeholder="ej. Primo Carlos" autocomplete="off" />
+          <!-- Split Grid en 2 Columnas: Integrantes & Invitados (Izquierda) vs Desglose & Liquidación (Derecha) -->
+          <div class="ticket-body-split-grid">
+            <!-- Columna Izquierda: Integrantes Registrados e Invitados -->
+            <div class="ticket-members-col">
+              <!-- Sección 1: Integrantes Registrados y Switch de Asistencia -->
+              <div class="ticket-section-block">
+                <div class="ticket-section-header">
+                  <span class="ticket-section-title">
+                    ${renderIcon('users', { size: 16 })} Integrantes Registrados (${activeSf.membersCount})
+                  </span>
+                  <span class="ticket-section-hint">Switch de Asistencia</span>
                 </div>
-                <div class="form-group">
-                  <label for="select-guest-category">Categoría</label>
-                  <select id="select-guest-category" class="glass-select">
-                    <option value="adulto">Adulto (1.0 ud)</option>
-                    <option value="nino">Niño (0.5 ud)</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="input-guest-days">Días Asistidos</label>
-                  <input type="number" id="input-guest-days" class="glass-input" value="${event.availableDays?.length || 4}" min="1" max="14" />
+
+                <div class="ticket-members-list">
+                  ${membersListHtml}
                 </div>
               </div>
-              <div class="inline-form-actions">
-                <button type="button" id="btn-cancel-add-guest" class="btn-pill-glass btn-sm">Cancelar</button>
-                <button type="button" id="btn-save-add-guest" class="btn-pill-cyan btn-sm" data-subfamily="${activeSf.subFamilyName}">
-                  ${renderIcon('plus', { size: 14 })}
-                  <span>Sumar al Cálculo</span>
+
+              <!-- Sección 2: Invitados Temporales -->
+              <div class="ticket-section-block">
+                <div class="ticket-section-header">
+                  <span class="ticket-section-title">
+                    ${renderIcon('user-plus', { size: 16 })} Invitados Temporales (${calculatedGuests.length})
+                  </span>
+                  <button type="button" id="btn-open-add-guest-form" class="btn-pill-cyan btn-sm">
+                    ${renderIcon('plus', { size: 14 })}
+                    <span>Agregar Invitado</span>
+                  </button>
+                </div>
+
+                <!-- Formulario Desplegable para Agregar Invitado Temporal -->
+                <div id="form-inline-add-guest" class="glass-panel inline-guest-form" style="display: none;">
+                  <h5 class="inline-form-title">Sumar Invitado Temporal a ${activeSf.subFamilyName}</h5>
+                  <div class="inline-form-grid">
+                    <div class="form-group">
+                      <label for="input-guest-name">Nombre o Referencia *</label>
+                      <input type="text" id="input-guest-name" class="glass-input" placeholder="ej. Primo Carlos" autocomplete="off" />
+                    </div>
+                    <div class="form-group">
+                      <label for="select-guest-category">Categoría</label>
+                      <select id="select-guest-category" class="glass-select">
+                        <option value="adulto">Adulto (1.0 ud)</option>
+                        <option value="nino">Niño (0.5 ud)</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="input-guest-days">Días Asistidos</label>
+                      <input type="number" id="input-guest-days" class="glass-input" value="${event.availableDays?.length || 4}" min="1" max="14" />
+                    </div>
+                  </div>
+                  <div class="inline-form-actions">
+                    <button type="button" id="btn-cancel-add-guest" class="btn-pill-glass btn-sm">Cancelar</button>
+                    <button type="button" id="btn-save-add-guest" class="btn-pill-cyan btn-sm" data-subfamily="${activeSf.subFamilyName}">
+                      ${renderIcon('plus', { size: 14 })}
+                      <span>Sumar al Cálculo</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="ticket-guests-list">
+                  ${calculatedGuests.length === 0 
+                    ? '<p class="empty-guest-text">Sin invitados adicionales. Toca "+ Agregar Invitado" para sumarlos al cálculo.</p>' 
+                    : guestsListHtml}
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Desglose Matemático, Liquidación y Acciones -->
+            <div class="ticket-calc-col">
+              <!-- Sección 3: Desglose Matemático -->
+              <div class="ticket-section-block">
+                <div class="math-breakdown-card glass-panel">
+                  <div class="breakdown-header">
+                    <span class="breakdown-tag">${renderIcon('chart', { size: 14 })} DESGLOSE MATEMÁTICO</span>
+                  </div>
+                  <div class="breakdown-table-rows">
+                    <div class="breakdown-item-row">
+                      <span class="breakdown-label">Cuota Integrantes Fijos (${activeSf.attendingCount - calculatedGuests.length} activos)</span>
+                      <strong class="breakdown-val">${formatCurrency(baseProportionalShare)}</strong>
+                    </div>
+                    ${guestsTotalCost > 0 ? `
+                      <div class="breakdown-item-row text-cyan">
+                        <span class="breakdown-label">+ Cuota Invitados Temporales (${calculatedGuests.length})</span>
+                        <strong class="breakdown-val">+${formatCurrency(guestsTotalCost)}</strong>
+                      </div>
+                    ` : ''}
+                    <div class="breakdown-item-row total-gross-row">
+                      <span class="breakdown-label">Cuota Total Bruta</span>
+                      <strong class="breakdown-val">${formatCurrency(grossTotalQuota)}</strong>
+                    </div>
+                    <div class="breakdown-item-row text-emerald">
+                      <span class="breakdown-label">- Aportes en Compras (Bolsillo)</span>
+                      <strong class="breakdown-val">-${formatCurrency(baseTotalPaid)}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sección 4: Gran Caja de Liquidación al Fondo -->
+              <div class="settlement-bottom-card ${activeSf.isFullySettled ? 'settled-card' : 'pending-card'} glass-panel">
+                <div class="settlement-card-header">
+                  <span class="settlement-badge-label">
+                    ${activeSf.isFullySettled 
+                      ? 'CUENTA SALDADA Y REGISTRADA' 
+                      : isRefund 
+                      ? 'REEMBOLSO A FAVOR DE LA FAMILIA' 
+                      : 'SALDO A ENTREGAR EN CAJA'}
+                  </span>
+                </div>
+                
+                <div class="settlement-card-amount ${activeSf.isFullySettled ? 'text-emerald' : balanceColorClass}">
+                  ${formatCurrency(Math.abs(finalBalance))}
+                </div>
+                
+                <p class="settlement-card-subtext">
+                  ${activeSf.isFullySettled 
+                    ? `El saldo de ${formatCurrency(Math.abs(finalBalance))} ya fue recibido/entregado y liquidado en caja.` 
+                    : isRefund 
+                    ? `Fondo común debe devolver ${formatCurrency(Math.abs(finalBalance))} a los integrantes de esta familia.` 
+                    : `Pendiente de recibir ${formatCurrency(Math.abs(finalBalance))} para ingresar a la caja general.`}
+                </p>
+
+                <div class="settlement-card-action-box">
+                  <button 
+                    id="btn-toggle-sf-settle" 
+                    class="${activeSf.isFullySettled ? 'btn-reopen-account btn-pill-glass' : 'btn-settle-account btn-pill-cyan'}"
+                    data-subfamily="${activeSf.subFamilyName}"
+                    data-event-id="${event.id}"
+                    data-settled="${activeSf.isFullySettled}"
+                  >
+                    ${activeSf.isFullySettled 
+                      ? `${renderIcon('refresh', { size: 16 })} <span>Reabrir Cuenta</span>` 
+                      : `${renderIcon('check', { size: 18 })} <span>Liquidar Cuenta en Caja</span>`}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Sección 5: Acciones Rápidas de Exportación -->
+              <div class="ticket-actions-bar">
+                <button 
+                  id="btn-share-sf-whatsapp" 
+                  class="btn-pill-whatsapp"
+                  data-subfamily="${activeSf.subFamilyName}"
+                >
+                  ${renderIcon('whatsapp', { size: 18 })}
+                  <span>Compartir WhatsApp</span>
+                </button>
+                <button 
+                  id="btn-print-sf-ticket" 
+                  class="btn-pill-glass"
+                  data-subfamily="${activeSf.subFamilyName}"
+                >
+                  ${renderIcon('print', { size: 16 })}
+                  <span>Imprimir Ticket POS</span>
                 </button>
               </div>
             </div>
-
-            <div class="ticket-guests-list">
-              ${calculatedGuests.length === 0 
-                ? '<p class="empty-guest-text">Sin invitados adicionales. Toca "+ Agregar Invitado" para sumarlos al cálculo.</p>' 
-                : guestsListHtml}
-            </div>
-          </div>
-
-          <!-- Sección 3: Desglose Matemático -->
-          <div class="ticket-section-block">
-            <div class="math-breakdown-card glass-panel">
-              <div class="breakdown-header">
-                <span class="breakdown-tag">${renderIcon('chart', { size: 14 })} DESGLOSE MATEMÁTICO</span>
-              </div>
-              <div class="breakdown-table-rows">
-                <div class="breakdown-item-row">
-                  <span class="breakdown-label">Cuota Integrantes Fijos (${activeSf.attendingCount - calculatedGuests.length} activos)</span>
-                  <strong class="breakdown-val">${formatCurrency(baseProportionalShare)}</strong>
-                </div>
-                ${guestsTotalCost > 0 ? `
-                  <div class="breakdown-item-row text-cyan">
-                    <span class="breakdown-label">+ Cuota Invitados Temporales (${calculatedGuests.length})</span>
-                    <strong class="breakdown-val">+${formatCurrency(guestsTotalCost)}</strong>
-                  </div>
-                ` : ''}
-                <div class="breakdown-item-row total-gross-row">
-                  <span class="breakdown-label">Cuota Total Bruta</span>
-                  <strong class="breakdown-val">${formatCurrency(grossTotalQuota)}</strong>
-                </div>
-                <div class="breakdown-item-row text-emerald">
-                  <span class="breakdown-label">- Aportes en Compras (Bolsillo)</span>
-                  <strong class="breakdown-val">-${formatCurrency(baseTotalPaid)}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sección 4: Gran Caja de Liquidación al Fondo -->
-          <div class="settlement-bottom-card ${activeSf.isFullySettled ? 'settled-card' : 'pending-card'} glass-panel">
-            <div class="settlement-card-header">
-              <span class="settlement-badge-label">
-                ${activeSf.isFullySettled 
-                  ? 'CUENTA SALDADA Y REGISTRADA' 
-                  : isRefund 
-                  ? 'REEMBOLSO A FAVOR DE LA FAMILIA' 
-                  : 'SALDO A ENTREGAR EN CAJA'}
-              </span>
-            </div>
-            
-            <div class="settlement-card-amount ${activeSf.isFullySettled ? 'text-emerald' : balanceColorClass}">
-              ${formatCurrency(Math.abs(finalBalance))}
-            </div>
-            
-            <p class="settlement-card-subtext">
-              ${activeSf.isFullySettled 
-                ? `El saldo de ${formatCurrency(Math.abs(finalBalance))} ya fue recibido/entregado y liquidado en caja.` 
-                : isRefund 
-                ? `Fondo común debe devolver ${formatCurrency(Math.abs(finalBalance))} a los integrantes de esta familia.` 
-                : `Pendiente de recibir ${formatCurrency(Math.abs(finalBalance))} para ingresar a la caja general.`}
-            </p>
-
-            <div class="settlement-card-action-box">
-              <button 
-                id="btn-toggle-sf-settle" 
-                class="${activeSf.isFullySettled ? 'btn-reopen-account btn-pill-glass' : 'btn-settle-account btn-pill-cyan'}"
-                data-subfamily="${activeSf.subFamilyName}"
-                data-event-id="${event.id}"
-                data-settled="${activeSf.isFullySettled}"
-              >
-                ${activeSf.isFullySettled 
-                  ? `${renderIcon('refresh', { size: 16 })} <span>Reabrir Cuenta</span>` 
-                  : `${renderIcon('check', { size: 18 })} <span>Liquidar Cuenta en Caja</span>`}
-              </button>
-            </div>
-          </div>
-
-          <!-- Sección 5: Acciones Rápidas de Exportación -->
-          <div class="ticket-actions-bar">
-            <button 
-              id="btn-share-sf-whatsapp" 
-              class="btn-pill-whatsapp"
-              data-subfamily="${activeSf.subFamilyName}"
-            >
-              ${renderIcon('whatsapp', { size: 18 })}
-              <span>Compartir WhatsApp</span>
-            </button>
-            <button 
-              id="btn-print-sf-ticket" 
-              class="btn-pill-glass"
-              data-subfamily="${activeSf.subFamilyName}"
-            >
-              ${renderIcon('print', { size: 16 })}
-              <span>Imprimir Ticket POS</span>
-            </button>
           </div>
         </div>
       </main>
