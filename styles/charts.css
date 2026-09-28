@@ -451,17 +451,16 @@
 }
 
 /* ==========================================================================
-   5. POS TICKETS Y VISTA PARTICIONADA (MASTER-DETAIL FLUIDO & RESPONSIVO)
+   5. POS TICKETS Y VISTA PARTICIONADA (2 COLUMNAS MASTER-DETAIL)
    ========================================================================== */
 .pos-split-layout {
   display: flex;
   flex-direction: column;
   gap: 22px;
   width: 100%;
-  min-width: 0;
 }
 
-@media (min-width: 1120px) {
+@media (min-width: 960px) {
   .pos-split-layout {
     display: grid;
     grid-template-columns: 340px 1fr;
@@ -470,7 +469,7 @@
   }
 }
 
-@media (min-width: 1360px) {
+@media (min-width: 1240px) {
   .pos-split-layout {
     grid-template-columns: 380px 1fr;
     gap: 30px;
@@ -479,27 +478,19 @@
 
 /* Columna Izquierda: Panel Maestro de Subfamilias */
 .pos-master-col {
-  padding: 20px;
-  border-radius: 26px;
+  padding: 18px;
+  border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
   gap: 14px;
   background: var(--surface-card);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  width: 100%;
-  box-sizing: border-box;
 }
 
-@media (min-width: 1120px) {
+@media (min-width: 920px) {
   .pos-master-col {
     position: sticky;
-    top: 92px;
-    max-height: calc(100vh - 120px);
+    top: 84px;
+    max-height: calc(100vh - 110px);
   }
 }
 
@@ -549,22 +540,13 @@
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
-  max-height: 240px;
+  max-height: 480px;
   padding-right: 2px;
 }
 
-@media (min-width: 640px) and (max-width: 1119px) {
+@media (max-width: 919px) {
   .pos-master-list-scroll {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     max-height: 280px;
-    gap: 10px;
-  }
-}
-
-@media (min-width: 1120px) {
-  .pos-master-list-scroll {
-    max-height: calc(100vh - 280px);
   }
 }
 
@@ -709,26 +691,14 @@
   flex-direction: column;
   width: 100%;
   min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
 }
 
 .pos-ticket-card {
   padding: 24px 26px;
-  border-radius: 26px;
+  border-radius: var(--radius-2xl);
   display: flex;
   flex-direction: column;
   gap: 20px;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  background: var(--surface-card);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .ticket-header {
@@ -795,23 +765,16 @@
   grid-template-columns: 1fr;
   gap: 12px;
   padding: 16px 20px;
-  border-radius: 20px;
-  background: rgba(11, 18, 33, 0.55);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-  border-left: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border-subtle);
 }
 
 [data-theme="light"] .ticket-metrics-row {
   background: rgba(255, 255, 255, 0.50);
-  border: 1px solid rgba(226, 232, 240, 0.90);
-  border-top: 1px solid rgba(255, 255, 255, 0.95);
 }
 
-@media (min-width: 540px) {
+@media (min-width: 680px) {
   .ticket-metrics-row {
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
