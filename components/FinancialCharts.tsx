@@ -544,17 +544,6 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                             strokeWidth={1}
                           />
 
-                          {/* Reflejo biselado en el aro superior del carril */}
-                          <Ellipse
-                            cx={barX + rx}
-                            cy={10}
-                            rx={rx - 1}
-                            ry={ry - 0.5}
-                            fill="none"
-                            stroke={isDark ? 'rgba(255, 255, 255, 0.30)' : 'rgba(255, 255, 255, 0.90)'}
-                            strokeWidth={0.8}
-                          />
-
                           {/* 2. Rayito / Onda líquida fluida interior vertical */}
                           <Path
                             d={`M ${barX + rx} 120 Q ${barX + 4} 92 ${barX + rx} 64 Q ${barX + barWidth - 4} 36 ${barX + rx} 12`}
@@ -615,34 +604,6 @@ export const FinancialCharts: React.FC<FinancialChartsProps> = ({
                             fill="#FFFFFF"
                             opacity={0.90}
                           />
-
-                          {/* 7. Satélite / Rayito de energía flotante en la cima */}
-                          <G>
-                            {/* Halo difuso del satélite */}
-                            <Circle
-                              cx={barX + rx}
-                              cy={topY}
-                              r={6.5}
-                              fill={item.color}
-                              opacity={0.50}
-                            />
-                            {/* Núcleo esférico brillante con borde */}
-                            <Circle
-                              cx={barX + rx}
-                              cy={topY}
-                              r={3.2}
-                              fill="#FFFFFF"
-                              stroke={item.color}
-                              strokeWidth={1.2}
-                            />
-                            {/* Destello especular en el núcleo */}
-                            <Circle
-                              cx={barX + rx - 1}
-                              cy={topY - 1}
-                              r={1}
-                              fill="#FFFFFF"
-                            />
-                          </G>
                         </Svg>
                       </View>
 

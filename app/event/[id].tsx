@@ -79,13 +79,13 @@ export default function EventDetailDashboard() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const isTablet = width >= 768;
+  const isTablet = width >= 700;
   const isSmallPhone = width < 420;
   const { colors, isDark, toggleTheme, getNeonGlow } = useTheme();
 
-  const centerLogoSize = isTablet ? 68 : (isSmallPhone ? 52 : 58);
-  const centerLogoIconSize = isTablet ? 44 : (isSmallPhone ? 34 : 38);
-  const centerLogoRadius = isTablet ? 20 : (isSmallPhone ? 16 : 18);
+  const centerLogoSize = isTablet ? 54 : (isSmallPhone ? 40 : 46);
+  const centerLogoIconSize = isTablet ? 32 : (isSmallPhone ? 24 : 28);
+  const centerLogoRadius = isTablet ? 16 : (isSmallPhone ? 12 : 14);
 
   const [event, setEvent] = useState<EventConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -855,7 +855,7 @@ export default function EventDetailDashboard() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <AmbientBackground />
-      {/* Barra de Encabezado Superior Flotante (Opción A) */}
+      {/* Barra de Encabezado Superior Flotante Compacta con Emblema Central Sobrepuesto */}
       <View
         style={[
           styles.topHeader,
@@ -863,8 +863,8 @@ export default function EventDetailDashboard() {
           {
             marginTop:
               Platform.OS === 'web'
-                ? isTablet ? 20 : 12
-                : Math.max(insets.top, 12) + (isTablet ? 8 : 4),
+                ? isTablet ? 16 : 10
+                : Math.max(insets.top, 10) + (isTablet ? 6 : 2),
             backgroundColor: isDark ? 'rgba(13, 20, 32, 0.60)' : 'rgba(255, 255, 255, 0.65)',
             borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(226, 232, 240, 0.90)',
             borderTopColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.98)',
@@ -873,25 +873,25 @@ export default function EventDetailDashboard() {
                   backdropFilter: 'blur(20px) saturate(180%)',
                   WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                   boxShadow: isDark
-                    ? '0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14)'
-                    : '0 10px 30px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
+                    ? '0 10px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.14)'
+                    : '0 8px 24px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
                 } as any)
               : {
                   shadowColor: isDark ? '#000000' : '#0F172A',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: isDark ? 0.35 : 0.08,
-                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: isDark ? 0.30 : 0.08,
+                  shadowRadius: 10,
                   elevation: 5,
                 }),
           },
         ]}
       >
-        <View style={[styles.headerLeft, isSmallPhone && { gap: 8, flex: 1, maxWidth: '42%' }]}>
+        <View style={[styles.headerLeft, isSmallPhone && { gap: 8, flex: 1, maxWidth: '44%' }]}>
           <TouchableOpacity
             style={[
               styles.backButton,
-              isSmallPhone && { paddingHorizontal: 8, paddingVertical: 6 },
-              { backgroundColor: colors.surfaceSubtle, flexDirection: 'row', alignItems: 'center', gap: 4 }
+              isSmallPhone && { paddingHorizontal: 8, paddingVertical: 5 },
+              { backgroundColor: colors.surfaceSubtle, flexDirection: 'row', alignItems: 'center', gap: 5 }
             ]}
             onPress={() => router.push('/')}
           >
@@ -903,7 +903,7 @@ export default function EventDetailDashboard() {
               <Text
                 numberOfLines={1}
                 ellipsizeMode="tail"
-                style={[styles.eventTitle, isSmallPhone && { fontSize: 16 }, { color: colors.textPrimary }]}
+                style={[styles.eventTitle, isSmallPhone && { fontSize: 15 }, { color: colors.textPrimary }]}
               >
                 {event.title}
               </Text>
@@ -935,7 +935,7 @@ export default function EventDetailDashboard() {
           </View>
         </View>
 
-        {/* Emblema Central Flotante y Sobrepuesto */}
+        {/* Emblema Central Flotante y Sobrepuesto que sobresale hacia arriba del header */}
         <TouchableOpacity
           onPress={() => router.push('/')}
           activeOpacity={0.85}
@@ -944,11 +944,8 @@ export default function EventDetailDashboard() {
             {
               position: 'absolute',
               left: '50%',
-              top: '50%',
-              transform: [
-                { translateX: -centerLogoSize / 2 },
-                { translateY: -centerLogoSize / 2 },
-              ],
+              top: isTablet ? -14 : -10,
+              transform: [{ translateX: -centerLogoSize / 2 }],
               width: centerLogoSize,
               height: centerLogoSize,
               borderRadius: centerLogoRadius,
@@ -957,7 +954,7 @@ export default function EventDetailDashboard() {
               borderWidth: 1.5,
               alignItems: 'center',
               justifyContent: 'center',
-              zIndex: 35,
+              zIndex: 50,
               ...(isDark ? getNeonGlow(colors.primary, 'medium') : {}),
               ...(Platform.OS === 'web'
                 ? ({
@@ -965,8 +962,8 @@ export default function EventDetailDashboard() {
                     WebkitBackdropFilter: 'blur(16px)',
                     cursor: 'pointer',
                     boxShadow: isDark
-                      ? '0 10px 28px rgba(0, 240, 255, 0.38), inset 0 1px 2px rgba(255, 255, 255, 0.45), inset 0 -2px 6px rgba(0, 0, 0, 0.40)'
-                      : '0 10px 24px rgba(2, 132, 199, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.95)',
+                      ? '0 8px 24px rgba(0, 240, 255, 0.40), inset 0 1px 2px rgba(255, 255, 255, 0.45), inset 0 -2px 6px rgba(0, 0, 0, 0.40)'
+                      : '0 8px 20px rgba(2, 132, 199, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.95)',
                   } as any)
                 : {
                     shadowColor: isDark ? colors.primary : '#0284C7',
@@ -1553,7 +1550,7 @@ export default function EventDetailDashboard() {
                 {/* Layout Dos Columnas en Tablets / Pantallas Anchas */}
                 {isTablet ? (
                   <View style={styles.masterDetailRow}>
-                    {/* COLUMNA IZQUIERDA (35%): LISTA DE SUBFAMILIAS */}
+                    {/* COLUMNA IZQUIERDA: LISTA DE SUBFAMILIAS */}
                     <View style={styles.masterColumn}>
                       <View
                         style={[
@@ -1575,7 +1572,7 @@ export default function EventDetailDashboard() {
                         ]}
                       >
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <SculptedIcon name="home" size={15} variant="plain" color={colors.primary} />
+                          <SculptedIcon name="users" size={15} variant="plain" color={colors.primary} />
                           <Text style={[styles.masterColumnTitle, { color: colors.textPrimary, fontFamily: Fonts.bold }]}>
                             Subfamilias ({totals.subFamilies.length})
                           </Text>
@@ -1787,7 +1784,7 @@ export default function EventDetailDashboard() {
                       </ScrollView>
                     </View>
 
-                    {/* COLUMNA DERECHA (65%): TICKET DE CUENTA POS DETALLE */}
+                    {/* COLUMNA DERECHA: TICKET DE CUENTA POS DETALLE */}
                     <View style={styles.detailColumn}>
                       <PosTicketView
                         subFamilyName={activeSubFamilyName}
@@ -1801,213 +1798,97 @@ export default function EventDetailDashboard() {
                     </View>
                   </View>
                 ) : (
-                  /* Layout Móvil (Lista Apilada -> Detalle al Tocar) */
+                  /* Layout Móvil Fluido (Selector Horizontal + Ticket POS siempre visible debajo) */
                   <View style={styles.mobileLayoutContainer}>
-                    {!mobileDetailOpen ? (
-                      <View style={styles.mobileListContainer}>
-                        {/* Buscador Móvil */}
-                        <View
-                          style={[
-                            styles.searchBoxContainer,
-                            {
-                              backgroundColor: isDark ? 'rgba(13, 20, 32, 0.70)' : 'rgba(255, 255, 255, 0.75)',
-                              borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
-                              borderWidth: 1,
-                              ...(Platform.OS === 'web'
-                                ? ({
-                                    backdropFilter: 'blur(16px)',
-                                    WebkitBackdropFilter: 'blur(16px)',
-                                  } as any)
-                                : {}),
-                            },
-                          ]}
-                        >
-                          <SculptedIcon name="search" size={14} variant="plain" color={colors.textMuted} />
-                          <TextInput
-                            style={[styles.searchBoxInput, { color: colors.textPrimary }]}
-                            placeholder="Buscar subfamilia..."
-                            value={subFamilySearchQuery}
-                            onChangeText={setSubFamilySearchQuery}
-                            placeholderTextColor={colors.textMuted}
-                          />
-                          {subFamilySearchQuery.length > 0 && (
-                            <TouchableOpacity onPress={() => setSubFamilySearchQuery('')}>
-                              <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
-                            </TouchableOpacity>
-                          )}
-                        </View>
+                    {/* Buscador Móvil */}
+                    <View
+                      style={[
+                        styles.searchBoxContainer,
+                        {
+                          backgroundColor: isDark ? 'rgba(13, 20, 32, 0.70)' : 'rgba(255, 255, 255, 0.75)',
+                          borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(226, 232, 240, 0.90)',
+                          borderWidth: 1,
+                          ...(Platform.OS === 'web'
+                            ? ({
+                                backdropFilter: 'blur(16px)',
+                                WebkitBackdropFilter: 'blur(16px)',
+                              } as any)
+                            : {}),
+                        },
+                      ]}
+                    >
+                      <SculptedIcon name="search" size={14} variant="plain" color={colors.textMuted} />
+                      <TextInput
+                        style={[styles.searchBoxInput, { color: colors.textPrimary }]}
+                        placeholder="Buscar subfamilia..."
+                        value={subFamilySearchQuery}
+                        onChangeText={setSubFamilySearchQuery}
+                        placeholderTextColor={colors.textMuted}
+                      />
+                      {subFamilySearchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSubFamilySearchQuery('')}>
+                          <SculptedIcon name="close" size={13} variant="plain" color={colors.textMuted} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
 
-                        <View style={styles.mobileCardsList}>
-                          {filteredSubFamilies.map((sf) => {
-                            const isPaid = sf.isFullySettled;
-                            const isRefund = sf.finalBalance < 0;
-                            const isOwed = sf.finalBalance > 0;
-
-                            return (
-                              <GlassCard
-                                key={sf.subFamilyName}
-                                variant={isPaid ? 'subtle' : isOwed ? 'coral' : 'cyan'}
-                                glow={!isPaid && isDark}
-                                contentStyle={styles.mobileFamilyCard}
-                                onPress={() => {
-                                  setSelectedSubFamily(sf.subFamilyName);
-                                  setMobileDetailOpen(true);
+                    {/* Carrusel Horizontal de Selección Rápida de Familia */}
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 4 }}>
+                      <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 2 }}>
+                        {filteredSubFamilies.map((sf) => {
+                          const isSelected = activeSubFamilyName === sf.subFamilyName;
+                          const isPaid = sf.isFullySettled;
+                          return (
+                            <TouchableOpacity
+                              key={sf.subFamilyName}
+                              onPress={() => setSelectedSubFamily(sf.subFamilyName)}
+                              style={[
+                                {
+                                  paddingHorizontal: 14,
+                                  paddingVertical: 8,
+                                  borderRadius: Radii.pill,
+                                  borderWidth: 1,
+                                  backgroundColor: isSelected
+                                    ? (isDark ? 'rgba(0, 240, 255, 0.22)' : 'rgba(2, 132, 199, 0.15)')
+                                    : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'),
+                                  borderColor: isSelected
+                                    ? (isDark ? '#00F0FF' : '#0284C7')
+                                    : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.10)'),
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                },
+                              ]}
+                            >
+                              <SculptedIcon name="users" size={12} variant="plain" color={isSelected ? (isDark ? '#00F0FF' : '#0284C7') : colors.textSecondary} />
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? '700' : '500',
+                                  color: isSelected ? colors.textPrimary : colors.textSecondary,
                                 }}
                               >
-                                <View style={styles.mobileCardHeader}>
-                                  <View style={{ flex: 1 }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                      <SculptedIcon name="home" size={14} variant="plain" color={isPaid ? colors.textSecondary : colors.textPrimary} />
-                                      <Text
-                                        style={[
-                                          styles.mobileCardTitle,
-                                          { color: isPaid ? colors.textSecondary : colors.textPrimary },
-                                        ]}
-                                      >
-                                        {sf.subFamilyName}
-                                      </Text>
-                                    </View>
-                                    <Text style={[styles.mobileCardSub, { color: colors.textSecondary }]}>
-                                      {sf.attendingCount} de {sf.membersCount} asistentes • Cuota: {FormatCurrency(sf.proportionalShare)}
-                                    </Text>
-                                  </View>
-                                  <SculptedIcon name="chevron-right" size={14} variant="plain" color={colors.textMuted} />
-                                </View>
-
-                                <View style={styles.mobileCardFooter}>
-                                  {isPaid ? (
-                                    <View
-                                      style={[
-                                        styles.badgePaidMaster,
-                                        {
-                                          backgroundColor: colors.successLight,
-                                          borderColor: colors.successBorder,
-                                          flexDirection: 'row',
-                                          alignItems: 'center',
-                                          gap: 4,
-                                        },
-                                      ]}
-                                    >
-                                      <SculptedIcon name="check-circle" size={11} variant="plain" color={colors.successText} />
-                                      <Text style={[styles.badgePaidMasterText, { color: colors.successText }]}>
-                                        Cuenta Liquidada ($0.00)
-                                      </Text>
-                                    </View>
-                                  ) : isRefund ? (
-                                    <View
-                                      style={[
-                                        styles.badgeRefund,
-                                        {
-                                          backgroundColor: colors.primaryLight,
-                                          borderColor: colors.primaryBorder,
-                                        },
-                                      ]}
-                                    >
-                                      <Text style={[styles.badgeRefundText, { color: colors.primaryText }]}>
-                                        Reembolso: {FormatCurrency(Math.abs(sf.finalBalance))}
-                                      </Text>
-                                    </View>
-                                  ) : isOwed ? (
-                                    <View
-                                      style={[
-                                        styles.badgeOwed,
-                                        {
-                                          backgroundColor: colors.warningLight,
-                                          borderColor: colors.warningBorder,
-                                        },
-                                      ]}
-                                    >
-                                      <Text style={[styles.badgeOwedText, { color: colors.warningText }]}>
-                                        Pagar: {FormatCurrency(sf.finalBalance)}
-                                      </Text>
-                                    </View>
-                                  ) : (
-                                    <View
-                                      style={[
-                                        styles.badgeSettled,
-                                        {
-                                          backgroundColor: colors.surfaceSubtle,
-                                          borderColor: colors.border,
-                                        },
-                                      ]}
-                                    >
-                                      <Text style={[styles.badgeSettledText, { color: colors.textSecondary }]}>
-                                        $0.00
-                                      </Text>
-                                    </View>
-                                  )}
-
-                                  <View style={styles.mobileActionsGroup}>
-                                    {isPaid ? (
-                                      <TouchableOpacity
-                                        style={[
-                                          styles.sfQuickReopenBtn,
-                                          {
-                                            backgroundColor: colors.coralLight,
-                                            borderColor: colors.coralBorder,
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            gap: 4,
-                                          },
-                                        ]}
-                                        onPress={() => {
-                                          handleSettleSubFamily(sf.subFamilyName, false);
-                                        }}
-                                      >
-                                        <SculptedIcon name="refresh" size={11} variant="plain" color={colors.coralText} />
-                                        <Text style={[styles.sfQuickReopenBtnText, { color: colors.coralText }]}>Reabrir</Text>
-                                      </TouchableOpacity>
-                                    ) : (
-                                      <TouchableOpacity
-                                        style={[
-                                          styles.sfQuickSettleBtn,
-                                          {
-                                            backgroundColor: colors.primary,
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            gap: 4,
-                                          },
-                                        ]}
-                                        onPress={() => {
-                                          handleSettleSubFamily(sf.subFamilyName, true);
-                                        }}
-                                      >
-                                        <SculptedIcon name="check" size={12} variant="plain" color={isDark ? '#0D1117' : '#FFFFFF'} />
-                                        <Text style={[styles.sfQuickSettleBtnText, { color: isDark ? '#0D1117' : '#FFFFFF' }]}>Liquidar</Text>
-                                      </TouchableOpacity>
-                                    )}
-
-                                    <TouchableOpacity
-                                      style={[styles.sfQuickDeleteBtn, { backgroundColor: colors.dangerLight }]}
-                                      onPress={() => {
-                                        handleDeleteSubFamily(sf.subFamilyName);
-                                      }}
-                                    >
-                                      <SculptedIcon name="trash" size={12} variant="plain" color={colors.dangerText} />
-                                    </TouchableOpacity>
-                                  </View>
-                                </View>
-                              </GlassCard>
-                            );
-                          })}
-                        </View>
+                                {sf.subFamilyName}
+                              </Text>
+                              {isPaid && <SculptedIcon name="check-circle" size={11} variant="plain" color={colors.successText} />}
+                            </TouchableOpacity>
+                          );
+                        })}
                       </View>
-                    ) : (
-                      /* Vista Detalle en Móvil */
-                      <View style={styles.mobileDetailWrapper}>
-                        <PosTicketView
-                          subFamilyName={activeSubFamilyName}
-                          event={event}
-                          totals={totals}
-                          onToggleAttendance={handleToggleAttendance}
-                          onToggleSettlement={handleToggleSettlement}
-                          onSettleSubFamily={handleSettleSubFamily}
-                          onToggleParticipantRole={handleToggleParticipantRole}
-                          onBackToList={() => setMobileDetailOpen(false)}
-                          isMobile={true}
-                        />
-                      </View>
-                    )}
+                    </ScrollView>
+
+                    {/* Detalle del Ticket POS Siempre Visible en Móvil */}
+                    <View style={styles.detailColumn}>
+                      <PosTicketView
+                        subFamilyName={activeSubFamilyName}
+                        event={event}
+                        totals={totals}
+                        onToggleAttendance={handleToggleAttendance}
+                        onToggleSettlement={handleToggleSettlement}
+                        onSettleSubFamily={handleSettleSubFamily}
+                        onToggleParticipantRole={handleToggleParticipantRole}
+                      />
+                    </View>
                   </View>
                 )}
               </View>
@@ -3373,22 +3254,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: 14,
-    marginTop: Platform.OS === 'ios' ? 48 : 12,
-    marginBottom: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: Radii.xl,
+    marginTop: Platform.OS === 'ios' ? 44 : 10,
+    marginBottom: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    minHeight: 52,
+    borderRadius: Radii.lg,
     borderWidth: 1,
     zIndex: 20,
     overflow: 'visible',
   },
   topHeaderTablet: {
     marginHorizontal: 24,
-    marginTop: 18,
-    marginBottom: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 24,
+    marginTop: 16,
+    marginBottom: 10,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    minHeight: 56,
+    borderRadius: 20,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -3711,12 +3594,16 @@ const styles = StyleSheet.create({
   },
   masterDetailRow: {
     flexDirection: 'row',
-    gap: 18,
+    gap: 20,
     alignItems: 'flex-start',
+    width: '100%',
+    alignSelf: 'stretch',
   },
   masterColumn: {
-    width: '38%',
-    gap: 14,
+    width: 320,
+    maxWidth: '38%',
+    minWidth: 260,
+    gap: 12,
   },
   masterColumnHeader: {
     flexDirection: 'row',

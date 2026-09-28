@@ -456,27 +456,20 @@
 .pos-split-layout {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
   width: 100%;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 960px) {
   .pos-split-layout {
     display: grid;
-    grid-template-columns: minmax(260px, 320px) 1fr;
-    gap: 22px;
+    grid-template-columns: 340px 1fr;
+    gap: 26px;
     align-items: start;
   }
 }
 
-@media (min-width: 1024px) {
-  .pos-split-layout {
-    grid-template-columns: 340px 1fr;
-    gap: 26px;
-  }
-}
-
-@media (min-width: 1360px) {
+@media (min-width: 1240px) {
   .pos-split-layout {
     grid-template-columns: 380px 1fr;
     gap: 30px;
@@ -493,11 +486,11 @@
   background: var(--surface-card);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 920px) {
   .pos-master-col {
     position: sticky;
     top: 84px;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 110px);
   }
 }
 
@@ -547,15 +540,13 @@
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
-  max-height: calc(100vh - 280px);
-  min-height: 220px;
+  max-height: 480px;
   padding-right: 2px;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 919px) {
   .pos-master-list-scroll {
     max-height: 280px;
-    min-height: auto;
   }
 }
 
