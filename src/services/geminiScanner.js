@@ -31,6 +31,27 @@ Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructu
 
 const VALID_CATEGORIES = ['Comida', 'Hospedaje', 'Transporte', 'Bebidas', 'Varios'];
 
+/**
+ * Obtener la API Key de Gemini desde LocalStorage o Config
+ */
+export const getGeminiApiKey = () => {
+  if (typeof window === 'undefined') return '';
+  const localKey = localStorage.getItem('chapapp_gemini_api_key');
+  if (localKey && localKey.trim()) return localKey.trim();
+  if (window.__ENV && window.__ENV.GEMINI_API_KEY) return window.__ENV.GEMINI_API_KEY.trim();
+  if (CONFIG.GEMINI.API_KEY && !CONFIG.GEMINI.API_KEY.includes('EXAMPLE')) return CONFIG.GEMINI.API_KEY.trim();
+  return '';
+};
+
+/**
+ * Guardar la API Key de Gemini en LocalStorage
+ */
+export const setGeminiApiKey = (key) => {
+  if (typeof window !== 'undefined' && key) {
+    localStorage.setItem('chapapp_gemini_api_key', key.trim());
+  }
+};
+
 const parseJsonResponse = (responseText) => {
   let cleaned = responseText.trim();
   if (cleaned.startsWith('```json')) {
@@ -41,18 +62,52 @@ const parseJsonResponse = (responseText) => {
   return JSON.parse(cleaned);
 };
 
-export const fileToBase64 = (file) => {
+/**
+ * Convierte y comprime imágenes a Base64 usando HTML5 Canvas para optimizar velocidad y memoria
+ */
+export const fileToBase64 = (file, maxDimension = 1600, quality = 0.85) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result.replace(/^data:image\/[a-zA-Z0-9.+]+;base64,/, '');
-      resolve({ base64, mimeType: file.type || 'image/jpeg' });
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const base64 = dataUrl.replace(/^data:image\/[a-zA-Z0-9.+]+;base64,/, '');
+        resolve({ base64, mimeType: 'image/jpeg' });
+      };
+      img.onerror = () => {
+        const rawBase64 = String(e.target.result).replace(/^data:image\/[a-zA-Z0-9.+]+;base64,/, '');
+        resolve({ base64: rawBase64, mimeType: file.type || 'image/jpeg' });
+      };
+      img.src = e.target.result;
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 };
 
+/**
+ * Analiza el comprobante de gasto enviándolo a Google Gemini Vision
+ */
 export const extractDataFromReceipt = async (fileOrBase64, mimeType = 'image/jpeg') => {
   let base64Data = '';
   let finalMime = mimeType;
@@ -65,16 +120,9 @@ export const extractDataFromReceipt = async (fileOrBase64, mimeType = 'image/jpe
     base64Data = fileOrBase64.replace(/^data:image\/[a-zA-Z0-9.+]+;base64,/, '');
   }
 
-  const apiKey = CONFIG.GEMINI.API_KEY;
-  if (!apiKey || apiKey.includes('EXAMPLE')) {
-    // Si no está configurada la llave, devolvemos simulación amigable
-    console.warn('[Gemini AI] API key no configurada, usando análisis heurístico.');
-    return {
-      title: 'Ticket Escaneado',
-      amount: 0,
-      category: 'Comida',
-      confidence: 0.8
-    };
+  const apiKey = getGeminiApiKey();
+  if (!apiKey) {
+    throw new Error('MISSING_API_KEY');
   }
 
   const candidateModels = CONFIG.GEMINI.FALLBACK_MODELS;

@@ -9,13 +9,13 @@ export const CONFIG = {
     ANON_KEY: 'sb_publishable_tG7pPEaA-_d1I7V8TKiaGg_6tyuC2vt',
   },
   GEMINI: {
-    API_KEY: (typeof window !== 'undefined' && window.__ENV?.GEMINI_API_KEY) || 'AIzaSyA8_EXAMPLE_OR_USER_CONFIGURED',
-    MODEL: 'gemini-2.5-flash',
+    API_KEY: (typeof window !== 'undefined' && (localStorage.getItem('chapapp_gemini_api_key') || window.__ENV?.GEMINI_API_KEY)) || '',
+    MODEL: 'gemini-2.0-flash',
     FALLBACK_MODELS: [
-      'gemini-2.5-flash',
       'gemini-2.0-flash',
+      'gemini-1.5-flash',
       'gemini-2.0-flash-exp',
-      'gemini-flash-latest'
+      'gemini-1.5-pro'
     ]
   },
   APP: {

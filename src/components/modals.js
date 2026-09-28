@@ -5,7 +5,7 @@
 
 import { renderIcon } from '../utils/icons.js';
 import { formatCurrency, calculateEventTotals } from '../utils/calculations.js';
-import { extractDataFromReceipt } from '../services/geminiScanner.js';
+import { extractDataFromReceipt, getGeminiApiKey, setGeminiApiKey } from '../services/geminiScanner.js';
 import { getGlobalDirectory, saveGlobalDirectory } from '../services/database.js';
 import { parseExpensesCsv, SAMPLE_CSV_TEMPLATE } from '../utils/csvParser.js';
 import { showToast } from './toast.js';
@@ -85,11 +85,16 @@ export const mountModals = () => {
             <span class="ai-badge">${renderIcon('sparkles', { size: 13 })} Google Gemini Vision</span>
             <p class="ai-scanner-desc">Sube foto de tu ticket o nota para autocompletar monto y concepto.</p>
           </div>
-          <label class="btn-pill-cyan ai-upload-btn" id="lbl-scan-ticket">
-            ${renderIcon('camera', { size: 14 })}
-            <span>Escanear Ticket</span>
-            <input type="file" id="input-receipt-file" accept="image/*" capture="environment" style="display: none;" />
-          </label>
+          <div class="ai-scanner-actions">
+            <button type="button" id="btn-config-gemini-key" class="btn-config-key" title="Configurar API Key de Google Gemini" aria-label="Configurar API Key">
+              ${renderIcon('key', { size: 14 })}
+            </button>
+            <label class="btn-pill-cyan ai-upload-btn" id="lbl-scan-ticket">
+              ${renderIcon('camera', { size: 14 })}
+              <span>Escanear Ticket</span>
+              <input type="file" id="input-receipt-file" accept="image/*" capture="environment" style="display: none;" />
+            </label>
+          </div>
         </div>
 
         <div id="ai-scanning-loader" class="ai-loading-box" style="display: none;">
@@ -457,6 +462,24 @@ export const mountModals = () => {
     });
   });
 
+  // Listener para configurar la API Key de Google Gemini
+  const btnConfigKey = document.getElementById('btn-config-gemini-key');
+  if (btnConfigKey) {
+    btnConfigKey.addEventListener('click', () => {
+      const currentKey = getGeminiApiKey();
+      const newKey = window.prompt('Ingresa tu Google Gemini API Key (obtén tu clave gratuita en aistudio.google.com):', currentKey || '');
+      if (newKey !== null) {
+        if (newKey.trim()) {
+          setGeminiApiKey(newKey.trim());
+          showToast('API Key de Google Gemini guardada con éxito', 'success');
+        } else {
+          localStorage.removeItem('chapapp_gemini_api_key');
+          showToast('API Key de Gemini eliminada', 'info');
+        }
+      }
+    });
+  }
+
   // Listener para el Escáner de Tickets con Google Gemini
   const receiptFileInput = document.getElementById('input-receipt-file');
   const aiLoader = document.getElementById('ai-scanning-loader');
@@ -465,6 +488,19 @@ export const mountModals = () => {
     receiptFileInput.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
+
+      let apiKey = getGeminiApiKey();
+      if (!apiKey) {
+        const userKey = window.prompt('Para escanear tickets con IA, ingresa tu API Key de Google Gemini (puedes obtenerla gratis en aistudio.google.com):');
+        if (userKey && userKey.trim()) {
+          setGeminiApiKey(userKey.trim());
+          apiKey = userKey.trim();
+        } else {
+          showToast('Se requiere una API Key de Gemini para escanear tickets', 'info');
+          receiptFileInput.value = '';
+          return;
+        }
+      }
 
       try {
         if (aiLoader) aiLoader.style.display = 'flex';
@@ -489,8 +525,12 @@ export const mountModals = () => {
 
         showToast(`Ticket analizado con éxito: ${extracted.title} ($${extracted.amount})`, 'success');
       } catch (err) {
-        console.error('Error analizando ticket:', err);
-        showToast('No se pudo analizar el ticket automáticamente. Por favor ingresa los datos manuales.', 'error');
+        console.error('Error analizando ticket con Gemini:', err);
+        if (err.message === 'MISSING_API_KEY') {
+          showToast('Por favor configura tu API Key de Google Gemini', 'error');
+        } else {
+          showToast(`Error al procesar ticket: ${err.message || 'Error de conexión'}. Por favor ingresa los datos manuales.`, 'error');
+        }
       } finally {
         if (aiLoader) aiLoader.style.display = 'none';
         receiptFileInput.value = '';
