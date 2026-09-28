@@ -13,6 +13,20 @@ const LUMINOUS_3D_CATEGORY_COLORS = {
   Varios: { hex: '#A855F7', glow: 'rgba(168, 85, 247, 0.60)', label: 'Varios' },
 };
 
+// Helper para generar ondas armónicas sinusoidales (rayos de energía holográficos)
+function createHarmonicSineWave(cx, cy, baseRadius, amplitude, lobes, phase = 0, points = 100) {
+  let d = '';
+  for (let i = 0; i <= points; i++) {
+    const theta = (i / points) * 2 * Math.PI;
+    const r = baseRadius + amplitude * Math.sin(lobes * theta + phase);
+    const x = (cx + r * Math.cos(theta)).toFixed(2);
+    const y = (cy + r * Math.sin(theta)).toFixed(2);
+    if (i === 0) d += `M ${x} ${y}`;
+    else d += ` L ${x} ${y}`;
+  }
+  return d + ' Z';
+}
+
 /**
  * Renderiza el Dial Circular Liquid Glass de Meta y Recaudación con Anillos de Rayos y Órbitas Concéntricas
  */
@@ -20,10 +34,8 @@ export const renderCollectionDial = (collected, total, percentage) => {
   const size = 220;
   const center = size / 2; // 110
   const trackRadius = 74;
-  const trackStrokeWidth = 14;
+  const trackStrokeWidth = 12;
   const trackCircumference = 2 * Math.PI * trackRadius; // ~464.95
-  const outerOrbitRadius = 96;
-  const innerRingRadius = 54;
 
   const clampedPercent = Math.min(100, Math.max(0, percentage));
   const clampedRatio = Math.max(0, Math.min(1, clampedPercent / 100));
@@ -37,11 +49,17 @@ export const renderCollectionDial = (collected, total, percentage) => {
 
   const activeAccentColor = isComplete ? '#10B981' : clampedRatio > 0.5 ? '#A855F7' : '#00F0FF';
 
+  // Generar ondas armónicas sinusoidales de rayos de luz
+  const wavePurple = createHarmonicSineWave(center, center, 74, 8, 3, 0.4);
+  const waveCyan = createHarmonicSineWave(center, center, 72, 7, 4, 1.2);
+  const waveAmber = createHarmonicSineWave(center, center, 68, 6, 3, 2.5);
+  const waveMint = createHarmonicSineWave(center, center, 78, 5, 5, 3.8);
+
   return `
     <div class="glass-panel chart-liquid-card animate-fade-in">
       <div class="card-header-compact">
         <div class="header-icon-title-group">
-          <div class="chart-icon-box" style="color: ${activeAccentColor};">
+          <div class="chart-icon-box">
             ${renderIcon('trending-up', { size: 18 })}
           </div>
           <div>
@@ -50,7 +68,7 @@ export const renderCollectionDial = (collected, total, percentage) => {
           </div>
         </div>
 
-        <div class="badge-status ${isComplete ? 'status-active' : 'badge-cyan'}">
+        <div class="badge-recaudado-pill ${isComplete ? 'complete' : ''}">
           <span>${isComplete ? '✓ 100% CUBIERTO' : `${clampedPercent}% RECAUDADO`}</span>
         </div>
       </div>
@@ -79,34 +97,36 @@ export const renderCollectionDial = (collected, total, percentage) => {
               </filter>
             </defs>
 
-            <!-- 1. Órbita exterior fina de radar -->
-            <circle class="orbit-ring" cx="${center}" cy="${center}" r="${outerOrbitRadius}" stroke="rgba(0, 240, 255, 0.18)" stroke-width="1" fill="none" />
+            <!-- 1. Órbitas circulares concéntricas de radar -->
+            <circle cx="${center}" cy="${center}" r="92" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" fill="none" />
+            <circle cx="${center}" cy="${center}" r="62" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" fill="none" />
+            <circle cx="${center}" cy="${center}" r="46" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" fill="none" />
 
-            <!-- 2. Rayos y elipses concéntricas de energía holográfica -->
-            <ellipse cx="${center}" cy="${center}" rx="92" ry="82" stroke="rgba(192, 132, 252, 0.20)" stroke-width="1" fill="none" transform="rotate(-20 ${center} ${center})" />
-            <ellipse cx="${center}" cy="${center}" rx="86" ry="76" stroke="rgba(0, 240, 255, 0.22)" stroke-width="1" fill="none" transform="rotate(30 ${center} ${center})" />
-            <ellipse cx="${center}" cy="${center}" rx="90" ry="78" stroke="rgba(245, 158, 11, 0.15)" stroke-width="0.8" fill="none" transform="rotate(75 ${center} ${center})" />
+            <!-- 2. Ondas armónicas sinusoidales de rayos y energía holográfica -->
+            <path d="${wavePurple}" fill="none" stroke="rgba(192, 132, 252, 0.40)" stroke-width="1.2" />
+            <path d="${waveCyan}" fill="none" stroke="rgba(0, 240, 255, 0.42)" stroke-width="1.2" />
+            <path d="${waveAmber}" fill="none" stroke="rgba(245, 158, 11, 0.35)" stroke-width="1" />
+            <path d="${waveMint}" fill="none" stroke="rgba(16, 185, 129, 0.30)" stroke-width="1" />
 
             <!-- 3. Carril base del anillo en cristal translúcido esmerilado -->
             <circle class="track-glass-ring" cx="${center}" cy="${center}" r="${trackRadius}" stroke-width="${trackStrokeWidth}" stroke="rgba(255, 255, 255, 0.08)" fill="none" />
 
             <!-- 4. Barra fluida principal de progreso con filtro de rayos neón -->
-            <circle 
-              class="progress-liquid-ring" 
-              cx="${center}" 
-              cy="${center}" 
-              r="${trackRadius}" 
-              stroke-width="${trackStrokeWidth}"
-              stroke="url(#liquidCollectionGrad)"
-              fill="none"
-              filter="url(#liquidRayGlow)"
-              style="stroke-dasharray: ${trackCircumference}; stroke-dashoffset: ${strokeDashoffset}; stroke-linecap: round; transform: rotate(-90deg); transform-origin: ${center}px ${center}px; transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);"
-            />
+            ${clampedPercent > 0 ? `
+              <circle 
+                class="progress-liquid-ring" 
+                cx="${center}" 
+                cy="${center}" 
+                r="${trackRadius}" 
+                stroke-width="${trackStrokeWidth}"
+                stroke="url(#liquidCollectionGrad)"
+                fill="none"
+                filter="url(#liquidRayGlow)"
+                style="stroke-dasharray: ${trackCircumference}; stroke-dashoffset: ${strokeDashoffset}; stroke-linecap: round; transform: rotate(-90deg); transform-origin: ${center}px ${center}px; transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);"
+              />
+            ` : ''}
 
-            <!-- 5. Guía concéntrica interior -->
-            <circle class="inner-guide-ring" cx="${center}" cy="${center}" r="${innerRingRadius}" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1" fill="none" />
-
-            <!-- 6. Satélite indicador brillante (Rayo / Destello en punta activa) -->
+            <!-- 5. Satélite indicador brillante (Rayo / Destello en punta activa) -->
             ${clampedPercent > 0 ? `
               <g class="satellite-group">
                 <circle cx="${satelliteX.toFixed(2)}" cy="${satelliteY.toFixed(2)}" r="8" fill="${activeAccentColor}" opacity="0.4" />
@@ -115,18 +135,17 @@ export const renderCollectionDial = (collected, total, percentage) => {
             ` : ''}
           </svg>
 
-          <!-- Centro con Glassmorfismo y Tipografía Nítida -->
-          <div class="liquid-hub-center glass-panel">
+          <!-- Centro con Glassmorfismo Transparente y Tipografía Nítida -->
+          <div class="liquid-hub-center">
             <span class="hub-percentage-text">${clampedPercent}%</span>
             <span class="hub-ratio-sub">${formatCurrency(collected).split('.')[0]} / ${formatCurrency(total).split('.')[0]}</span>
           </div>
         </div>
       </div>
 
-      <!-- Píldora inferior de balance monetario -->
-      <div class="liquid-card-footer">
-        <span>Cobrado <strong class="text-cyan">${formatCurrency(collected)}</strong></span>
-        <span>Faltan <strong class="text-amber">${formatCurrency(Math.max(0, total - collected))}</strong></span>
+      <!-- Píldora inferior recesada de balance monetario (Image 1) -->
+      <div class="liquid-recessed-footer">
+        <span class="recessed-footer-text">Cobrado <strong class="text-cyan">${formatCurrency(collected)}</strong> de <strong>${formatCurrency(total)}</strong></span>
       </div>
     </div>
   `;
