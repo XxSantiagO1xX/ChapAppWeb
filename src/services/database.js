@@ -407,9 +407,15 @@ export const addParticipant = async (eventId, participantData) => {
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      await supabase.from('participants').insert({
+      const targetEventId = isUUID(eventId)
+        ? eventId
+        : currentEvent && isUUID(currentEvent.id)
+        ? currentEvent.id
+        : null;
+
+      const { data, error } = await supabase.from('participants').insert({
         id: p.id,
-        event_id: currentEvent ? currentEvent.id : eventId,
+        event_id: targetEventId,
         name: p.name,
         category: p.category,
         weight: p.weight,
@@ -420,8 +426,14 @@ export const addParticipant = async (eventId, participantData) => {
           subFamily: p.subFamily,
         },
       });
+
+      if (error) {
+        console.error('[Database] Error insertando participante en Supabase:', error);
+      } else {
+        console.log('[Database] ✅ Participante guardado en Supabase:', p.name, p.id);
+      }
     } catch (e) {
-      console.error('[Database] Error insertando participante en Supabase:', e);
+      console.error('[Database] Excepción insertando participante en Supabase:', e);
     }
   }
 
@@ -633,6 +645,14 @@ export const settleSubFamily = async (eventId, subFamilyName, isSettled) => {
  * Agregar Gasto
  */
 export const addExpense = async (eventId, expenseData) => {
+  const localList = loadLocalEvents();
+  const currentEvent = localList.find((e) => e.id === eventId || e.slug === eventId);
+  const targetEventId = isUUID(eventId)
+    ? eventId
+    : currentEvent && isUUID(currentEvent.id)
+    ? currentEvent.id
+    : null;
+
   const exp = {
     id: generateUUID(),
     title: expenseData.title.trim(),
@@ -645,17 +665,22 @@ export const addExpense = async (eventId, expenseData) => {
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      await supabase.from('expenses').insert({
+      const { error } = await supabase.from('expenses').insert({
         id: exp.id,
-        event_id: eventId,
+        event_id: targetEventId,
         title: exp.title,
         amount: exp.amount,
         expense_category: exp.category,
         paid_by: exp.paidBy,
         split_between: exp.splitBetween,
       });
+      if (error) {
+        console.error('[Database] Error insertando gasto en Supabase:', error);
+      } else {
+        console.log('[Database] ✅ Gasto guardado en Supabase:', exp.title, exp.id);
+      }
     } catch (e) {
-      console.error('[Database] Error insertando gasto en Supabase:', e);
+      console.error('[Database] Excepción insertando gasto en Supabase:', e);
     }
   }
 
@@ -856,6 +881,97 @@ export const saveGlobalDirectory = (directory) => {
   try {
     localStorage.setItem(CONFIG.APP.STORAGE_KEYS.LOCAL_DIRECTORY, JSON.stringify(directory));
   } catch (e) {}
+};
+
+/**
+ * Agregar Contacto al Directorio Maestro (y guardarlo en Supabase y LocalStorage)
+ */
+export const addDirectoryContact = async ({ name, subFamily, category = 'adulto', weight = 1.0 }) => {
+  const newContact = {
+    id: generateUUID(),
+    name: name.trim(),
+    category,
+    weight: typeof weight === 'number' ? weight : (category === 'nino' ? 0.5 : 1.0),
+    subFamily: subFamily?.trim() || inferSubFamily(name),
+  };
+
+  const supabase = await initSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('participants').insert({
+        id: newContact.id,
+        event_id: null,
+        name: newContact.name,
+        category: newContact.category,
+        weight: newContact.weight,
+        active_days: {
+          days: [],
+          isAttending: true,
+          isSettled: false,
+          subFamily: newContact.subFamily,
+        },
+      });
+      if (error) {
+        console.error('[Database] Error guardando contacto en Supabase:', error);
+      } else {
+        console.log('[Database] ✅ Contacto del directorio guardado en Supabase:', newContact.name, newContact.id);
+      }
+    } catch (e) {
+      console.error('[Database] Excepción guardando contacto en Supabase:', e);
+    }
+  }
+
+  const dir = getGlobalDirectory();
+  dir.push(newContact);
+  saveGlobalDirectory(dir);
+  return newContact;
+};
+
+/**
+ * Eliminar Contacto del Directorio Maestro (y de Supabase si existe)
+ */
+export const deleteDirectoryContact = async (contactId, contactName) => {
+  const supabase = await initSupabaseClient();
+  if (supabase && isUUID(contactId)) {
+    try {
+      await supabase.from('participants').delete().eq('id', contactId);
+      console.log('[Database] ✅ Contacto eliminado de Supabase:', contactName, contactId);
+    } catch (e) {
+      console.error('[Database] Error eliminando contacto en Supabase:', e);
+    }
+  }
+
+  let dir = getGlobalDirectory();
+  dir = dir.filter((d) => d.id !== contactId && d.name.toLowerCase().trim() !== (contactName || '').toLowerCase().trim());
+  saveGlobalDirectory(dir);
+  return dir;
+};
+
+/**
+ * Alternar rol/categoría de un contacto en el Directorio Maestro (y en Supabase)
+ */
+export const updateDirectoryContactRole = async (contactId, category, weight) => {
+  const supabase = await initSupabaseClient();
+  if (supabase && isUUID(contactId)) {
+    try {
+      await supabase.from('participants').update({
+        category,
+        weight,
+      }).eq('id', contactId);
+      console.log('[Database] ✅ Rol de contacto actualizado en Supabase:', contactId, category);
+    } catch (e) {
+      console.error('[Database] Error actualizando rol en Supabase:', e);
+    }
+  }
+
+  const dir = getGlobalDirectory();
+  const contact = dir.find((d) => d.id === contactId);
+  if (contact) {
+    contact.category = category;
+    contact.weight = weight;
+    saveGlobalDirectory(dir);
+  }
+  return dir;
 };
 
 /**

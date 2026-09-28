@@ -22,6 +22,9 @@ import {
   getGlobalDirectory,
   fetchGlobalDirectoryFromSupabase,
   saveGlobalDirectory,
+  addDirectoryContact,
+  deleteDirectoryContact,
+  updateDirectoryContactRole,
   subscribeToEventsListRealtime,
   generateUUID
 } from './services/database.js';
@@ -675,18 +678,16 @@ class App {
       const toggleDirCatBtn = e.target.closest('.btn-toggle-dir-category');
       if (toggleDirCatBtn) {
         const id = toggleDirCatBtn.getAttribute('data-id');
-        let dir = getGlobalDirectory();
-        const contact = dir.find((d) => d.id === id);
-        if (contact) {
-          const isChild = contact.category === 'nino';
-          contact.category = isChild ? 'adulto' : 'nino';
-          contact.weight = isChild ? 1.0 : 0.5;
-          saveGlobalDirectory(dir);
-          const importBtn = document.getElementById('btn-import-selected-to-active-event');
-          const isImport = importBtn && importBtn.style.display !== 'none';
-          this.openDirectoryModal(isImport ? 'import' : 'manage');
-          showToast(`${contact.name} cambiado a ${contact.category === 'nino' ? 'Niño (0.5 ud)' : 'Adulto (1.0 ud)'}`, 'success');
-        }
+        const currentCat = toggleDirCatBtn.getAttribute('data-category');
+        const isChild = currentCat === 'nino';
+        const newCat = isChild ? 'adulto' : 'nino';
+        const newWeight = isChild ? 1.0 : 0.5;
+
+        await updateDirectoryContactRole(id, newCat, newWeight);
+        const importBtn = document.getElementById('btn-import-selected-to-active-event');
+        const isImport = importBtn && importBtn.style.display !== 'none';
+        this.openDirectoryModal(isImport ? 'import' : 'manage');
+        showToast(`Rol cambiado a ${newCat === 'nino' ? 'Niño (0.5 ud)' : 'Adulto (1.0 ud)'}`, 'success');
         return;
       }
 
@@ -697,13 +698,10 @@ class App {
         const name = delDirBtn.getAttribute('data-name');
         openConfirmModal({
           title: `¿Eliminar a ${name}?`,
-          message: 'Se removerá del directorio global maestro.',
+          message: 'Se removerá del directorio global maestro y de la base de datos.',
           variant: 'danger',
           onConfirm: async () => {
-            let dir = getGlobalDirectory();
-            dir = dir.filter((d) => d.id !== id && d.name.toLowerCase().trim() !== (name || '').toLowerCase().trim());
-            saveGlobalDirectory(dir);
-
+            await deleteDirectoryContact(id, name);
             const importBtn = document.getElementById('btn-import-selected-to-active-event');
             const isImport = importBtn && importBtn.style.display !== 'none';
             this.openDirectoryModal(isImport ? 'import' : 'manage');
@@ -735,19 +733,17 @@ class App {
           return;
         }
 
-        const dir = getGlobalDirectory();
-        dir.push({
-          id: 'dir_' + Date.now(),
+        await addDirectoryContact({
           name,
+          subFamily: sf,
           category: cat,
           weight,
-          subFamily: sf,
         });
-        saveGlobalDirectory(dir);
+
         document.getElementById('dir-contact-name').value = '';
         document.getElementById('form-inline-add-contact-wrapper').style.display = 'none';
         this.openDirectoryModal('manage');
-        showToast(`"${name}" agregado al directorio`, 'success');
+        showToast(`"${name}" agregado al directorio y guardado en Supabase`, 'success');
         return;
       }
 
