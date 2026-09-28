@@ -31,16 +31,16 @@
   --bg-app: #070D18;
   --bg-app-rgb: 7, 13, 24;
 
-  /* Superficies Liquid Glass con Profundidad */
-  --surface-header: rgba(10, 18, 34, 0.85);
-  --surface-card: rgba(13, 22, 40, 0.72);
-  --surface-card-hover: rgba(18, 29, 52, 0.85);
-  --surface-card-elevated: rgba(20, 32, 58, 0.90);
+  /* Superficies Liquid Glass con Profundidad y Translucidez */
+  --surface-header: rgba(10, 18, 34, 0.78);
+  --surface-card: rgba(12, 20, 36, 0.48);
+  --surface-card-hover: rgba(16, 26, 48, 0.65);
+  --surface-card-elevated: rgba(18, 28, 50, 0.80);
   --surface-subtle: rgba(255, 255, 255, 0.05);
-  --surface-subtle-hover: rgba(255, 255, 255, 0.09);
-  --surface-input: rgba(11, 19, 36, 0.75);
-  --surface-dialog: rgba(9, 16, 30, 0.95);
-  --surface-drawer: rgba(7, 13, 24, 0.98);
+  --surface-subtle-hover: rgba(255, 255, 255, 0.10);
+  --surface-input: rgba(11, 19, 36, 0.70);
+  --surface-dialog: rgba(9, 16, 30, 0.94);
+  --surface-drawer: rgba(7, 13, 24, 0.96);
 
   /* Bordes Biselados Neumórficos y Destellos Neón */
   --border-subtle: rgba(255, 255, 255, 0.08);

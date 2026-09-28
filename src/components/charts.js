@@ -1,5 +1,5 @@
 /**
- * ChapApp - Gráficas Financieras Liquid Glass 3D con Ondas Fluidas y Rayos de Luz
+ * ChapApp - Gráficas Financieras Liquid Glass 3D con Anillos de Energía y Rayos de Luz
  */
 
 import { formatCurrency } from '../utils/calculations.js';
@@ -14,28 +14,7 @@ const LUMINOUS_3D_CATEGORY_COLORS = {
 };
 
 /**
- * Genera trayectorias SVG ondulantes para simular líquido dentro del cristal (Liquid Glass Waves)
- */
-function createFluidWavePath(cx, cy, baseRadius, amplitude, waves, phase = 0) {
-  const steps = waves * 16;
-  let d = '';
-  for (let i = 0; i <= steps; i++) {
-    const angle = (i / steps) * 2 * Math.PI;
-    const r = baseRadius + amplitude * Math.sin(waves * angle + phase);
-    const x = cx + r * Math.cos(angle);
-    const y = cy + r * Math.sin(angle);
-    if (i === 0) {
-      d += `M ${x.toFixed(2)} ${y.toFixed(2)}`;
-    } else {
-      d += ` L ${x.toFixed(2)} ${y.toFixed(2)}`;
-    }
-  }
-  d += ' Z';
-  return d;
-}
-
-/**
- * Renderiza el Dial Circular Liquid Glass de Meta y Recaudación
+ * Renderiza el Dial Circular Liquid Glass de Meta y Recaudación con Anillos de Rayos y Órbitas Concéntricas
  */
 export const renderCollectionDial = (collected, total, percentage) => {
   const size = 220;
@@ -51,14 +30,10 @@ export const renderCollectionDial = (collected, total, percentage) => {
   const isComplete = clampedPercent >= 100;
   const strokeDashoffset = trackCircumference - clampedRatio * trackCircumference;
 
-  // Ondas líquidas fluidas
-  const waveRibbon1 = createFluidWavePath(center, center, 74, 8, 4, 0);
-  const waveRibbon2 = createFluidWavePath(center, center, 74, 6, 5, Math.PI / 3);
-
   // Satélite / Rayo de progreso en la órbita
   const orbitAngle = -Math.PI / 2 + clampedRatio * 2 * Math.PI;
-  const satelliteX = center + outerOrbitRadius * Math.cos(orbitAngle);
-  const satelliteY = center + outerOrbitRadius * Math.sin(orbitAngle);
+  const satelliteX = center + trackRadius * Math.cos(orbitAngle);
+  const satelliteY = center + trackRadius * Math.sin(orbitAngle);
 
   const activeAccentColor = isComplete ? '#10B981' : clampedRatio > 0.5 ? '#A855F7' : '#00F0FF';
 
@@ -94,21 +69,9 @@ export const renderCollectionDial = (collected, total, percentage) => {
                 <stop offset="100%" stop-color="${isComplete ? '#10B981' : '#00E599'}" />
               </linearGradient>
 
-              <!-- Degradados de ondas translúcidas -->
-              <linearGradient id="liquidWaveGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.45" />
-                <stop offset="50%" stop-color="#C084FC" stop-opacity="0.30" />
-                <stop offset="100%" stop-color="#10B981" stop-opacity="0.40" />
-              </linearGradient>
-
-              <linearGradient id="liquidWaveGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#A855F7" stop-opacity="0.35" />
-                <stop offset="100%" stop-color="#00F0FF" stop-opacity="0.25" />
-              </linearGradient>
-
-              <!-- Filtro de resplandor Neón -->
+              <!-- Filtro de resplandor Neón y Rayos -->
               <filter id="liquidRayGlow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="3" result="glow" />
+                <feGaussianBlur stdDeviation="3.5" result="glow" />
                 <feMerge>
                   <feMergeNode in="glow" />
                   <feMergeNode in="SourceGraphic" />
@@ -116,34 +79,38 @@ export const renderCollectionDial = (collected, total, percentage) => {
               </filter>
             </defs>
 
-            <!-- 1. Órbita exterior fina -->
-            <circle class="orbit-ring" cx="${center}" cy="${center}" r="${outerOrbitRadius}" />
+            <!-- 1. Órbita exterior fina de radar -->
+            <circle class="orbit-ring" cx="${center}" cy="${center}" r="${outerOrbitRadius}" stroke="rgba(0, 240, 255, 0.18)" stroke-width="1" fill="none" />
 
-            <!-- 2. Ondas líquidas fluidas de cristal -->
-            <path d="${waveRibbon1}" stroke="url(#liquidWaveGrad1)" stroke-width="1.8" fill="none" class="liquid-wave-path" />
-            <path d="${waveRibbon2}" stroke="url(#liquidWaveGrad2)" stroke-width="1.2" fill="none" class="liquid-wave-path wave-delay" />
+            <!-- 2. Rayos y elipses concéntricas de energía holográfica -->
+            <ellipse cx="${center}" cy="${center}" rx="92" ry="82" stroke="rgba(192, 132, 252, 0.20)" stroke-width="1" fill="none" transform="rotate(-20 ${center} ${center})" />
+            <ellipse cx="${center}" cy="${center}" rx="86" ry="76" stroke="rgba(0, 240, 255, 0.22)" stroke-width="1" fill="none" transform="rotate(30 ${center} ${center})" />
+            <ellipse cx="${center}" cy="${center}" rx="90" ry="78" stroke="rgba(245, 158, 11, 0.15)" stroke-width="0.8" fill="none" transform="rotate(75 ${center} ${center})" />
 
-            <!-- 3. Carril base del anillo en cristal translúcido -->
-            <circle class="track-glass-ring" cx="${center}" cy="${center}" r="${trackRadius}" stroke-width="${trackStrokeWidth}" />
+            <!-- 3. Carril base del anillo en cristal translúcido esmerilado -->
+            <circle class="track-glass-ring" cx="${center}" cy="${center}" r="${trackRadius}" stroke-width="${trackStrokeWidth}" stroke="rgba(255, 255, 255, 0.08)" fill="none" />
 
-            <!-- 4. Barra fluida principal de progreso con filtro de rayos -->
+            <!-- 4. Barra fluida principal de progreso con filtro de rayos neón -->
             <circle 
               class="progress-liquid-ring" 
               cx="${center}" 
               cy="${center}" 
               r="${trackRadius}" 
               stroke-width="${trackStrokeWidth}"
-              style="stroke-dasharray: ${trackCircumference}; stroke-dashoffset: ${strokeDashoffset};"
+              stroke="url(#liquidCollectionGrad)"
+              fill="none"
+              filter="url(#liquidRayGlow)"
+              style="stroke-dasharray: ${trackCircumference}; stroke-dashoffset: ${strokeDashoffset}; stroke-linecap: round; transform: rotate(-90deg); transform-origin: ${center}px ${center}px; transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);"
             />
 
             <!-- 5. Guía concéntrica interior -->
-            <circle class="inner-guide-ring" cx="${center}" cy="${center}" r="${innerRingRadius}" />
+            <circle class="inner-guide-ring" cx="${center}" cy="${center}" r="${innerRingRadius}" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1" fill="none" />
 
-            <!-- 6. Satélite indicador brillante (Rayo / Destello orbital) -->
+            <!-- 6. Satélite indicador brillante (Rayo / Destello en punta activa) -->
             ${clampedPercent > 0 ? `
               <g class="satellite-group">
-                <circle cx="${satelliteX.toFixed(2)}" cy="${satelliteY.toFixed(2)}" r="7" fill="${activeAccentColor}" opacity="0.35" />
-                <circle cx="${satelliteX.toFixed(2)}" cy="${satelliteY.toFixed(2)}" r="3.8" fill="${activeAccentColor}" stroke="#FFFFFF" stroke-width="1.2" />
+                <circle cx="${satelliteX.toFixed(2)}" cy="${satelliteY.toFixed(2)}" r="8" fill="${activeAccentColor}" opacity="0.4" />
+                <circle cx="${satelliteX.toFixed(2)}" cy="${satelliteY.toFixed(2)}" r="4.2" fill="${activeAccentColor}" stroke="#FFFFFF" stroke-width="1.5" />
               </g>
             ` : ''}
           </svg>
@@ -232,11 +199,11 @@ export const renderCategory3DBars = (expenses = [], totalExpenses = 0) => {
             class="liquid-fluid-stream" 
             style="--target-h: ${heightPercent}%; height: ${heightPercent}%;"
           >
-            <!-- Menisco / Tapa Líquida Superior -->
+            <!-- Menisco / Tapa Líquida Superior con Brillo Neón -->
             <div class="fluid-meniscus-cap">
               <div class="meniscus-flare"></div>
             </div>
-            <!-- Brillo de fondo del líquido -->
+            <!-- Brillo interior del líquido -->
             <div class="fluid-interior-glow"></div>
           </div>
         </div>
