@@ -32,21 +32,21 @@
   --bg-app-rgb: 7, 13, 24;
 
   /* Superficies Liquid Glass con Profundidad y Translucidez */
-  --surface-header: rgba(10, 18, 34, 0.72);
-  --surface-card: rgba(12, 20, 36, 0.44);
-  --surface-card-hover: rgba(16, 26, 48, 0.58);
-  --surface-card-elevated: rgba(18, 28, 50, 0.75);
-  --surface-subtle: rgba(255, 255, 255, 0.05);
-  --surface-subtle-hover: rgba(255, 255, 255, 0.09);
-  --surface-input: rgba(11, 19, 36, 0.65);
-  --surface-dialog: rgba(9, 16, 30, 0.94);
-  --surface-drawer: rgba(7, 13, 24, 0.96);
+  --surface-header: rgba(12, 20, 38, 0.72);
+  --surface-card: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(11, 18, 33, 0.65);
+  --surface-card-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 100%), rgba(14, 24, 46, 0.75);
+  --surface-card-elevated: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 100%), rgba(16, 28, 52, 0.80);
+  --surface-subtle: rgba(255, 255, 255, 0.06);
+  --surface-subtle-hover: rgba(255, 255, 255, 0.10);
+  --surface-input: rgba(10, 18, 34, 0.70);
+  --surface-dialog: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(8, 15, 28, 0.95);
+  --surface-drawer: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(7, 13, 25, 0.96);
 
   /* Bordes Biselados Neumórficos y Destellos Neón */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-subtle-hover: rgba(255, 255, 255, 0.16);
-  --border-glass: rgba(0, 240, 255, 0.25);
-  --border-glass-highlight: rgba(255, 255, 255, 0.28);
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-subtle-hover: rgba(255, 255, 255, 0.20);
+  --border-glass: rgba(0, 240, 255, 0.35);
+  --border-glass-highlight: rgba(255, 255, 255, 0.35);
   --border-neon-cyan: rgba(0, 240, 255, 0.45);
   --border-neon-emerald: rgba(16, 185, 129, 0.45);
   --border-neon-amber: rgba(245, 158, 11, 0.45);
@@ -73,11 +73,11 @@
   --color-purple-glow: rgba(168, 85, 247, 0.32);
 
   /* Sombras y Luces 3D */
-  --shadow-header: 0 16px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-  --shadow-card: 0 12px 30px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  --shadow-card-hover: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 20px rgba(0, 240, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  --shadow-header: 0 16px 40px rgba(0, 0, 0, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  --shadow-card: 0 20px 48px rgba(0, 0, 0, 0.55), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-card-hover: 0 24px 56px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 240, 255, 0.15), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35);
   --shadow-emblem: 0 12px 32px rgba(0, 240, 255, 0.40), inset 0 1px 2px rgba(255, 255, 255, 0.50), inset 0 -2px 6px rgba(0, 0, 0, 0.45);
-  --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.85), 0 0 35px rgba(0, 240, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   --shadow-button-primary: 0 6px 20px rgba(0, 240, 255, 0.35);
   --shadow-button-whatsapp: 0 6px 20px rgba(37, 211, 102, 0.35);
 }
