@@ -27,21 +27,23 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-radius: var(--radius-2xl);
+  border-radius: 26px;
   position: relative;
   overflow: hidden;
   background: var(--surface-card);
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid var(--border-subtle);
-  border-top-color: var(--border-glass-highlight);
-  box-shadow: var(--shadow-card);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
 }
 
 .chart-liquid-card:hover {
+  transform: translateY(-2px);
   border-color: var(--border-glass);
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.60), 0 0 20px rgba(0, 240, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .card-header-compact {
@@ -297,22 +299,9 @@
   box-shadow: inset 0 2px 8px rgba(15, 23, 42, 0.15);
 }
 
-/* Aro 3D superior del tubo de cristal */
+/* Aro 3D superior del tubo de cristal (Oculto para eliminar aro flotante) */
 .chamber-top-rim {
-  position: absolute;
-  top: -2px;
-  left: 0;
-  right: 0;
-  height: 14px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.38);
-  z-index: 8;
-  background: rgba(255, 255, 255, 0.06);
-  pointer-events: none;
-}
-
-[data-theme="light"] .chamber-top-rim {
-  border-color: rgba(15, 23, 42, 0.30);
+  display: none !important;
 }
 
 /* Reflejo de cristal */
@@ -478,12 +467,18 @@
 
 /* Columna Izquierda: Panel Maestro de Subfamilias */
 .pos-master-col {
-  padding: 18px;
-  border-radius: var(--radius-xl);
+  padding: 20px;
+  border-radius: 26px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   background: var(--surface-card);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 @media (min-width: 920px) {
@@ -552,10 +547,13 @@
 
 /* Item Individual de la Lista Maestra de Subfamilias */
 .pos-master-item {
-  padding: 12px 14px;
-  border-radius: var(--radius-lg);
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid var(--border-subtle);
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(11, 18, 33, 0.50);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -567,20 +565,23 @@
 }
 
 [data-theme="light"] .pos-master-item {
-  background: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(226, 232, 240, 0.90);
+  border-top: 1px solid rgba(255, 255, 255, 0.95);
 }
 
 .pos-master-item:hover {
-  background: var(--surface-subtle-hover);
-  border-color: var(--border-subtle-hover);
+  background: var(--surface-card-hover);
+  border-color: var(--border-glass);
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.40);
 }
 
 .pos-master-item.selected {
   background: var(--surface-card-elevated);
   border-color: var(--border-neon-cyan);
-  box-shadow: 0 0 16px var(--color-primary-glow);
+  border-top-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.50), 0 0 16px var(--color-primary-glow);
 }
 
 .master-item-icon-col {
@@ -695,10 +696,17 @@
 
 .pos-ticket-card {
   padding: 24px 26px;
-  border-radius: var(--radius-2xl);
+  border-radius: 26px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  background: var(--surface-card);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .ticket-header {
@@ -765,13 +773,20 @@
   grid-template-columns: 1fr;
   gap: 12px;
   padding: 16px 20px;
-  border-radius: var(--radius-xl);
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: rgba(11, 18, 33, 0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  border-left: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="light"] .ticket-metrics-row {
   background: rgba(255, 255, 255, 0.50);
+  border: 1px solid rgba(226, 232, 240, 0.90);
+  border-top: 1px solid rgba(255, 255, 255, 0.95);
 }
 
 @media (min-width: 680px) {

@@ -68,7 +68,7 @@ export const mountModals = () => {
     </dialog>
 
     <!-- 2. Modal Gasto Rápido (+ Escáner con IA Google Gemini) -->
-    <dialog id="modal-quick-expense" class="glass-dialog modal-lg">
+    <dialog id="modal-quick-expense" class="glass-dialog">
       <div class="dialog-content">
         <div class="dialog-header">
           <div class="dialog-title-group">
@@ -78,14 +78,14 @@ export const mountModals = () => {
           <button class="btn-icon-glass btn-close-dialog" aria-label="Cerrar">${renderIcon('close', { size: 16 })}</button>
         </div>
 
-        <!-- Botón de Escaneo Inteligente con IA (Compacto) -->
-        <div class="ai-scanner-banner-compact glass-panel">
-          <div class="ai-scanner-info-compact">
-            <span class="ai-badge">${renderIcon('sparkles', { size: 13 })} Google Gemini Vision</span>
-            <span class="ai-scanner-desc">Autocompleta monto y concepto escaneando tu nota de compra</span>
+        <!-- Botón de Escaneo Inteligente con IA -->
+        <div class="ai-scanner-banner glass-panel">
+          <div class="ai-scanner-info">
+            <span class="ai-badge">${renderIcon('sparkles', { size: 14 })} Google Gemini Vision</span>
+            <p class="ai-scanner-desc">Sube la foto de tu ticket o nota manuscrita para extraer monto y concepto automáticamente.</p>
           </div>
-          <label class="btn-pill-cyan ai-upload-btn-compact" id="lbl-scan-ticket">
-            ${renderIcon('camera', { size: 13 })}
+          <label class="btn-pill-cyan ai-upload-btn" id="lbl-scan-ticket">
+            ${renderIcon('camera', { size: 16 })}
             <span>Escanear Ticket</span>
             <input type="file" id="input-receipt-file" accept="image/*" capture="environment" style="display: none;" />
           </label>
@@ -97,66 +97,27 @@ export const mountModals = () => {
         </div>
 
         <form id="form-quick-expense" class="dialog-form">
-          <!-- Monto y Concepto (Izquierda) + Categorías en Vertical (Derecha) -->
-          <div class="expense-form-split-grid">
-            <div class="expense-left-col">
-              <div class="form-group">
-                <label for="expense-amount">Monto Total ($ MXN) *</label>
-                <div class="input-currency-wrapper">
-                  <span class="currency-prefix">$</span>
-                  <input type="number" step="0.01" id="expense-amount" class="glass-input input-highlight-md" placeholder="0.00" required inputmode="decimal" />
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="expense-title">Concepto / Comercio *</label>
-                <input type="text" id="expense-title" class="glass-input" placeholder="ej. Supermercado, Carne asada, Gasolina..." required />
-              </div>
-            </div>
-
-            <div class="expense-right-col">
-              <label class="form-label-category">Categoría del Gasto</label>
-              <div class="category-vertical-selector" id="expense-category-pills">
-                <button type="button" class="cat-pill-vertical active" data-cat="Comida">
-                  <span class="cat-dot dot-comida"></span>
-                  <span class="cat-label">Comida</span>
-                </button>
-                <button type="button" class="cat-pill-vertical" data-cat="Bebidas">
-                  <span class="cat-dot dot-bebidas"></span>
-                  <span class="cat-label">Bebidas</span>
-                </button>
-                <button type="button" class="cat-pill-vertical" data-cat="Transporte">
-                  <span class="cat-dot dot-transporte"></span>
-                  <span class="cat-label">Transporte</span>
-                </button>
-                <button type="button" class="cat-pill-vertical" data-cat="Hospedaje">
-                  <span class="cat-dot dot-hospedaje"></span>
-                  <span class="cat-label">Hospedaje</span>
-                </button>
-                <button type="button" class="cat-pill-vertical" data-cat="Varios">
-                  <span class="cat-dot dot-varios"></span>
-                  <span class="cat-label">Varios</span>
-                </button>
-              </div>
+          <div class="form-group">
+            <label for="expense-amount">Monto Total ($ MXN) *</label>
+            <input type="number" step="0.01" id="expense-amount" class="glass-input input-highlight-lg" placeholder="0.00" required inputmode="decimal" />
+          </div>
+          <div class="form-group">
+            <label for="expense-title">Concepto / Comercio *</label>
+            <input type="text" id="expense-title" class="glass-input" placeholder="ej. Supermercado, Cena día 1, Gasolina" required />
+          </div>
+          <div class="form-group">
+            <label>Categoría del Gasto</label>
+            <div class="category-pills-selector" id="expense-category-pills">
+              <button type="button" class="cat-pill-btn active" data-cat="Comida">Comida</button>
+              <button type="button" class="cat-pill-btn" data-cat="Bebidas">Bebidas</button>
+              <button type="button" class="cat-pill-btn" data-cat="Transporte">Transporte</button>
+              <button type="button" class="cat-pill-btn" data-cat="Hospedaje">Hospedaje</button>
+              <button type="button" class="cat-pill-btn" data-cat="Varios">Varios</button>
             </div>
           </div>
-
-          <!-- Selector Moderno e Interactivo de Quién Pagó -->
-          <div class="form-group" style="margin-top: 2px;">
-            <div class="payer-picker-header">
-              <label>Pagado por (de su bolsillo) *</label>
-              <span id="expense-payer-selected-badge" class="badge-pill badge-cyan">Selecciona quién pagó</span>
-            </div>
-            <input type="hidden" id="expense-payer" required />
-            
-            <div class="payer-picker-box glass-panel">
-              <div class="payer-search-wrap">
-                <span class="payer-search-icon">${renderIcon('search', { size: 14 })}</span>
-                <input type="text" id="expense-payer-search" class="glass-input-search sm" placeholder="Buscar por nombre o subfamilia..." autocomplete="off" />
-              </div>
-              <div id="expense-payer-cards-grid" class="payer-cards-grid-scroll">
-                <!-- Tarjetas dinámicas -->
-              </div>
-            </div>
+          <div class="form-group">
+            <label for="expense-payer">Pagado por (de su bolsillo) *</label>
+            <select id="expense-payer" class="glass-select" required></select>
           </div>
 
           <div class="dialog-footer">
@@ -433,7 +394,7 @@ export const mountModals = () => {
           document.getElementById('expense-title').value = extracted.title;
         }
         if (extracted.category) {
-          const catPills = document.querySelectorAll('#expense-category-pills .cat-pill-vertical, #expense-category-pills .cat-pill-btn');
+          const catPills = document.querySelectorAll('#expense-category-pills .cat-pill-btn');
           catPills.forEach((p) => {
             if (p.getAttribute('data-cat') === extracted.category) {
               p.classList.add('active');
@@ -457,9 +418,9 @@ export const mountModals = () => {
   // Selector de categorías en el modal de gasto
   const categoryPillsContainer = document.getElementById('expense-category-pills');
   if (categoryPillsContainer) {
-    categoryPillsContainer.querySelectorAll('.cat-pill-vertical, .cat-pill-btn').forEach((btn) => {
+    categoryPillsContainer.querySelectorAll('.cat-pill-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        categoryPillsContainer.querySelectorAll('.cat-pill-vertical, .cat-pill-btn').forEach((b) => b.classList.remove('active'));
+        categoryPillsContainer.querySelectorAll('.cat-pill-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
       });
     });

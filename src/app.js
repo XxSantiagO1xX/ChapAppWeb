@@ -280,23 +280,6 @@ class App {
         return;
       }
 
-      // 9.3 Selección de Pagador en Modal de Gasto
-      const payerCard = e.target.closest('.payer-card-chip');
-      if (payerCard) {
-        const pId = payerCard.getAttribute('data-payer-id');
-        const pName = payerCard.getAttribute('data-payer-name');
-        
-        document.querySelectorAll('.payer-card-chip').forEach((c) => c.classList.remove('selected'));
-        payerCard.classList.add('selected');
-        
-        const hiddenInput = document.getElementById('expense-payer');
-        if (hiddenInput) hiddenInput.value = pId;
-        
-        const badge = document.getElementById('expense-payer-selected-badge');
-        if (badge) badge.textContent = pName;
-        return;
-      }
-
       // 10. Seleccionar Subfamilia en POS Tickets
       const sfPill = e.target.closest('.sf-pill-item');
       if (sfPill) {
@@ -882,18 +865,6 @@ class App {
         });
       }
 
-      // Búsqueda en Selector de Pagador del Modal de Gasto
-      if (e.target.id === 'expense-payer-search') {
-        const q = e.target.value.toLowerCase().trim();
-        const chips = document.querySelectorAll('.payer-card-chip');
-        chips.forEach((chip) => {
-          const name = (chip.getAttribute('data-payer-name') || '').toLowerCase();
-          const sf = (chip.getAttribute('data-payer-subfamily') || '').toLowerCase();
-          const match = !q || name.includes(q) || sf.includes(q);
-          chip.style.display = match ? 'flex' : 'none';
-        });
-      }
-
       // Búsqueda en Lista Maestra de Subfamilias POS
       if (e.target.id === 'pos-master-search') {
         const q = e.target.value.toLowerCase().trim();
@@ -958,11 +929,11 @@ class App {
         const amount = parseFloat(document.getElementById('expense-amount').value) || 0;
         const title = document.getElementById('expense-title').value.trim();
         const payerId = document.getElementById('expense-payer').value;
-        const activeCatPill = document.querySelector('#expense-category-pills .cat-pill-vertical.active, #expense-category-pills .cat-pill-btn.active');
+        const activeCatPill = document.querySelector('#expense-category-pills .cat-pill-btn.active');
         const category = activeCatPill ? activeCatPill.getAttribute('data-cat') : 'Comida';
 
         if (amount <= 0 || !title || !payerId) {
-          showToast('Por favor completa el monto, concepto y quién pagó', 'error');
+          showToast('Por favor completa todos los campos del gasto', 'error');
           return;
         }
 
@@ -1172,61 +1143,17 @@ class App {
   openQuickExpenseModal() {
     const dialog = document.getElementById('modal-quick-expense');
     const { activeEvent } = store.getState();
-    const hiddenPayerInput = document.getElementById('expense-payer');
-    const badgeName = document.getElementById('expense-payer-selected-badge');
-    const gridMount = document.getElementById('expense-payer-cards-grid');
-    const searchInput = document.getElementById('expense-payer-search');
+    const payerSelect = document.getElementById('expense-payer');
 
-    if (searchInput) searchInput.value = '';
-
-    if (activeEvent && gridMount) {
-      const attending = (activeEvent.participants || []).filter((p) => p.isAttending !== false);
-      const defaultPayer = attending[0];
-
-      if (hiddenPayerInput && defaultPayer) {
-        hiddenPayerInput.value = defaultPayer.id;
-      }
-      if (badgeName && defaultPayer) {
-        badgeName.textContent = defaultPayer.name;
-      }
-
-      const getInitials = (name) => {
-        const parts = (name || '').trim().split(' ').filter(Boolean);
-        if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-        return (name || 'P').substring(0, 2).toUpperCase();
-      };
-
-      gridMount.innerHTML = attending.map((p, idx) => {
-        const isSelected = idx === 0;
-        return `
-          <div 
-            class="payer-card-chip ${isSelected ? 'selected' : ''}" 
-            data-payer-id="${p.id}" 
-            data-payer-name="${p.name}" 
-            data-payer-subfamily="${p.subFamily || 'Familia General'}"
-          >
-            <div class="payer-avatar-circle">${getInitials(p.name)}</div>
-            <div class="payer-card-info">
-              <span class="payer-card-name">${p.name}</span>
-              <span class="payer-card-sf">${p.subFamily || 'Familia General'}</span>
-            </div>
-            <div class="payer-check-icon">${renderIcon('check', { size: 14 })}</div>
-          </div>
-        `;
-      }).join('');
+    if (payerSelect && activeEvent) {
+      const attending = (activeEvent.participants || []).filter((p) => p.isAttending);
+      payerSelect.innerHTML = attending.map((p) => `
+        <option value="${p.id}">${p.name} (${p.subFamily})</option>
+      `).join('');
     }
 
-    const amountInput = document.getElementById('expense-amount');
-    const titleInput = document.getElementById('expense-title');
-    if (amountInput) amountInput.value = '';
-    if (titleInput) titleInput.value = '';
-
-    // Reset categories to Comida
-    const catPills = document.querySelectorAll('#expense-category-pills .cat-pill-vertical, #expense-category-pills .cat-pill-btn');
-    catPills.forEach((p, idx) => {
-      if (idx === 0) p.classList.add('active');
-      else p.classList.remove('active');
-    });
+    document.getElementById('expense-amount').value = '';
+    document.getElementById('expense-title').value = '';
 
     if (dialog) dialog.showModal();
   }
