@@ -456,20 +456,27 @@
 .pos-split-layout {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
   width: 100%;
 }
 
-@media (min-width: 960px) {
+@media (min-width: 768px) {
   .pos-split-layout {
     display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 26px;
+    grid-template-columns: minmax(260px, 320px) 1fr;
+    gap: 22px;
     align-items: start;
   }
 }
 
-@media (min-width: 1240px) {
+@media (min-width: 1024px) {
+  .pos-split-layout {
+    grid-template-columns: 340px 1fr;
+    gap: 26px;
+  }
+}
+
+@media (min-width: 1360px) {
   .pos-split-layout {
     grid-template-columns: 380px 1fr;
     gap: 30px;
@@ -486,11 +493,11 @@
   background: var(--surface-card);
 }
 
-@media (min-width: 920px) {
+@media (min-width: 768px) {
   .pos-master-col {
     position: sticky;
     top: 84px;
-    max-height: calc(100vh - 110px);
+    max-height: calc(100vh - 100px);
   }
 }
 
@@ -540,13 +547,15 @@
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
-  max-height: 480px;
+  max-height: calc(100vh - 280px);
+  min-height: 220px;
   padding-right: 2px;
 }
 
-@media (max-width: 919px) {
+@media (max-width: 767px) {
   .pos-master-list-scroll {
     max-height: 280px;
+    min-height: auto;
   }
 }
 
