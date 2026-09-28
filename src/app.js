@@ -102,16 +102,28 @@ class App {
     try {
       const updatedEvents = await getAllEvents();
       const currentEvents = store.getState().events || [];
+      const { activeEvent } = store.getState();
+      
       const hasChanged = JSON.stringify(currentEvents) !== JSON.stringify(updatedEvents);
 
       if (hasChanged) {
-        store.setState({ events: updatedEvents });
-        const { activeEvent } = store.getState();
+        let refreshedActive = null;
         if (activeEvent) {
-          const refreshed = updatedEvents.find((e) => e.id === activeEvent.id || e.slug === activeEvent.id);
-          if (refreshed) {
-            store.setState({ activeEvent: refreshed });
-          }
+          refreshedActive = updatedEvents.find((e) => e.id === activeEvent.id || e.slug === activeEvent.id) || null;
+        }
+
+        store.setState({ 
+          events: updatedEvents, 
+          ...(refreshedActive ? { activeEvent: refreshedActive } : {}) 
+        });
+
+        // Si el modal del directorio está abierto, refrescar su lista
+        const dirModal = document.getElementById('modal-global-directory');
+        if (dirModal && dirModal.open) {
+          const freshDir = await fetchGlobalDirectoryFromSupabase();
+          const importBtn = document.getElementById('btn-import-selected-to-active-event');
+          const isImport = importBtn && importBtn.style.display !== 'none';
+          this.renderDirectoryList(freshDir, isImport ? 'import' : 'manage');
         }
       }
 
