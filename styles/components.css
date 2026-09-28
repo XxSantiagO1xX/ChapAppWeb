@@ -1203,6 +1203,168 @@ button:active {
   color: var(--text-muted);
 }
 
+/* Tarjetas del Directorio Maestro y Subfamilias */
+.directory-contact-card {
+  padding: 14px 18px;
+  min-height: 64px;
+  border-radius: var(--radius-lg);
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  transition: all var(--transition-fast);
+}
+
+[data-theme="light"] .directory-contact-card {
+  background: rgba(255, 255, 255, 0.70);
+  border-color: rgba(226, 232, 240, 0.85);
+}
+
+.directory-contact-card:hover {
+  background: var(--surface-card-hover);
+  border-color: var(--border-glass);
+  transform: translateY(-1px);
+}
+
+.dir-contact-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dir-contact-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.contact-avatar-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-adult {
+  background: rgba(0, 240, 255, 0.14);
+  border: 1.5px solid var(--border-neon-cyan);
+  color: var(--color-primary);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+}
+
+.avatar-child {
+  background: rgba(168, 85, 247, 0.16);
+  border: 1.5px solid rgba(168, 85, 247, 0.50);
+  color: #D8B4FE;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.20);
+}
+
+.contact-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.contact-name {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #FFFFFF !important;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="light"] .contact-name {
+  color: #0F172A !important;
+}
+
+.contact-sf-sub {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Botón Distintivo / Alternador de Tarifa Niño <-> Adulto */
+.btn-toggle-dir-category {
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-toggle-dir-category.role-adult {
+  background: rgba(0, 240, 255, 0.14);
+  border: 1.5px solid var(--border-neon-cyan);
+  color: var(--color-primary);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+}
+
+.btn-toggle-dir-category.role-child {
+  background: rgba(168, 85, 247, 0.16);
+  border: 1.5px solid rgba(168, 85, 247, 0.50);
+  color: #D8B4FE;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.20);
+}
+
+.btn-toggle-dir-category:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.btn-toggle-dir-category.role-adult:hover {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 14px var(--color-primary-glow);
+}
+
+.btn-toggle-dir-category.role-child:hover {
+  background: rgba(168, 85, 247, 0.28);
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.35);
+}
+
+.btn-delete-dir-contact {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid var(--border-neon-coral);
+  color: var(--color-coral);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.btn-delete-dir-contact:hover {
+  background: var(--color-coral);
+  color: #FFFFFF;
+  transform: scale(1.10);
+  box-shadow: 0 0 14px rgba(244, 63, 94, 0.40);
+}
+
 /* ==========================================================================
    10. MODAL CORTE DE CAJA (RESUMEN FINANCIERO)
    ========================================================================== */

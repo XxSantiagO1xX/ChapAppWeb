@@ -547,15 +547,15 @@ body {
   flex: 1;
 }
 
-/* Barra Lateral Flotante en Forma de Cápsula (Image 3) */
+/* Barra Lateral Flotante en Forma de Cápsula */
 .floating-capsule-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
   background: var(--surface-card);
   border: 1px solid var(--border-glass);
-  border-radius: var(--radius-xl);
-  padding: 16px 12px;
+  border-radius: 28px;
+  padding: 22px 14px;
   backdrop-filter: blur(28px) saturate(200%);
   -webkit-backdrop-filter: blur(28px) saturate(200%);
   box-shadow: var(--shadow-card);
@@ -569,13 +569,15 @@ body {
     align-self: flex-start;
     width: 240px;
     min-width: 240px;
+    min-height: 480px;
     z-index: 40;
   }
 
   .floating-capsule-sidebar.collapsed {
     width: 66px;
     min-width: 66px;
-    padding: 14px 6px;
+    min-height: auto;
+    padding: 16px 6px;
     border-radius: var(--radius-pill);
     border: 1.5px solid rgba(0, 240, 255, 0.40);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 18px rgba(0, 240, 255, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.25);
@@ -590,8 +592,8 @@ body {
 
   .floating-capsule-sidebar.collapsed .capsule-tab-item {
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
     padding: 0;
     border-radius: 14px;
   }
@@ -702,16 +704,17 @@ body {
 .capsule-tabs-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
 }
 
 .capsule-tab-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: var(--radius-lg);
+  gap: 14px;
+  padding: 14px 16px;
+  min-height: 54px;
+  border-radius: var(--radius-xl);
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid transparent;
@@ -725,6 +728,7 @@ body {
 .capsule-tab-item:hover {
   background: var(--surface-subtle-hover);
   color: var(--text-primary);
+  transform: translateX(2px);
 }
 
 .capsule-tab-item.active {
@@ -736,7 +740,7 @@ body {
 
 .capsule-tab-item.active .capsule-tab-title {
   color: var(--color-primary);
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .capsule-icon-box {
@@ -749,22 +753,22 @@ body {
 .capsule-text-box {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   text-align: left;
   min-width: 0;
   flex: 1;
 }
 
 .capsule-tab-title {
-  font-size: 0.90rem;
-  font-weight: 700;
+  font-size: 0.94rem;
+  font-weight: 800;
   color: var(--text-primary);
   white-space: nowrap;
   line-height: 1.2;
 }
 
 .capsule-tab-sub {
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
@@ -772,9 +776,9 @@ body {
 }
 
 .capsule-count-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 7px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 3px 8px;
   border-radius: var(--radius-pill);
   background: var(--surface-subtle);
   border: 1px solid var(--border-subtle);
@@ -784,20 +788,21 @@ body {
 .capsule-shortcuts-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 14px;
-  margin-top: 8px;
+  gap: 10px;
+  padding-top: 18px;
+  margin-top: 14px;
   border-top: 1px solid var(--border-subtle);
   width: 100%;
 }
 
 .capsule-shortcut-btn {
   width: 100%;
-  padding: 10px 14px;
-  font-size: 0.84rem;
-  font-weight: 700;
+  padding: 13px 16px;
+  min-height: 50px;
+  font-size: 0.88rem;
+  font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 8px;
-  border-radius: var(--radius-md);
+  gap: 10px;
+  border-radius: var(--radius-xl);
 }

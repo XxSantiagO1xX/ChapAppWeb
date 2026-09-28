@@ -670,7 +670,26 @@ class App {
         return;
       }
 
-      // 25. Eliminar Contacto del Directorio
+      // 25. Alternar Categoría Niño <-> Adulto en el Directorio Maestro
+      const toggleDirCatBtn = e.target.closest('.btn-toggle-dir-category');
+      if (toggleDirCatBtn) {
+        const id = toggleDirCatBtn.getAttribute('data-id');
+        let dir = getGlobalDirectory();
+        const contact = dir.find((d) => d.id === id);
+        if (contact) {
+          const isChild = contact.category === 'nino';
+          contact.category = isChild ? 'adulto' : 'nino';
+          contact.weight = isChild ? 1.0 : 0.5;
+          saveGlobalDirectory(dir);
+          const importBtn = document.getElementById('btn-import-selected-to-active-event');
+          const isImport = importBtn && importBtn.style.display !== 'none';
+          this.openDirectoryModal(isImport ? 'import' : 'manage');
+          showToast(`${contact.name} cambiado a ${contact.category === 'nino' ? 'Niño (0.5 ud)' : 'Adulto (1.0 ud)'}`, 'success');
+        }
+        return;
+      }
+
+      // 26. Eliminar Contacto del Directorio
       const delDirBtn = e.target.closest('.btn-delete-dir-contact');
       if (delDirBtn) {
         const id = delDirBtn.getAttribute('data-id');
@@ -683,7 +702,9 @@ class App {
             let dir = getGlobalDirectory();
             dir = dir.filter((d) => d.id !== id);
             saveGlobalDirectory(dir);
-            this.openDirectoryModal('manage');
+            const importBtn = document.getElementById('btn-import-selected-to-active-event');
+            const isImport = importBtn && importBtn.style.display !== 'none';
+            this.openDirectoryModal(isImport ? 'import' : 'manage');
             showToast('Contacto eliminado del directorio', 'info');
           }
         });
@@ -1246,33 +1267,74 @@ class App {
     });
 
     if (listMount) {
-      listMount.innerHTML = Object.keys(grouped).sort().map((sfName) => {
-        const contacts = grouped[sfName];
-        return `
-          <div class="subfamily-group-card glass-panel" style="padding: 14px; margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <strong style="font-size: 0.95rem; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px;">${renderIcon('users', { size: 15 })} ${sfName}</strong>
-              <span class="badge-pill badge-neutral">${contacts.length} contacto${contacts.length === 1 ? '' : 's'}</span>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${contacts.map((d) => `
-                <div class="directory-contact-card glass-panel" style="padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    ${mode === 'import' ? `<input type="checkbox" value="${d.id}" checked class="dir-import-checkbox" style="accent-color: var(--color-primary); width: 16px; height: 16px;" />` : ''}
-                    <div class="contact-info-col">
-                      <span class="contact-name" style="font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">${renderIcon('user', { size: 14 })} ${d.name}</span>
-                      <span class="contact-sub" style="font-size: 0.75rem; color: var(--text-muted);">${d.category.toUpperCase()} (${d.weight || (d.category === 'nino' ? 0.5 : 1.0)})</span>
-                    </div>
-                  </div>
-                  <button class="btn-icon-danger btn-delete-dir-contact" data-id="${d.id}" data-name="${d.name}" title="Eliminar del directorio">
-                    ${renderIcon('trash', { size: 16 })}
-                  </button>
-                </div>
-              `).join('')}
-            </div>
+      if (directory.length === 0) {
+        listMount.innerHTML = `
+          <div class="glass-panel" style="padding: 24px; text-align: center; color: var(--text-secondary);">
+            <p style="font-size: 0.95rem; margin-bottom: 8px;">No hay contactos en el directorio maestro.</p>
+            <p style="font-size: 0.80rem; color: var(--text-muted);">Toca "+ Nuevo Contacto" para registrar integrantes.</p>
           </div>
         `;
-      }).join('');
+      } else {
+        listMount.innerHTML = Object.keys(grouped).sort().map((sfName) => {
+          const contacts = grouped[sfName];
+          return `
+            <div class="subfamily-group-card glass-panel" style="padding: 16px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border-subtle);">
+                <strong style="font-size: 1.0rem; color: var(--color-primary); display: inline-flex; align-items: center; gap: 8px; font-weight: 800;">
+                  ${renderIcon('users', { size: 16 })} ${sfName}
+                </strong>
+                <span class="badge-pill badge-neutral">${contacts.length} integrante${contacts.length === 1 ? '' : 's'}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                ${contacts.map((d) => {
+                  const isChild = d.category === 'nino';
+                  return `
+                    <div class="directory-contact-card glass-panel">
+                      <div class="dir-contact-left">
+                        ${mode === 'import' ? `<input type="checkbox" value="${d.id}" checked class="dir-import-checkbox" style="accent-color: var(--color-primary); width: 18px; height: 18px; cursor: pointer;" />` : ''}
+                        
+                        <div class="contact-avatar-circle ${isChild ? 'avatar-child' : 'avatar-adult'}">
+                          ${renderIcon(isChild ? 'smile' : 'user', { size: 16 })}
+                        </div>
+
+                        <div class="contact-info-col">
+                          <span class="contact-name">${d.name}</span>
+                          <span class="contact-sf-sub">${sfName} • ${d.weight || (isChild ? 0.5 : 1.0)} ud ponderada</span>
+                        </div>
+                      </div>
+
+                      <div class="dir-contact-right">
+                        <!-- Botón para Alternar / Editar entre Niño y Adulto -->
+                        <button 
+                          type="button" 
+                          class="btn-toggle-dir-category ${isChild ? 'role-child' : 'role-adult'}" 
+                          data-id="${d.id}"
+                          data-category="${d.category}"
+                          title="Clic para alternar entre Adulto (1.0 ud) y Niño (0.5 ud)"
+                        >
+                          ${renderIcon(isChild ? 'smile' : 'user', { size: 13 })}
+                          <span>${isChild ? 'Niño (0.5)' : 'Adulto (1.0)'}</span>
+                        </button>
+
+                        <!-- Botón para Eliminar del Directorio -->
+                        <button 
+                          type="button" 
+                          class="btn-delete-dir-contact" 
+                          data-id="${d.id}" 
+                          data-name="${d.name}" 
+                          title="Eliminar del directorio maestro"
+                        >
+                          ${renderIcon('trash', { size: 15 })}
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
     }
 
     if (dialog) dialog.showModal();
