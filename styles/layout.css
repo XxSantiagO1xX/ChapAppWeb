@@ -548,6 +548,12 @@ body {
   flex: 1;
 }
 
+@media (max-width: 859px) {
+  .dashboard-main-content {
+    padding-bottom: 96px;
+  }
+}
+
 /* Barra Lateral Flotante en Forma de Cápsula (Image 3) */
 .floating-capsule-sidebar {
   display: flex;

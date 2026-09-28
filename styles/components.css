@@ -321,7 +321,6 @@ button:active {
   background: var(--surface-card);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: 1px solid rgba(255, 255, 255, 0.22);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(28px) saturate(200%);
   -webkit-backdrop-filter: blur(28px) saturate(200%);
@@ -330,7 +329,7 @@ button:active {
 
 .event-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.60), 0 0 20px rgba(0, 240, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.60), 0 0 20px rgba(0, 240, 255, 0.15);
   border-color: var(--border-glass);
 }
 
@@ -527,23 +526,9 @@ button:active {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-radius: 26px;
+  border-radius: var(--radius-xl);
   position: relative;
   overflow: hidden;
-  background: var(--surface-card);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
-}
-
-.hud-metric-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--border-glass);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.60), 0 0 20px rgba(0, 240, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .hud-metric-card::before {
@@ -725,29 +710,17 @@ button:active {
 }
 
 .subfamily-group-card {
-  padding: 22px 24px;
-  border-radius: 26px;
+  padding: 20px;
+  border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: var(--surface-card);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  transition: all var(--transition-normal);
-}
-
-.subfamily-group-card:hover {
-  border-color: var(--border-glass);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.60), 0 0 20px rgba(0, 240, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: all var(--transition-fast);
 }
 
 .subfamily-group-card.sf-card-settled {
   border-color: rgba(16, 185, 129, 0.40);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), 0 0 24px rgba(16, 185, 129, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
 }
 
 .sf-group-header {
@@ -804,33 +777,15 @@ button:active {
 }
 
 .participant-card-item {
-  padding: 14px 18px;
-  border-radius: 18px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: rgba(11, 18, 33, 0.55);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-  border-left: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border-subtle);
   transition: all var(--transition-fast);
-}
-
-[data-theme="light"] .participant-card-item {
-  background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(226, 232, 240, 0.90);
-  border-top: 1px solid rgba(255, 255, 255, 0.95);
-}
-
-.participant-card-item:hover {
-  background: rgba(14, 24, 46, 0.70);
-  border-color: var(--border-glass);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 0 12px rgba(0, 240, 255, 0.10);
-  transform: translateY(-1px);
 }
 
 .participant-card-item.item-absent {
@@ -967,25 +922,12 @@ button:active {
 }
 
 .expense-card-item {
-  padding: 18px 20px;
-  border-radius: 20px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   gap: 14px;
   background: var(--surface-card);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top: 1px solid rgba(255, 255, 255, 0.20);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.10);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal), border-color var(--transition-normal);
-}
-
-.expense-card-item:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-glass);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 16px rgba(0, 240, 255, 0.15);
 }
 
 .expense-icon-box {
@@ -1073,11 +1015,6 @@ button:active {
   font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #FFFFFF;
-}
-
-[data-theme="light"] .dialog-title {
-  color: #0F172A;
 }
 
 .dialog-form {
@@ -1155,7 +1092,6 @@ button:active {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .cat-pill-btn.active {
@@ -1164,41 +1100,6 @@ button:active {
   color: var(--color-primary);
   font-weight: 800;
   box-shadow: 0 0 12px var(--color-primary-glow);
-}
-
-.cat-pill-btn[data-cat="Comida"].active {
-  background: rgba(245, 158, 11, 0.20);
-  border-color: #F59E0B;
-  color: #F59E0B;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.40);
-}
-
-.cat-pill-btn[data-cat="Bebidas"].active {
-  background: rgba(0, 240, 255, 0.20);
-  border-color: #00F0FF;
-  color: #00F0FF;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.40);
-}
-
-.cat-pill-btn[data-cat="Transporte"].active {
-  background: rgba(56, 189, 248, 0.20);
-  border-color: #38BDF8;
-  color: #38BDF8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.40);
-}
-
-.cat-pill-btn[data-cat="Hospedaje"].active {
-  background: rgba(255, 122, 0, 0.20);
-  border-color: #FF7A00;
-  color: #FF7A00;
-  box-shadow: 0 0 12px rgba(255, 122, 0, 0.40);
-}
-
-.cat-pill-btn[data-cat="Varios"].active {
-  background: rgba(168, 85, 247, 0.20);
-  border-color: #A855F7;
-  color: #A855F7;
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.40);
 }
 
 /* AI Scanner Banner */
@@ -1320,15 +1221,10 @@ button:active {
 }
 
 .cut-metric-box {
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: rgba(11, 18, 33, 0.60);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top: 1px solid rgba(255, 255, 255, 0.20);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  background: rgba(0, 0, 0, 0.40);
+  border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1848,21 +1744,14 @@ button:active {
 
 /* Tarjeta de Desglose Matemático (Image 5) */
 .math-breakdown-card {
-  padding: 20px 22px;
-  border-radius: 24px;
-  background: var(--surface-card);
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  padding: 18px 20px;
+  border-radius: var(--radius-xl);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-subtle);
 }
 
 [data-theme="light"] .math-breakdown-card {
   background: rgba(255, 255, 255, 0.70);
-  border: 1px solid rgba(226, 232, 240, 0.90);
-  border-top: 1px solid rgba(255, 255, 255, 0.95);
 }
 
 .breakdown-header {
@@ -1916,29 +1805,25 @@ button:active {
 .settlement-bottom-card {
   margin-top: 24px;
   padding: 24px 20px;
-  border-radius: 26px;
+  border-radius: var(--radius-2xl);
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  backdrop-filter: blur(28px) saturate(200%);
-  -webkit-backdrop-filter: blur(28px) saturate(200%);
   transition: all var(--transition-normal);
 }
 
 .settlement-bottom-card.settled-card {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%), rgba(11, 18, 33, 0.65);
+  background: rgba(16, 185, 129, 0.10);
   border: 1.5px solid var(--border-neon-emerald);
-  border-top: 1.5px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), 0 0 24px rgba(16, 185, 129, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 36px rgba(16, 185, 129, 0.18);
 }
 
 .settlement-bottom-card.pending-card {
-  background: linear-gradient(135deg, rgba(244, 63, 94, 0.10) 0%, rgba(244, 63, 94, 0.03) 100%), rgba(11, 18, 33, 0.65);
+  background: rgba(244, 63, 94, 0.08);
   border: 1.5px solid var(--border-neon-coral);
-  border-top: 1.5px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.50), 0 0 24px rgba(244, 63, 94, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 36px rgba(244, 63, 94, 0.15);
 }
 
 .settlement-badge-label {
