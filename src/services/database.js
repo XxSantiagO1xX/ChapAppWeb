@@ -330,19 +330,16 @@ export const createEvent = async ({ title, year, availableDays = [], participant
 
       if (initialParticipants.length > 0) {
         const rows = initialParticipants.map((p) => ({
-          id: p.id,
+          id: isUUID(p.id) ? p.id : generateUUID(),
           event_id: newEvent.id,
           name: p.name,
-          category: p.category,
-          weight: p.weight,
-          sub_family: p.subFamily,
-          is_attending: p.isAttending,
-          is_settled: p.isSettled,
+          category: p.category || 'adulto',
+          weight: typeof p.weight === 'number' ? p.weight : (p.category === 'nino' ? 0.5 : 1.0),
           active_days: {
-            days: p.activeDays,
-            isAttending: p.isAttending,
-            isSettled: p.isSettled,
-            subFamily: p.subFamily,
+            days: p.activeDays || days,
+            isAttending: p.isAttending !== false,
+            isSettled: Boolean(p.isSettled),
+            subFamily: p.subFamily || inferSubFamily(p.name),
           },
         }));
         await supabase.from('participants').insert(rows);
@@ -366,7 +363,9 @@ export const archiveEvent = async (id, isArchived) => {
   if (supabase) {
     try {
       await supabase.from('events').update({ is_archived: isArchived }).eq('id', id);
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Database] Error archivando evento en Supabase:', e);
+    }
   }
   const list = loadLocalEvents();
   const found = list.find((e) => e.id === id || e.slug === id);
@@ -384,7 +383,9 @@ export const deleteEvent = async (id) => {
   if (supabase) {
     try {
       await supabase.from('events').delete().eq('id', id);
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Database] Error eliminando evento en Supabase:', e);
+    }
   }
   let list = loadLocalEvents();
   list = list.filter((e) => e.id !== id && e.slug !== id);
@@ -402,7 +403,7 @@ export const addParticipant = async (eventId, participantData) => {
     : ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
 
   const p = {
-    id: participantData.id || generateUUID(),
+    id: isUUID(participantData.id) ? participantData.id : generateUUID(),
     name: participantData.name.trim(),
     category: participantData.category || 'adulto',
     weight: typeof participantData.weight === 'number'
@@ -425,9 +426,6 @@ export const addParticipant = async (eventId, participantData) => {
         name: p.name,
         category: p.category,
         weight: p.weight,
-        sub_family: p.subFamily,
-        is_attending: p.isAttending,
-        is_settled: p.isSettled,
         active_days: {
           days: p.activeDays,
           isAttending: p.isAttending,
@@ -435,7 +433,9 @@ export const addParticipant = async (eventId, participantData) => {
           subFamily: p.subFamily,
         },
       });
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Database] Error insertando participante en Supabase:', e);
+    }
   }
 
   const list = loadLocalEvents();
@@ -459,9 +459,6 @@ export const updateParticipant = async (eventId, participant) => {
         name: participant.name,
         category: participant.category,
         weight: participant.weight,
-        sub_family: participant.subFamily,
-        is_attending: participant.isAttending,
-        is_settled: participant.isSettled,
         active_days: {
           days: participant.activeDays,
           isAttending: participant.isAttending,
@@ -469,7 +466,9 @@ export const updateParticipant = async (eventId, participant) => {
           subFamily: participant.subFamily,
         },
       }).eq('id', participant.id);
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Database] Error actualizando participante en Supabase:', e);
+    }
   }
 
   const list = loadLocalEvents();
@@ -487,25 +486,32 @@ export const updateParticipant = async (eventId, participant) => {
  * Alternar rol/categoría del participante ('adulto' <-> 'nino')
  */
 export const updateParticipantRole = async (eventId, participantId, category, weight) => {
+  const list = loadLocalEvents();
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
+  const part = event?.participants?.find((p) => p.id === participantId);
+
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
       await supabase.from('participants').update({
         category,
         weight,
+        active_days: {
+          days: part?.activeDays || ['Día 1', 'Día 2', 'Día 3', 'Día 4'],
+          isAttending: part?.isAttending ?? true,
+          isSettled: part?.isSettled ?? false,
+          subFamily: part?.subFamily || '',
+        }
       }).eq('id', participantId);
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Database] Error actualizando rol en Supabase:', e);
+    }
   }
 
-  const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId || e.slug === eventId);
-  if (event) {
-    const part = event.participants.find((p) => p.id === participantId);
-    if (part) {
-      part.category = category;
-      part.weight = weight;
-      saveLocalEvents(list);
-    }
+  if (part) {
+    part.category = category;
+    part.weight = weight;
+    saveLocalEvents(list);
   }
 };
 
@@ -526,7 +532,6 @@ export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttend
     if (supabase) {
       try {
         await supabase.from('participants').update({
-          is_attending: isAttending,
           active_days: {
             days: p.activeDays,
             isAttending,
@@ -534,7 +539,9 @@ export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttend
             subFamily: p.subFamily,
           },
         }).eq('id', p.id);
-      } catch (e) {}
+      } catch (e) {
+        console.error('[Database] Error actualizando asistencia en Supabase:', e);
+      }
     }
   }
 
@@ -550,17 +557,26 @@ export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttend
  * Eliminar una Subfamilia completa
  */
 export const deleteSubFamily = async (eventId, subFamilyName) => {
+  const event = await getEventById(eventId);
+  const targetParts = (event?.participants || []).filter(
+    (p) => (p.subFamily || 'Familia General') === subFamilyName
+  );
+
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      await supabase.from('participants').delete().eq('sub_family', subFamilyName);
-    } catch (e) {}
+      for (const p of targetParts) {
+        await supabase.from('participants').delete().eq('id', p.id);
+      }
+    } catch (e) {
+      console.error('[Database] Error eliminando subfamilia en Supabase:', e);
+    }
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId || e.slug === eventId);
-  if (event) {
-    event.participants = (event.participants || []).filter(
+  const ev = list.find((e) => e.id === eventId || e.slug === eventId);
+  if (ev) {
+    ev.participants = (ev.participants || []).filter(
       (p) => (p.subFamily || 'Familia General') !== subFamilyName
     );
     saveLocalEvents(list);
@@ -575,7 +591,9 @@ export const deleteParticipant = async (eventId, participantId) => {
   if (supabase) {
     try {
       await supabase.from('participants').delete().eq('id', participantId);
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Database] Error eliminando participante en Supabase:', e);
+    }
   }
 
   const list = loadLocalEvents();
@@ -603,7 +621,6 @@ export const settleSubFamily = async (eventId, subFamilyName, isSettled) => {
     if (supabase) {
       try {
         await supabase.from('participants').update({
-          is_settled: isSettled,
           active_days: {
             days: p.activeDays,
             isAttending: p.isAttending,
@@ -611,7 +628,9 @@ export const settleSubFamily = async (eventId, subFamilyName, isSettled) => {
             subFamily: p.subFamily,
           },
         }).eq('id', p.id);
-      } catch (e) {}
+      } catch (e) {
+        console.error('[Database] Error actualizando liquidación en Supabase:', e);
+      }
     }
   }
 
@@ -632,7 +651,7 @@ export const addExpense = async (eventId, expenseData) => {
     title: expenseData.title.trim(),
     amount: typeof expenseData.amount === 'number' ? expenseData.amount : parseFloat(expenseData.amount) || 0,
     category: expenseData.category || 'Comida',
-    paidBy: expenseData.paidBy,
+    paidBy: expenseData.paidBy && isUUID(expenseData.paidBy) ? expenseData.paidBy : null,
     splitBetween: expenseData.splitBetween || [],
   };
 
@@ -648,7 +667,9 @@ export const addExpense = async (eventId, expenseData) => {
         paid_by: exp.paidBy,
         split_between: exp.splitBetween,
       });
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Database] Error insertando gasto en Supabase:', e);
+    }
   }
 
   const list = loadLocalEvents();
@@ -668,11 +689,11 @@ export const batchAddExpenses = async (eventId, expensesList) => {
   if (!expensesList || expensesList.length === 0) return [];
 
   const prepared = expensesList.map((exp) => ({
-    id: exp.id || generateUUID(),
+    id: isUUID(exp.id) ? exp.id : generateUUID(),
     title: exp.title.trim(),
     amount: typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount) || 0,
     category: exp.category || 'Comida',
-    paidBy: exp.paidBy,
+    paidBy: exp.paidBy && isUUID(exp.paidBy) ? exp.paidBy : null,
     splitBetween: exp.splitBetween || [],
   }));
 
@@ -712,7 +733,9 @@ export const deleteExpense = async (eventId, expenseId) => {
   if (supabase) {
     try {
       await supabase.from('expenses').delete().eq('id', expenseId);
-    } catch (e) {}
+    } catch (e) {
+      console.error('[Database] Error eliminando gasto en Supabase:', e);
+    }
   }
 
   const list = loadLocalEvents();
