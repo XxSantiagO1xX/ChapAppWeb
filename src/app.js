@@ -699,10 +699,11 @@ class App {
           title: `¿Eliminar a ${name}?`,
           message: 'Se removerá del directorio global maestro.',
           variant: 'danger',
-          onConfirm: () => {
+          onConfirm: async () => {
             let dir = getGlobalDirectory();
-            dir = dir.filter((d) => d.id !== id);
+            dir = dir.filter((d) => d.id !== id && d.name.toLowerCase().trim() !== (name || '').toLowerCase().trim());
             saveGlobalDirectory(dir);
+
             const importBtn = document.getElementById('btn-import-selected-to-active-event');
             const isImport = importBtn && importBtn.style.display !== 'none';
             this.openDirectoryModal(isImport ? 'import' : 'manage');

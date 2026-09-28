@@ -198,7 +198,7 @@ const formatEventRow = (row) => {
 };
 
 /**
- * Obtener todos los eventos
+ * Obtener todos los eventos (Supabase como Fuente de la Verdad)
  */
 export const getAllEvents = async () => {
   const localList = loadLocalEvents();
@@ -211,20 +211,16 @@ export const getAllEvents = async () => {
         .order('year', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (!error && Array.isArray(data) && data.length > 0) {
-        const formatted = data.map((row) => {
-          const ev = formatEventRow(row);
-          const localEv = localList.find((l) => l.id === ev.id || l.slug === ev.slug);
-          if ((!ev.participants || ev.participants.length === 0) && localEv?.participants?.length > 0) {
-            ev.participants = localEv.participants;
-          }
-          if ((!ev.expenses || ev.expenses.length === 0) && localEv?.expenses?.length > 0) {
-            ev.expenses = localEv.expenses;
-          }
-          return ev;
-        });
-        saveLocalEvents(formatted);
-        return formatted;
+      if (!error && Array.isArray(data)) {
+        if (data.length > 0) {
+          const formatted = data.map((row) => formatEventRow(row));
+          saveLocalEvents(formatted);
+          return formatted;
+        } else {
+          // Si Supabase devuelve 0 eventos, la base de datos está vacía
+          saveLocalEvents([]);
+          return [];
+        }
       }
     } catch (err) {
       console.warn('[Database] Error cargando de Supabase, usando local:', err);
@@ -234,9 +230,7 @@ export const getAllEvents = async () => {
   if (localList && localList.length > 0) {
     return localList;
   }
-  // Semilla predeterminada si no hay datos en la nube ni en caché local
-  saveLocalEvents(INITIAL_SEED_EVENTS);
-  return INITIAL_SEED_EVENTS;
+  return [];
 };
 
 /**
@@ -257,12 +251,6 @@ export const getEventById = async (id) => {
       const { data, error } = await query.single();
       if (!error && data) {
         const formatted = formatEventRow(data);
-        if ((!formatted.participants || formatted.participants.length === 0) && localMatched?.participants?.length > 0) {
-          formatted.participants = localMatched.participants;
-        }
-        if ((!formatted.expenses || formatted.expenses.length === 0) && localMatched?.expenses?.length > 0) {
-          formatted.expenses = localMatched.expenses;
-        }
 
         // Actualizar en caché local
         const idx = localList.findIndex((e) => e.id === formatted.id || e.slug === formatted.slug);
@@ -280,8 +268,7 @@ export const getEventById = async (id) => {
   }
 
   if (localMatched) return localMatched;
-
-  return INITIAL_SEED_EVENTS.find((e) => e.id === id || e.slug === id) || INITIAL_SEED_EVENTS[0] || null;
+  return null;
 };
 
 /**
@@ -748,7 +735,8 @@ export const deleteExpense = async (eventId, expenseId) => {
 
 /**
  * Directorio Global Maestro
- * Obtiene y fusiona automáticamente los participantes de Supabase, eventos en memoria y caché local
+ * Si Supabase está configurado, la fuente de la verdad son los participantes reales y los contactos explícitamente guardados.
+ * SEED_DIRECTORY sólo se utiliza como demo si Supabase NO está configurado y no hay nada en almacenamiento local.
  */
 export const getGlobalDirectory = () => {
   const localList = loadLocalEvents();
@@ -763,12 +751,33 @@ export const getGlobalDirectory = () => {
 
   const contactsMap = new Map();
 
-  // 1. Semilla base
-  SEED_DIRECTORY.forEach((d) => {
-    if (d && d.name) contactsMap.set(d.name.toLowerCase().trim(), { ...d });
-  });
+  // 1. Si Supabase NO está configurado y nunca se ha guardado directorio local, cargar semilla demo
+  if (!CONFIG.SUPABASE.URL || CONFIG.SUPABASE.URL.includes('tu-proyecto.supabase.co')) {
+    if (cachedDir === null && localList.length === 0) {
+      SEED_DIRECTORY.forEach((d) => {
+        if (d && d.name) contactsMap.set(d.name.toLowerCase().trim(), { ...d });
+      });
+      return Array.from(contactsMap.values());
+    }
+  }
 
-  // 2. Participantes de eventos en caché/memoria
+  // 2. Si hay un directorio guardado explícitamente en LocalStorage (incluyendo [] si se borraron todos)
+  if (Array.isArray(cachedDir)) {
+    cachedDir.forEach((d) => {
+      if (d && d.name) {
+        const key = d.name.toLowerCase().trim();
+        contactsMap.set(key, {
+          id: d.id || generateUUID(),
+          name: d.name,
+          category: d.category || 'adulto',
+          weight: typeof d.weight === 'number' ? d.weight : (d.category === 'nino' ? 0.5 : 1.0),
+          subFamily: d.subFamily || inferSubFamily(d.name),
+        });
+      }
+    });
+  }
+
+  // 3. Participantes de eventos en caché/memoria
   localList.forEach((ev) => {
     (ev.participants || []).forEach((p) => {
       if (p && p.name) {
@@ -778,29 +787,12 @@ export const getGlobalDirectory = () => {
           id: p.id || existing?.id || generateUUID(),
           name: p.name,
           category: p.category || existing?.category || 'adulto',
-          weight: typeof p.weight === 'number' ? p.weight : (existing?.weight || 1.0),
+          weight: typeof p.weight === 'number' ? p.weight : (existing?.weight || (p.category === 'nino' ? 0.5 : 1.0)),
           subFamily: p.subFamily || existing?.subFamily || inferSubFamily(p.name),
         });
       }
     });
   });
-
-  // 3. Contactos personalizados guardados en directorio
-  if (Array.isArray(cachedDir)) {
-    cachedDir.forEach((d) => {
-      if (d && d.name) {
-        const key = d.name.toLowerCase().trim();
-        const existing = contactsMap.get(key);
-        contactsMap.set(key, {
-          id: d.id || existing?.id || generateUUID(),
-          name: d.name,
-          category: d.category || existing?.category || 'adulto',
-          weight: typeof d.weight === 'number' ? d.weight : (existing?.weight || 1.0),
-          subFamily: d.subFamily || existing?.subFamily || inferSubFamily(d.name),
-        });
-      }
-    });
-  }
 
   return Array.from(contactsMap.values());
 };
@@ -810,29 +802,44 @@ export const fetchGlobalDirectoryFromSupabase = async () => {
   if (supabase) {
     try {
       const { data, error } = await supabase.from('participants').select('*');
-      if (!error && Array.isArray(data) && data.length > 0) {
+      if (!error && Array.isArray(data)) {
         const contactsMap = new Map();
 
-        // 1. Cargar directorio actual
-        getGlobalDirectory().forEach((d) => {
-          contactsMap.set(d.name.toLowerCase().trim(), d);
-        });
-
-        // 2. Fusionar todos los participantes de Supabase
+        // 1. Mapear todos los participantes existentes actualmente en Supabase
         data.forEach((row) => {
           const p = parseParticipantRow(row);
           if (p && p.name) {
             const key = p.name.toLowerCase().trim();
-            const existing = contactsMap.get(key);
             contactsMap.set(key, {
-              id: p.id || existing?.id || generateUUID(),
+              id: p.id || generateUUID(),
               name: p.name,
-              category: p.category || existing?.category || 'adulto',
-              weight: typeof p.weight === 'number' ? p.weight : (existing?.weight || 1.0),
-              subFamily: p.subFamily || existing?.subFamily || inferSubFamily(p.name),
+              category: p.category || 'adulto',
+              weight: typeof p.weight === 'number' ? p.weight : (p.category === 'nino' ? 0.5 : 1.0),
+              subFamily: p.subFamily || inferSubFamily(p.name),
             });
           }
         });
+
+        // 2. Si el usuario creó contactos manuales en el directorio local (con id empezando por 'dir_')
+        const cachedDir = (() => {
+          try {
+            const raw = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.LOCAL_DIRECTORY);
+            return raw ? JSON.parse(raw) : null;
+          } catch (e) {
+            return null;
+          }
+        })();
+
+        if (Array.isArray(cachedDir)) {
+          cachedDir.forEach((d) => {
+            if (d && d.name && String(d.id).startsWith('dir_')) {
+              const key = d.name.toLowerCase().trim();
+              if (!contactsMap.has(key)) {
+                contactsMap.set(key, { ...d });
+              }
+            }
+          });
+        }
 
         const merged = Array.from(contactsMap.values());
         saveGlobalDirectory(merged);
