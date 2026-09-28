@@ -999,7 +999,7 @@ class App {
                 <tr>
                   <td><strong>${exp.title}</strong></td>
                   <td><span class="badge-pill badge-category">${exp.category}</span></td>
-                  <td>👤 ${exp.payerName}</td>
+                  <td>${renderIcon('user', { size: 14 })} ${exp.payerName}</td>
                   <td class="col-num text-primary"><strong>${formatCurrency(exp.amount)}</strong></td>
                 </tr>
               `).join('')}
@@ -1171,7 +1171,7 @@ class App {
             <tbody>
               ${totals.subFamilies.map((sf) => `
                 <tr>
-                  <td><strong>🏡 ${sf.subFamilyName}</strong></td>
+                  <td><strong>${renderIcon('users', { size: 14 })} ${sf.subFamilyName}</strong></td>
                   <td>${sf.attendingCount} de ${sf.membersCount}</td>
                   <td class="col-num">${formatCurrency(sf.proportionalShare)}</td>
                   <td class="col-num">${formatCurrency(sf.totalPaid)}</td>
@@ -1218,7 +1218,7 @@ class App {
         return `
           <div class="subfamily-group-card glass-panel" style="padding: 14px; margin-bottom: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <strong style="font-size: 0.95rem; color: var(--color-primary);">🏡 ${sfName}</strong>
+              <strong style="font-size: 0.95rem; color: var(--color-primary); display: inline-flex; align-items: center; gap: 6px;">${renderIcon('users', { size: 15 })} ${sfName}</strong>
               <span class="badge-pill badge-neutral">${contacts.length} contacto${contacts.length === 1 ? '' : 's'}</span>
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -1227,7 +1227,7 @@ class App {
                   <div style="display: flex; align-items: center; gap: 10px;">
                     ${mode === 'import' ? `<input type="checkbox" value="${d.id}" checked class="dir-import-checkbox" style="accent-color: var(--color-primary); width: 16px; height: 16px;" />` : ''}
                     <div class="contact-info-col">
-                      <span class="contact-name" style="font-weight: 700;">👤 ${d.name}</span>
+                      <span class="contact-name" style="font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">${renderIcon('user', { size: 14 })} ${d.name}</span>
                       <span class="contact-sub" style="font-size: 0.75rem; color: var(--text-muted);">${d.category.toUpperCase()} (${d.weight || (d.category === 'nino' ? 0.5 : 1.0)})</span>
                     </div>
                   </div>

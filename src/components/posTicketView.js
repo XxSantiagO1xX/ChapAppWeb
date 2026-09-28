@@ -93,13 +93,13 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
         tabindex="0"
       >
         <div class="master-item-icon-col">
-          <span class="sf-icon-badge">🏡</span>
+          <span class="sf-icon-badge">${renderIcon('users', { size: 16 })}</span>
         </div>
         
         <div class="master-item-content-col">
           <div class="master-item-title-row">
             <span class="master-item-name">${sf.subFamilyName}</span>
-            ${sf.isFullySettled ? '<span class="sf-item-check-pill" title="100% Liquidada">✓ Liquidada</span>' : ''}
+            ${sf.isFullySettled ? `<span class="sf-item-check-pill" title="100% Liquidada">${renderIcon('check', { size: 12 })} Liquidada</span>` : ''}
           </div>
           
           <div class="master-item-sub-row">
@@ -129,7 +129,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
       <div class="pos-member-row glass-panel ${!p.isAttending ? 'is-absent' : ''}">
         <div class="member-name-col">
           <div class="member-title-line">
-            <strong class="member-display-name">👤 ${p.participantName}</strong>
+            <strong class="member-display-name">${renderIcon('user', { size: 14 })} ${p.participantName}</strong>
             ${!p.isAttending ? '<span class="badge-absent-mini">No Asiste</span>' : ''}
           </div>
           <div class="member-badges-row">
@@ -161,7 +161,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
     <div class="pos-guest-row glass-panel">
       <div class="guest-name-col">
         <div class="guest-title-line">
-          <strong>🎟️ ${g.name}</strong>
+          <strong>${renderIcon('receipt', { size: 14 })} ${g.name}</strong>
           <span class="badge-pill badge-cyan">Temporal</span>
         </div>
         <div class="member-badges-row">
@@ -186,7 +186,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
       <aside class="pos-master-col glass-panel">
         <div class="pos-master-header">
           <div class="master-header-title-row">
-            <h4 class="pos-master-title">🏡 Familias del Evento</h4>
+            <h4 class="pos-master-title">Subfamilias del Evento</h4>
             <span class="badge-pill badge-cyan">${subFamilies.length}</span>
           </div>
           <p class="pos-master-sub">Selecciona una familia para consultar o liquidar</p>
@@ -222,7 +222,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
           <div class="ticket-header">
             <div class="ticket-family-title-group">
               <span class="ticket-badge-tag">TICKET DE COBRO POS</span>
-              <h2 class="ticket-family-name">🏡 ${activeSf.subFamilyName}</h2>
+              <h2 class="ticket-family-name">${activeSf.subFamilyName}</h2>
               <p class="ticket-family-sub">
                 ${activeSf.attendingCount} asistentes de ${activeSf.membersCount} integrantes • ${activeSf.totalWeightedUnits} uds ponderadas
               </p>
@@ -230,7 +230,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
             
             <div class="ticket-status-group">
               <span class="ticket-status-pill ${activeSf.isFullySettled ? 'settled' : 'pending'}">
-                ${activeSf.isFullySettled ? '✓ Familia 100% Liquidada' : '⏳ Pendiente de Liquidar'}
+                ${activeSf.isFullySettled ? `${renderIcon('check', { size: 14 })} Familia 100% Liquidada` : `${renderIcon('clock', { size: 14 })} Pendiente de Liquidar`}
               </span>
             </div>
           </div>
@@ -325,7 +325,7 @@ export const renderPosTicketView = (event, selectedSubFamily = null) => {
           <div class="ticket-section-block">
             <div class="math-breakdown-card glass-panel">
               <div class="breakdown-header">
-                <span class="breakdown-tag">📊 DESGLOSE MATEMÁTICO</span>
+                <span class="breakdown-tag">${renderIcon('chart', { size: 14 })} DESGLOSE MATEMÁTICO</span>
               </div>
               <div class="breakdown-table-rows">
                 <div class="breakdown-item-row">

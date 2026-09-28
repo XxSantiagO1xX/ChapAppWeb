@@ -212,7 +212,7 @@ export const renderEventDashboard = (event) => {
           <div class="participant-card-item glass-panel ${!p.isAttending ? 'item-absent' : ''}" data-member-name="${p.name.toLowerCase()}">
             <div class="participant-info-col">
               <div class="participant-name-row">
-                <span class="participant-name">👤 ${p.name}</span>
+                <span class="participant-name">${renderIcon('user', { size: 14 })} ${p.name}</span>
                 
                 <!-- Botón de Cambio Rápido de Tarifa (Adulto 1.0 <-> Niño 0.5) -->
                 <button 
@@ -221,7 +221,7 @@ export const renderEventDashboard = (event) => {
                   data-category="${p.category}"
                   title="Clic para cambiar tarifa entre Adulto (1.0) y Niño (0.5)"
                 >
-                  ${isChild ? '👶 Niño (0.5)' : '🧑 Adulto (1.0)'}
+                  ${isChild ? 'Niño (0.5)' : 'Adulto (1.0)'}
                 </button>
               </div>
 
@@ -239,7 +239,7 @@ export const renderEventDashboard = (event) => {
                 data-attending="${p.isAttending}"
                 title="${p.isAttending ? 'Marcar como ausente' : 'Marcar como asistente'}"
               >
-                ${p.isAttending ? '✓ Asiste' : '❌ Falta'}
+                ${p.isAttending ? `${renderIcon('check', { size: 13 })} Asiste` : `${renderIcon('close', { size: 13 })} Falta`}
               </button>
               <button 
                 class="btn-icon-danger btn-delete-participant"
@@ -259,7 +259,7 @@ export const renderEventDashboard = (event) => {
         <div class="subfamily-group-card glass-panel ${isFamilyPaid ? 'sf-card-settled' : ''}" data-sf-name="${sfName.toLowerCase()}">
           <div class="sf-group-header">
             <div class="sf-title-info-group">
-              <h4 class="sf-group-title">🏡 ${sfName}</h4>
+              <h4 class="sf-group-title">${renderIcon('users', { size: 16 })} ${sfName}</h4>
               <span class="sf-group-stats">
                 ${attendingCount} de ${parts.length} asisten • Saldo: <strong class="${sfCalc && sfCalc.finalBalance > 0 ? 'text-amber' : sfCalc && sfCalc.finalBalance < 0 ? 'text-emerald' : 'text-cyan'}">${sfCalc ? formatCurrency(sfCalc.finalBalance) : '$0.00'}</strong>
               </span>
@@ -284,7 +284,7 @@ export const renderEventDashboard = (event) => {
                 data-settled="${isFamilyPaid}"
                 title="${isFamilyPaid ? 'Reabrir cuenta de la subfamilia' : 'Liquidar cuenta de toda la subfamilia'}"
               >
-                ${isFamilyPaid ? '✓ Liquidada' : 'Liquidar'}
+                ${isFamilyPaid ? `${renderIcon('check', { size: 14 })} Liquidada` : 'Liquidar'}
               </button>
 
               <button 

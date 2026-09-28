@@ -201,7 +201,8 @@ export const mountModals = () => {
             </div>
             <div style="display: flex; gap: 8px;">
               <button type="button" id="btn-load-sample-csv" class="btn-pill-glass" style="font-size: 0.8rem;">
-                <span>📋 Cargar Ejemplo</span>
+                ${renderIcon('file', { size: 14 })}
+                <span>Cargar Ejemplo</span>
               </button>
               <label class="btn-pill-cyan" style="font-size: 0.8rem; cursor: pointer;">
                 ${renderIcon('upload', { size: 14 })}
