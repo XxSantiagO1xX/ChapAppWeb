@@ -29,7 +29,7 @@ export const renderHeader = ({ isDashboard = false, event = null } = {}) => {
         </div>
 
         <!-- Emblema Central Flotante y Sobrepuesto 100% Simétrico -->
-        <div class="header-center-emblem-wrapper" pointer-events="none">
+        <div class="header-center-emblem-wrapper">
           <a href="#/" class="center-floating-emblem" aria-label="Ir al Inicio - ChapApp" title="ChapApp - Inicio">
             <img src="/assets/logo_tree.png" alt="ChapApp Logo" class="emblem-tree-img" onerror="this.src='./assets/logo_tree.png'" />
           </a>
