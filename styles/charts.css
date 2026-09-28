@@ -463,16 +463,16 @@
 @media (min-width: 960px) {
   .pos-split-layout {
     display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 26px;
+    grid-template-columns: 290px 1fr;
+    gap: 22px;
     align-items: start;
   }
 }
 
-@media (min-width: 1240px) {
+@media (min-width: 1280px) {
   .pos-split-layout {
-    grid-template-columns: 380px 1fr;
-    gap: 30px;
+    grid-template-columns: 330px 1fr;
+    gap: 28px;
   }
 }
 
@@ -699,7 +699,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  container-type: inline-size;
 }
 
 /* Grilla Particionada de 2 Columnas para el Cuerpo del Ticket POS */
@@ -710,21 +709,19 @@
   width: 100%;
 }
 
-@container (min-width: 580px) {
+@media (min-width: 768px) {
   .ticket-body-split-grid {
     display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1.08fr 1fr;
+    gap: 22px;
     align-items: start;
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1200px) {
   .ticket-body-split-grid {
-    display: grid;
     grid-template-columns: 1.15fr 1fr;
-    gap: 24px;
-    align-items: start;
+    gap: 26px;
   }
 }
 
@@ -734,6 +731,12 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  width: 100%;
+}
+
+.ticket-members-col .ticket-section-block:first-child,
+.ticket-calc-col .ticket-section-block:first-child {
+  margin-top: 0;
 }
 
 .ticket-calc-col .settlement-bottom-card {
