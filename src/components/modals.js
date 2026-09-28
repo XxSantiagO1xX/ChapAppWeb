@@ -259,8 +259,8 @@ export const mountModals = () => {
           </div>
 
           <!-- Formulario Plegable para Agregar Contacto -->
-          <div id="form-inline-add-contact-wrapper" class="glass-panel" style="display: none; padding: 16px; margin: 12px 0;">
-            <h4 style="font-size: 0.95rem; margin-bottom: 12px;">Agregar Nuevo Integrante al Directorio</h4>
+          <div id="form-inline-add-contact-wrapper" class="glass-panel" style="display: none; padding: 20px; margin: 14px 0; border-radius: 18px; border: 1px solid var(--border-neon-cyan);">
+            <h4 style="font-size: 1.0rem; font-weight: 800; margin-bottom: 14px; color: var(--text-primary);">Agregar Nuevo Integrante al Directorio</h4>
             <div class="form-row-2">
               <div class="form-group">
                 <label for="dir-contact-name">Nombre Completo *</label>

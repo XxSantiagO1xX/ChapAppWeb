@@ -28,6 +28,7 @@
    TEMA OSCURO (PREDETERMINADO / CYBER GLASS)
    ========================================================================== */
 :root, [data-theme="dark"] {
+  color-scheme: dark;
   --bg-app: #070D18;
   --bg-app-rgb: 7, 13, 24;
 
@@ -86,6 +87,7 @@
    TEMA CLARO (LIQUID GLASS PREMIUM)
    ========================================================================== */
 [data-theme="light"] {
+  color-scheme: light;
   --bg-app: #EBF1F6;
   --bg-app-rgb: 235, 241, 246;
 

@@ -1015,6 +1015,11 @@ button:active {
   font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+  color: #FFFFFF !important;
+}
+
+[data-theme="light"] .dialog-title {
+  color: #0F172A !important;
 }
 
 .dialog-form {
@@ -1032,7 +1037,11 @@ button:active {
 .form-group label {
   font-size: 0.82rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: #CBD5E1;
+}
+
+[data-theme="light"] .form-group label {
+  color: #475569;
 }
 
 .form-row-2 {
@@ -1203,10 +1212,66 @@ button:active {
   color: var(--text-muted);
 }
 
+/* ==========================================================================
+   DIRECTORIO MAESTRO GLOBAL (MODAL & TARJETAS)
+   ========================================================================== */
+.directory-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.directory-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.directory-top-actions .glass-input {
+  flex: 1;
+  height: 46px;
+  padding: 10px 18px;
+  font-size: 0.92rem;
+  background: var(--surface-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--text-primary);
+}
+
+.directory-top-actions .glass-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 16px var(--color-primary-glow);
+}
+
+.directory-top-actions .btn-pill-primary {
+  white-space: nowrap;
+  flex-shrink: 0;
+  height: 46px;
+  padding: 0 20px;
+  font-size: 0.90rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+}
+
+@media (max-width: 540px) {
+  .directory-top-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .directory-top-actions .btn-pill-primary {
+    justify-content: center;
+  }
+}
+
 /* Tarjetas del Directorio Maestro y Subfamilias */
 .directory-contact-card {
   padding: 14px 18px;
-  min-height: 64px;
+  min-height: 72px;
   border-radius: var(--radius-lg);
   background: rgba(0, 0, 0, 0.32);
   border: 1px solid var(--border-subtle);
@@ -1231,7 +1296,7 @@ button:active {
 .dir-contact-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   flex: 1;
   min-width: 0;
 }
@@ -1244,8 +1309,8 @@ button:active {
 }
 
 .contact-avatar-circle {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1275,7 +1340,7 @@ button:active {
 }
 
 .contact-name {
-  font-size: 1.02rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #FFFFFF !important;
   letter-spacing: -0.01em;
@@ -1292,17 +1357,22 @@ button:active {
 }
 
 .contact-sf-sub {
-  font-size: 0.76rem;
-  color: var(--text-muted);
-  font-weight: 600;
+  font-size: 0.78rem;
+  color: #94A3B8;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+[data-theme="light"] .contact-sf-sub {
+  color: #64748B;
+}
+
 /* Botón Distintivo / Alternador de Tarifa Niño <-> Adulto */
 .btn-toggle-dir-category {
-  padding: 8px 14px;
+  height: 38px;
+  padding: 0 16px;
   border-radius: var(--radius-pill);
   font-size: 0.82rem;
   font-weight: 800;
@@ -1344,8 +1414,8 @@ button:active {
 }
 
 .btn-delete-dir-contact {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-pill);
   display: flex;
   align-items: center;
