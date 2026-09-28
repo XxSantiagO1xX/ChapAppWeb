@@ -757,6 +757,8 @@ class App {
             printReportHtml(`Ticket_${sf.subFamilyName}`, html);
           }
         }
+        return;
+      }
     });
 
     // Switches de Asistencia en Ticket POS y Formularios
