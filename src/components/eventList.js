@@ -108,72 +108,57 @@ export const renderEventList = () => {
 
     return `
       <article class="event-card glass-panel animate-scale-in" data-event-id="${evt.id}">
-        <div class="event-card-header">
-          <div class="event-card-title-group">
-            <span class="event-year-tag">${evt.year}</span>
-            <h3 class="event-card-title">${evt.title}</h3>
-            <span class="badge-status ${evt.isArchived ? 'status-archived' : 'status-active'}">
-              ${evt.isArchived ? 'Archivado' : 'Activo'}
-            </span>
+        <div class="event-card-top">
+          <div class="event-card-header">
+            <div class="event-card-badges-row">
+              <span class="event-year-tag">Año ${evt.year}</span>
+              <span class="badge-status ${evt.isArchived ? 'status-archived' : 'status-active'}">
+                ${evt.isArchived ? 'Archivado' : 'Activo'}
+              </span>
+            </div>
+            <div class="event-card-menu-group">
+              <button 
+                class="btn-icon-glass btn-toggle-archive-card" 
+                data-event-id="${evt.id}" 
+                data-archived="${evt.isArchived}"
+                title="${evt.isArchived ? 'Desarchivar evento' : 'Archivar evento'}"
+                aria-label="${evt.isArchived ? 'Desarchivar' : 'Archivar'}"
+              >
+                ${renderIcon('archive', { size: 16 })}
+              </button>
+              <button 
+                class="btn-icon-danger btn-delete-event-card" 
+                data-event-id="${evt.id}" 
+                data-event-title="${evt.title}"
+                title="Eliminar evento"
+                aria-label="Eliminar"
+              >
+                ${renderIcon('trash', { size: 16 })}
+              </button>
+            </div>
           </div>
-          <div class="event-card-menu-group">
-            <button 
-              class="btn-icon-glass btn-toggle-archive-card" 
-              data-event-id="${evt.id}" 
-              data-archived="${evt.isArchived}"
-              title="${evt.isArchived ? 'Desarchivar evento' : 'Archivar evento'}"
-            >
-              ${renderIcon('archive', { size: 16 })}
-            </button>
-            <button 
-              class="btn-icon-danger btn-delete-event-card" 
-              data-event-id="${evt.id}" 
-              data-event-title="${evt.title}"
-              title="Eliminar evento"
-            >
-              ${renderIcon('trash', { size: 16 })}
-            </button>
-          </div>
-        </div>
 
-        <!-- Barra de Progreso de Recaudación -->
-        <div class="event-progress-section">
-          <div class="event-progress-labels">
-            <span>Meta de Recaudación</span>
-            <span class="text-emerald"><strong>${collectionPercent}%</strong> (${formatCurrency(totals.totalCollected)})</span>
-          </div>
-          <div class="progress-track-glass">
-            <div class="progress-fill-emerald" style="width: ${collectionPercent}%;"></div>
-          </div>
-        </div>
+          <h3 class="event-card-title">${evt.title}</h3>
 
-        <!-- 4 Indicadores Rápidos -->
-        <div class="event-metrics-row">
-          <div class="event-metric-cell">
-            <span class="cell-label">Gastado</span>
-            <span class="cell-val">${formatCurrency(totals.totalExpenses)}</span>
-          </div>
-          <div class="event-metric-cell">
-            <span class="cell-label">Por Cobrar</span>
-            <span class="cell-val text-amber">${formatCurrency(totals.totalPendingToCollect)}</span>
-          </div>
-          <div class="event-metric-cell">
-            <span class="cell-label">En Caja</span>
-            <span class="cell-val text-cyan">${formatCurrency(totals.cashInHand)}</span>
-          </div>
-          <div class="event-metric-cell">
-            <span class="cell-label">Familias</span>
-            <span class="cell-val">${totals.subFamilies.length}</span>
+          <!-- Barra de Progreso de Recaudación -->
+          <div class="event-progress-section">
+            <div class="event-progress-labels">
+              <span class="progress-title">Meta de Recaudación</span>
+              <span class="progress-stats text-emerald"><strong>${collectionPercent}%</strong> (${formatCurrency(totals.totalCollected)})</span>
+            </div>
+            <div class="progress-track-glass">
+              <div class="progress-fill-emerald" style="width: ${collectionPercent}%;"></div>
+            </div>
           </div>
         </div>
 
         <div class="event-card-footer">
           <div class="event-members-pill">
-            ${renderIcon('users', { size: 14 })}
+            ${renderIcon('users', { size: 15 })}
             <span>${totals.totalAttendingCount} de ${totals.totalParticipantsCount} asistentes</span>
           </div>
-          <a href="#/event/${evt.id}" class="btn-pill-primary enter-dashboard-btn">
-            <span>Abrir Dashboard</span>
+          <a href="#/event/${evt.id}" class="btn-pill-primary enter-dashboard-btn" aria-label="Abrir Dashboard de ${evt.title}">
+            <span>Abrir</span>
             ${renderIcon('arrow-right', { size: 14 })}
           </a>
         </div>

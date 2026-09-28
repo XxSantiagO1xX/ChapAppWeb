@@ -562,6 +562,8 @@ dialog {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
+  align-items: stretch;
+  grid-auto-rows: 1fr;
 }
 
 @media (min-width: 680px) {
@@ -571,10 +573,10 @@ dialog {
   }
 }
 
-@media (min-width: 1100px) {
+@media (min-width: 1000px) {
   .events-grid-responsive {
     grid-template-columns: repeat(3, 1fr);
-    gap: 26px;
+    gap: 24px;
   }
 }
 
