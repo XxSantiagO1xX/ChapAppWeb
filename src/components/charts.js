@@ -178,11 +178,8 @@ export const renderCategory3DBars = (expenses = [], totalExpenses = 0) => {
           <span class="cylinder-amount-text">${formatCurrency(amount)}</span>
         </div>
 
-        <!-- Cámara del Cilindro 3D de Cristal Líquido (Image 1 & 2) -->
+        <!-- Cámara del Cilindro 3D de Cristal Líquido -->
         <div class="liquid-cylinder-chamber">
-          <!-- Borde / Aro 3D superior del cilindro de cristal -->
-          <div class="chamber-top-rim"></div>
-
           <!-- Reflejo lateral de vidrio -->
           <div class="chamber-glass-shine"></div>
 
@@ -207,9 +204,6 @@ export const renderCategory3DBars = (expenses = [], totalExpenses = 0) => {
             class="liquid-fluid-stream" 
             style="--target-h: ${heightPercent}%; height: ${heightPercent}%;"
           >
-            <!-- Perla / Esfera Luminosa Flotante en la superficie del líquido -->
-            <div class="fluid-luminous-pearl" style="background: #FFFFFF; box-shadow: 0 0 8px #FFFFFF, 0 0 16px ${color};"></div>
-
             <!-- Menisco / Tapa Líquida Superior -->
             <div class="fluid-meniscus-cap">
               <div class="meniscus-flare"></div>
