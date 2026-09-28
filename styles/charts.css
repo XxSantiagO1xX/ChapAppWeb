@@ -8,14 +8,14 @@
 .charts-row-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: 24px;
+  margin-bottom: 28px;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1040px) {
   .charts-row-grid {
-    grid-template-columns: 1fr 1.5fr;
-    gap: 24px;
+    grid-template-columns: 1fr 1.35fr;
+    gap: 28px;
   }
 }
 
@@ -423,23 +423,23 @@
 .pos-split-layout {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
   width: 100%;
 }
 
-@media (min-width: 920px) {
+@media (min-width: 960px) {
   .pos-split-layout {
     display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 22px;
+    grid-template-columns: 340px 1fr;
+    gap: 26px;
     align-items: start;
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1240px) {
   .pos-split-layout {
-    grid-template-columns: 360px 1fr;
-    gap: 26px;
+    grid-template-columns: 380px 1fr;
+    gap: 30px;
   }
 }
 

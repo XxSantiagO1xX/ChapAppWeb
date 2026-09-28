@@ -1,6 +1,6 @@
 /**
  * ChapApp - Servicio de Base de Datos y Sincronización Web
- * Comunicación transparente con Supabase Cloud y respaldo en LocalStorage
+ * Comunicación transparente con Supabase Cloud y respaldo resiliente en LocalStorage
  */
 
 import { initSupabaseClient, getSupabase } from './supabase.js';
@@ -102,7 +102,7 @@ const saveLocalEvents = (events) => {
 };
 
 /**
- * Parser de participante desde fila de Supabase
+ * Parser de participante desde fila de Supabase o Local
  */
 export const parseParticipantRow = (p) => {
   let days = [];
@@ -128,23 +128,34 @@ export const parseParticipantRow = (p) => {
         } catch (e) {}
       }
     }
+  } else if (Array.isArray(p.activeDays)) {
+    days = p.activeDays;
   }
+
+  const finalSubFamily =
+    p.subFamily ||
+    p.subfamily ||
+    p.sub_family ||
+    subFamily ||
+    inferSubFamily(p.name);
 
   return {
     id: p.id,
     name: p.name,
     category: p.category || 'adulto',
-    weight: typeof p.weight === 'number' ? p.weight : parseFloat(p.weight) || 1.0,
-    subFamily: p.sub_family || subFamily || inferSubFamily(p.name),
+    weight: typeof p.weight === 'number' ? p.weight : parseFloat(p.weight) || (p.category === 'nino' ? 0.5 : 1.0),
+    subFamily: finalSubFamily,
     activeDays: days,
-    isAttending: typeof p.is_attending === 'boolean' ? p.is_attending : isAttending,
-    isSettled: typeof p.is_settled === 'boolean' ? p.is_settled : isSettled,
+    isAttending: typeof p.isAttending === 'boolean' ? p.isAttending : (typeof p.is_attending === 'boolean' ? p.is_attending : isAttending),
+    isSettled: typeof p.isSettled === 'boolean' ? p.isSettled : (typeof p.is_settled === 'boolean' ? p.is_settled : isSettled),
   };
 };
 
 const formatEventRow = (row) => {
   const availableDays = Array.isArray(row.available_days)
     ? row.available_days
+    : Array.isArray(row.availableDays)
+    ? row.availableDays
     : typeof row.available_days === 'string'
     ? JSON.parse(row.available_days)
     : ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
@@ -162,9 +173,11 @@ const formatEventRow = (row) => {
     title: exp.title,
     amount: typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount) || 0,
     category: exp.expense_category || exp.category || 'Comida',
-    paidBy: exp.paid_by,
+    paidBy: exp.paid_by || exp.paidBy,
     splitBetween: Array.isArray(exp.split_between)
       ? exp.split_between
+      : Array.isArray(exp.splitBetween)
+      ? exp.splitBetween
       : typeof exp.split_between === 'string'
       ? JSON.parse(exp.split_between)
       : [],
@@ -176,9 +189,9 @@ const formatEventRow = (row) => {
     year: row.year,
     title: row.title,
     availableDays,
-    isArchived: Boolean(row.is_archived),
-    createdAt: row.created_at,
-    settlementNotes: row.settlement_notes,
+    isArchived: Boolean(row.is_archived || row.isArchived),
+    createdAt: row.created_at || row.createdAt,
+    settlementNotes: row.settlement_notes || row.settlementNotes,
     participants: parts,
     expenses: exps,
   };
@@ -188,6 +201,7 @@ const formatEventRow = (row) => {
  * Obtener todos los eventos
  */
 export const getAllEvents = async () => {
+  const localList = loadLocalEvents();
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
@@ -198,7 +212,17 @@ export const getAllEvents = async () => {
         .order('created_at', { ascending: false });
 
       if (!error && Array.isArray(data) && data.length > 0) {
-        const formatted = data.map(formatEventRow);
+        const formatted = data.map((row) => {
+          const ev = formatEventRow(row);
+          const localEv = localList.find((l) => l.id === ev.id || l.slug === ev.slug);
+          if ((!ev.participants || ev.participants.length === 0) && localEv?.participants?.length > 0) {
+            ev.participants = localEv.participants;
+          }
+          if ((!ev.expenses || ev.expenses.length === 0) && localEv?.expenses?.length > 0) {
+            ev.expenses = localEv.expenses;
+          }
+          return ev;
+        });
         saveLocalEvents(formatted);
         return formatted;
       }
@@ -206,7 +230,7 @@ export const getAllEvents = async () => {
       console.warn('[Database] Error cargando de Supabase, usando local:', err);
     }
   }
-  const localList = loadLocalEvents();
+
   if (localList && localList.length > 0) {
     return localList;
   }
@@ -216,10 +240,13 @@ export const getAllEvents = async () => {
 };
 
 /**
- * Obtener un evento por ID
+ * Obtener un evento por ID o Slug
  */
 export const getEventById = async (id) => {
   if (!id) return null;
+  const localList = loadLocalEvents();
+  const localMatched = localList.find((e) => e.id === id || e.slug === id);
+
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
@@ -229,16 +256,30 @@ export const getEventById = async (id) => {
 
       const { data, error } = await query.single();
       if (!error && data) {
-        return formatEventRow(data);
+        const formatted = formatEventRow(data);
+        if ((!formatted.participants || formatted.participants.length === 0) && localMatched?.participants?.length > 0) {
+          formatted.participants = localMatched.participants;
+        }
+        if ((!formatted.expenses || formatted.expenses.length === 0) && localMatched?.expenses?.length > 0) {
+          formatted.expenses = localMatched.expenses;
+        }
+
+        // Actualizar en caché local
+        const idx = localList.findIndex((e) => e.id === formatted.id || e.slug === formatted.slug);
+        if (idx >= 0) {
+          localList[idx] = formatted;
+        } else {
+          localList.unshift(formatted);
+        }
+        saveLocalEvents(localList);
+        return formatted;
       }
     } catch (err) {
       console.warn('[Database] Error cargando evento de Supabase:', err);
     }
   }
 
-  const localList = loadLocalEvents();
-  const matched = localList.find((e) => e.id === id || e.slug === id);
-  if (matched) return matched;
+  if (localMatched) return localMatched;
 
   return INITIAL_SEED_EVENTS.find((e) => e.id === id || e.slug === id) || INITIAL_SEED_EVENTS[0] || null;
 };
@@ -256,7 +297,7 @@ export const createEvent = async ({ title, year, availableDays = [], participant
     name: p.name,
     category: p.category || 'adulto',
     weight: p.weight ?? (p.category === 'nino' ? 0.5 : 1.0),
-    subFamily: p.subFamily || inferSubFamily(p.name),
+    subFamily: p.subFamily || p.subfamily || inferSubFamily(p.name),
     activeDays: [...days],
     isAttending: true,
     isSettled: false,
@@ -328,7 +369,7 @@ export const archiveEvent = async (id, isArchived) => {
     } catch (e) {}
   }
   const list = loadLocalEvents();
-  const found = list.find((e) => e.id === id);
+  const found = list.find((e) => e.id === id || e.slug === id);
   if (found) {
     found.isArchived = isArchived;
     saveLocalEvents(list);
@@ -346,7 +387,7 @@ export const deleteEvent = async (id) => {
     } catch (e) {}
   }
   let list = loadLocalEvents();
-  list = list.filter((e) => e.id !== id);
+  list = list.filter((e) => e.id !== id && e.slug !== id);
   saveLocalEvents(list);
 };
 
@@ -355,7 +396,7 @@ export const deleteEvent = async (id) => {
  */
 export const addParticipant = async (eventId, participantData) => {
   const localList = loadLocalEvents();
-  const currentEvent = localList.find((e) => e.id === eventId);
+  const currentEvent = localList.find((e) => e.id === eventId || e.slug === eventId);
   const defaultDays = currentEvent?.availableDays && currentEvent.availableDays.length > 0
     ? currentEvent.availableDays
     : ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
@@ -367,7 +408,7 @@ export const addParticipant = async (eventId, participantData) => {
     weight: typeof participantData.weight === 'number'
       ? participantData.weight
       : (participantData.category === 'nino' ? 0.5 : 1.0),
-    subFamily: participantData.subFamily || inferSubFamily(participantData.name),
+    subFamily: participantData.subFamily || participantData.subfamily || inferSubFamily(participantData.name),
     activeDays: Array.isArray(participantData.activeDays) && participantData.activeDays.length > 0
       ? participantData.activeDays
       : [...defaultDays],
@@ -380,7 +421,7 @@ export const addParticipant = async (eventId, participantData) => {
     try {
       await supabase.from('participants').insert({
         id: p.id,
-        event_id: eventId,
+        event_id: currentEvent ? currentEvent.id : eventId,
         name: p.name,
         category: p.category,
         weight: p.weight,
@@ -398,7 +439,7 @@ export const addParticipant = async (eventId, participantData) => {
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId);
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
   if (event) {
     event.participants = event.participants || [];
     event.participants.push(p);
@@ -432,7 +473,7 @@ export const updateParticipant = async (eventId, participant) => {
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId);
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
   if (event) {
     const idx = event.participants.findIndex((p) => p.id === participant.id);
     if (idx >= 0) {
@@ -457,7 +498,7 @@ export const updateParticipantRole = async (eventId, participantId, category, we
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId);
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
   if (event) {
     const part = event.participants.find((p) => p.id === participantId);
     if (part) {
@@ -475,7 +516,7 @@ export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttend
   const event = await getEventById(eventId);
   if (!event) return;
 
-  const targetParts = event.participants.filter(
+  const targetParts = (event.participants || []).filter(
     (p) => (p.subFamily || 'Familia General') === subFamilyName
   );
 
@@ -498,7 +539,7 @@ export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttend
   }
 
   const list = loadLocalEvents();
-  const ev = list.find((e) => e.id === eventId);
+  const ev = list.find((e) => e.id === eventId || e.slug === eventId);
   if (ev) {
     ev.participants = event.participants;
     saveLocalEvents(list);
@@ -512,12 +553,12 @@ export const deleteSubFamily = async (eventId, subFamilyName) => {
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      await supabase.from('participants').delete().eq('event_id', eventId).eq('sub_family', subFamilyName);
+      await supabase.from('participants').delete().eq('sub_family', subFamilyName);
     } catch (e) {}
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId);
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
   if (event) {
     event.participants = (event.participants || []).filter(
       (p) => (p.subFamily || 'Familia General') !== subFamilyName
@@ -538,7 +579,7 @@ export const deleteParticipant = async (eventId, participantId) => {
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId);
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
   if (event) {
     event.participants = (event.participants || []).filter((p) => p.id !== participantId);
     saveLocalEvents(list);
@@ -552,7 +593,7 @@ export const settleSubFamily = async (eventId, subFamilyName, isSettled) => {
   const event = await getEventById(eventId);
   if (!event) return;
 
-  const targetParts = event.participants.filter(
+  const targetParts = (event.participants || []).filter(
     (p) => (p.subFamily || 'Familia General') === subFamilyName
   );
 
@@ -575,7 +616,7 @@ export const settleSubFamily = async (eventId, subFamilyName, isSettled) => {
   }
 
   const list = loadLocalEvents();
-  const ev = list.find((e) => e.id === eventId);
+  const ev = list.find((e) => e.id === eventId || e.slug === eventId);
   if (ev) {
     ev.participants = event.participants;
     saveLocalEvents(list);
@@ -611,7 +652,7 @@ export const addExpense = async (eventId, expenseData) => {
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId);
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
   if (event) {
     event.expenses = event.expenses || [];
     event.expenses.unshift(exp);
@@ -654,7 +695,7 @@ export const batchAddExpenses = async (eventId, expensesList) => {
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId);
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
   if (event) {
     event.expenses = event.expenses || [];
     event.expenses.unshift(...prepared);
@@ -675,7 +716,7 @@ export const deleteExpense = async (eventId, expenseId) => {
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId);
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
   if (event) {
     event.expenses = (event.expenses || []).filter((x) => x.id !== expenseId);
     saveLocalEvents(list);

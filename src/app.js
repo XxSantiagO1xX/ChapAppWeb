@@ -656,7 +656,8 @@ class App {
         if (dialog) dialog.close();
 
         const refreshed = await getEventById(activeEvent.id);
-        store.setState({ activeEvent: refreshed });
+        const allEvents = await getAllEvents();
+        store.setState({ activeEvent: refreshed, events: allEvents });
         showToast(`${addedCount} integrantes importados al evento`, 'success');
         return;
       }
@@ -819,7 +820,8 @@ class App {
         if (dialog) dialog.close();
 
         const refreshed = await getEventById(activeEvent.id);
-        store.setState({ activeEvent: refreshed });
+        const allEvents = await getAllEvents();
+        store.setState({ activeEvent: refreshed, events: allEvents });
         showToast(`Gasto "${title}" guardado ($${amount})`, 'success');
       });
     }
@@ -834,7 +836,7 @@ class App {
 
         const name = document.getElementById('participant-name').value.trim();
         const category = document.getElementById('participant-category').value;
-        const weight = parseFloat(document.getElementById('participant-weight').value) || 1.0;
+        const weight = parseFloat(document.getElementById('participant-weight').value) || (category === 'nino' ? 0.5 : 1.0);
         const subFamily = document.getElementById('participant-subfamily').value.trim() || 'Familia General';
 
         await addParticipant(activeEvent.id, {
@@ -851,7 +853,8 @@ class App {
         if (dialog) dialog.close();
 
         const refreshed = await getEventById(activeEvent.id);
-        store.setState({ activeEvent: refreshed });
+        const allEvents = await getAllEvents();
+        store.setState({ activeEvent: refreshed, events: allEvents });
         showToast(`Integrante "${name}" agregado con éxito`, 'success');
       });
     }

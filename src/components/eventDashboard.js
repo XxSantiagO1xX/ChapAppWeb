@@ -89,7 +89,7 @@ export const renderEventDashboard = (event) => {
       <div class="capsule-shortcuts-group">
         <button id="btn-capsule-add-expense" class="capsule-shortcut-btn btn-pill-cyan" title="Registrar Gasto con IA">
           ${renderIcon('plus', { size: 15 })}
-          <span class="shortcut-label">+ Gasto IA</span>
+          <span class="shortcut-label">Gasto IA</span>
         </button>
         <button id="btn-capsule-directory" class="capsule-shortcut-btn btn-pill-glass" title="Directorio Global">
           ${renderIcon('users', { size: 15 })}
@@ -392,7 +392,7 @@ export const renderEventDashboard = (event) => {
             </button>
             <button id="btn-add-expense-tab" class="btn-pill-cyan">
               ${renderIcon('plus', { size: 16 })}
-              <span>+ Gasto con IA</span>
+              <span>Gasto con IA</span>
             </button>
           </div>
         </div>
@@ -416,11 +416,11 @@ export const renderEventDashboard = (event) => {
     `;
   }
 
-  // Botón de Acción Flotante (+ Gasto Rápido) Fijo Permanentemente en la esquina inferior derecha
+  // Botón de Acción Flotante (+ Gasto Rápido) Fijo Permanentemente con un solo signo +
   const floatingFabHtml = `
     <button id="btn-fab-add-expense" class="floating-fab-btn btn-pill-cyan" title="Registrar Gasto Rápido con IA">
       ${renderIcon('plus', { size: 18 })}
-      <span>+ Gasto Rápido</span>
+      <span>Gasto Rápido</span>
     </button>
   `;
 

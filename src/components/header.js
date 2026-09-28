@@ -13,9 +13,9 @@ export const renderHeader = ({ isDashboard = false, event = null } = {}) => {
     return `
       <header class="app-header glass-header dashboard-header">
         <div class="header-left">
-          <a href="#/" class="btn-icon-glass back-home-btn" aria-label="Volver al inicio">
+          <a href="#/" class="back-home-btn" aria-label="Volver al inicio">
             ${renderIcon('arrow-left', { size: 16 })}
-            <span class="btn-text-hide-mobile">Inicio</span>
+            <span>Inicio</span>
           </a>
           <div class="header-title-box">
             <div class="title-with-badge">
