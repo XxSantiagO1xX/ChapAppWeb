@@ -120,6 +120,33 @@ export const extractDataFromReceipt = async (fileOrBase64, mimeType = 'image/jpe
     base64Data = fileOrBase64.replace(/^data:image\/[a-zA-Z0-9.+]+;base64,/, '');
   }
 
+  // 1. Intentar primero con la función serverless de Vercel (/api/scan-receipt)
+  // que lee automáticamente la variable GEMINI_API_KEY configurada en el panel de Vercel
+  try {
+    const apiRes = await fetch('/api/scan-receipt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64: base64Data, mimeType: finalMime }),
+    });
+
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      if (data && data.title && typeof data.amount === 'number') {
+        return data;
+      }
+    } else {
+      const errData = await apiRes.json().catch(() => ({}));
+      if (errData.error === 'GEMINI_ERROR') {
+        throw new Error(errData.message || 'Error en análisis con Gemini');
+      }
+    }
+  } catch (serverErr) {
+    if (serverErr.message && !serverErr.message.includes('404') && !serverErr.message.includes('fetch')) {
+      console.warn('[Gemini Scanner] Serverless intento:', serverErr.message);
+    }
+  }
+
+  // 2. Fallback de cliente directo (por si se ejecuta en local o con clave guardada en el navegador)
   const apiKey = getGeminiApiKey();
   if (!apiKey) {
     throw new Error('MISSING_API_KEY');

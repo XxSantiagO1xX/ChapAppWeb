@@ -489,48 +489,50 @@ export const mountModals = () => {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      let apiKey = getGeminiApiKey();
-      if (!apiKey) {
-        const userKey = window.prompt('Para escanear tickets con IA, ingresa tu API Key de Google Gemini (puedes obtenerla gratis en aistudio.google.com):');
-        if (userKey && userKey.trim()) {
-          setGeminiApiKey(userKey.trim());
-          apiKey = userKey.trim();
-        } else {
-          showToast('Se requiere una API Key de Gemini para escanear tickets', 'info');
-          receiptFileInput.value = '';
-          return;
-        }
-      }
-
       try {
         if (aiLoader) aiLoader.style.display = 'flex';
-        const extracted = await extractDataFromReceipt(file);
+        let extracted = null;
 
-        if (extracted.amount > 0) {
-          document.getElementById('expense-amount').value = extracted.amount;
-        }
-        if (extracted.title) {
-          document.getElementById('expense-title').value = extracted.title;
-        }
-        if (extracted.category) {
-          const catPills = document.querySelectorAll('#expense-category-pills .cat-pill-btn');
-          catPills.forEach((p) => {
-            if (p.getAttribute('data-cat') === extracted.category) {
-              p.classList.add('active');
+        try {
+          extracted = await extractDataFromReceipt(file);
+        } catch (scanErr) {
+          if (scanErr.message === 'MISSING_API_KEY') {
+            const userKey = window.prompt('Para escanear tickets con IA, ingresa tu API Key de Google Gemini (puedes obtenerla gratis en aistudio.google.com):');
+            if (userKey && userKey.trim()) {
+              setGeminiApiKey(userKey.trim());
+              extracted = await extractDataFromReceipt(file);
             } else {
-              p.classList.remove('active');
+              showToast('Se requiere una API Key de Gemini para escanear tickets', 'info');
+              return;
             }
-          });
+          } else {
+            throw scanErr;
+          }
         }
 
-        showToast(`Ticket analizado con éxito: ${extracted.title} ($${extracted.amount})`, 'success');
+        if (extracted) {
+          if (extracted.amount > 0) {
+            document.getElementById('expense-amount').value = extracted.amount;
+          }
+          if (extracted.title) {
+            document.getElementById('expense-title').value = extracted.title;
+          }
+          if (extracted.category) {
+            const catPills = document.querySelectorAll('#expense-category-pills .cat-pill-btn');
+            catPills.forEach((p) => {
+              if (p.getAttribute('data-cat') === extracted.category) {
+                p.classList.add('active');
+              } else {
+                p.classList.remove('active');
+              }
+            });
+          }
+
+          showToast(`Ticket analizado con éxito: ${extracted.title} ($${extracted.amount})`, 'success');
+        }
       } catch (err) {
         console.error('Error analizando ticket con Gemini:', err);
-        if (err.message === 'MISSING_API_KEY') {
-          showToast('Por favor configura tu API Key de Google Gemini', 'error');
-        } else {
-          showToast(`Error al procesar ticket: ${err.message || 'Error de conexión'}. Por favor ingresa los datos manuales.`, 'error');
-        }
+        showToast(`Error al procesar ticket: ${err.message || 'Error de conexión'}. Por favor ingresa los datos manuales.`, 'error');
       } finally {
         if (aiLoader) aiLoader.style.display = 'none';
         receiptFileInput.value = '';
