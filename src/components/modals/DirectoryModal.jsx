@@ -34,7 +34,8 @@ export const DirectoryModal = () => {
 
   useEffect(() => {
     if (activeModal === 'directory') {
-      getGlobalDirectory().then((dir) => {
+      try {
+        const dir = getGlobalDirectory();
         setDirectory(dir || []);
         if (activeEvent && dir) {
           // Filtrar los que no estén ya en el evento
@@ -42,7 +43,9 @@ export const DirectoryModal = () => {
           const available = dir.filter((d) => !existingNames.has(d.name.toLowerCase())).map((d) => d.id);
           setSelectedForImport(new Set(available));
         }
-      });
+      } catch (err) {
+        console.warn('[DirectoryModal] Error cargando directorio:', err);
+      }
       setSearch('');
       setShowAddForm(false);
       setNewName('');

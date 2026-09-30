@@ -19,12 +19,15 @@ export const NewEventModal = () => {
 
   useEffect(() => {
     if (activeModal === 'newEvent') {
-      getGlobalDirectory().then((dir) => {
+      try {
+        const dir = getGlobalDirectory();
         setDirectory(dir || []);
         if (dir && dir.length > 0) {
           setSelectedDirectoryIds(new Set(dir.map((d) => d.id)));
         }
-      });
+      } catch (err) {
+        console.warn('[NewEventModal] Error cargando directorio:', err);
+      }
       setTitle('');
       setYear(new Date().getFullYear());
       setDays(4);
