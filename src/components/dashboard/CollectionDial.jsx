@@ -74,6 +74,25 @@ export const CollectionDial = ({ collected = 0, total = 0, percentage = 0 }) => 
                 )}
               </linearGradient>
 
+              {/* Degradados Cálidos Ámbar/Cobre para las Elipses Orbitales Decorativas */}
+              <linearGradient id="orbitalWarmGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#EA580C" stopOpacity="0.40" />
+                <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#FDE047" stopOpacity="0.10" />
+              </linearGradient>
+
+              <linearGradient id="orbitalWarmGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.35" />
+                <stop offset="60%" stopColor="#FB923C" stopOpacity="0.22" />
+                <stop offset="100%" stopColor="#EA580C" stopOpacity="0.12" />
+              </linearGradient>
+
+              <linearGradient id="orbitalWarmGrad3" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#FDE047" stopOpacity="0.30" />
+                <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.20" />
+                <stop offset="100%" stopColor="#FB923C" stopOpacity="0.10" />
+              </linearGradient>
+
               {/* Filtro de resplandor para la punta del anillo */}
               <filter id="liquidAmberTipGlow" x="-30%" y="-30%" width="160%" height="160%">
                 <feGaussianBlur stdDeviation="3" result="blur" />
@@ -88,11 +107,43 @@ export const CollectionDial = ({ collected = 0, total = 0, percentage = 0 }) => 
             <circle 
               cx={center} 
               cy={center} 
-              r={94} 
-              stroke="rgba(245, 158, 11, 0.15)" 
+              r={95} 
+              stroke="rgba(245, 158, 11, 0.12)" 
               strokeWidth="1" 
               strokeDasharray="4 6"
               fill="none" 
+            />
+
+            {/* 2. Elipses orbitales decorativas asimétricas fusionadas con la paleta cálida */}
+            <ellipse 
+              cx={center} 
+              cy={center} 
+              rx="93" 
+              ry="83" 
+              stroke="url(#orbitalWarmGrad1)" 
+              strokeWidth="1" 
+              fill="none" 
+              transform={`rotate(-20 ${center} ${center})`} 
+            />
+            <ellipse 
+              cx={center} 
+              cy={center} 
+              rx="87" 
+              ry="77" 
+              stroke="url(#orbitalWarmGrad2)" 
+              strokeWidth="1" 
+              fill="none" 
+              transform={`rotate(32 ${center} ${center})`} 
+            />
+            <ellipse 
+              cx={center} 
+              cy={center} 
+              rx="91" 
+              ry="79" 
+              stroke="url(#orbitalWarmGrad3)" 
+              strokeWidth="0.8" 
+              fill="none" 
+              transform={`rotate(75 ${center} ${center})`} 
             />
 
             {/* 2. Carril base translúcido (Track) */}
