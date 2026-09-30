@@ -40,7 +40,7 @@ const getInitialSeedUsers = async () => [
     username: 'admin',
     name: 'Administrador General',
     role: 'admin',
-    avatar: '👑',
+    avatar: null,
     createdAt: new Date().toISOString(),
     passwordHash: await hashPassword('1234'),
   },
@@ -49,7 +49,7 @@ const getInitialSeedUsers = async () => [
     username: 'segundo',
     name: 'Segundo al Mando',
     role: 'operator',
-    avatar: '🛡️',
+    avatar: null,
     createdAt: new Date().toISOString(),
     passwordHash: await hashPassword('2345'),
   },
@@ -78,7 +78,7 @@ export const initAuthUsers = async () => {
         username: 'admin',
         name: 'Administrador General',
         role: 'admin',
-        avatar: '👑',
+        avatar: null,
         createdAt: new Date().toISOString(),
         passwordHash: await hashPassword('1234'),
       });
@@ -90,7 +90,7 @@ export const initAuthUsers = async () => {
         username: 'segundo',
         name: 'Segundo al Mando',
         role: 'operator',
-        avatar: '🛡️',
+        avatar: null,
         createdAt: new Date().toISOString(),
         passwordHash: await hashPassword('2345'),
       });
@@ -159,7 +159,7 @@ export const login = async (username, password) => {
     username: user.username,
     name: user.name,
     role: user.role,
-    avatar: user.avatar || (user.role === 'admin' ? '👑' : '🛡️'),
+    avatar: user.avatar || null,
     loginAt: new Date().toISOString(),
   };
 
@@ -268,7 +268,7 @@ export const adminCreateUser = async ({ username, name, password, role = 'operat
     username: cleanUsername,
     name: name.trim(),
     role: role === 'admin' ? 'admin' : 'operator',
-    avatar: role === 'admin' ? '👑' : '🛡️',
+    avatar: null,
     createdAt: new Date().toISOString(),
     passwordHash: await hashPassword(password.trim()),
   };
@@ -305,7 +305,7 @@ export const adminUpdateUser = async (userId, { name, role }) => {
   if (name) user.name = name.trim();
   if (role) {
     user.role = role === 'admin' ? 'admin' : 'operator';
-    user.avatar = user.role === 'admin' ? '👑' : '🛡️';
+    user.avatar = null;
   }
   user.updatedAt = new Date().toISOString();
 

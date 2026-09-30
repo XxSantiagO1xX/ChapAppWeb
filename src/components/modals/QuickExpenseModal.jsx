@@ -454,7 +454,9 @@ export const QuickExpenseModal = () => {
                           {selectedPayer ? (
                             <div className="payer-selected-card glass-panel">
                               <div className="selected-member-left">
-                                <div className="selected-avatar-circle">👤</div>
+                                <div className="selected-avatar-circle">
+                                  <Icon name="user" size={16} />
+                                </div>
                                 <div className="selected-member-info">
                                   <strong>{selectedPayer.name}</strong>
                                   <span>{selectedPayer.subFamily || 'Familia General'}</span>
@@ -518,7 +520,9 @@ export const QuickExpenseModal = () => {
                                       role="button"
                                       tabIndex={0}
                                     >
-                                      <div className="payer-row-avatar">👤</div>
+                                      <div className="payer-row-avatar">
+                                        <Icon name="user" size={13} />
+                                      </div>
                                       <div className="payer-row-text">
                                         <span className="payer-row-name">{p.name}</span>
                                         <span className="payer-row-sub">{p.subFamily || 'General'}</span>

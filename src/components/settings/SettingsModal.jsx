@@ -310,8 +310,8 @@ export const SettingsModal = () => {
               {/* Tarjeta de Usuario Activo */}
               <div className="glass-panel" style={{ padding: '18px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div style={{ fontSize: '2.4rem', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-subtle)', borderRadius: '50%', border: '1px solid var(--border-subtle)' }}>
-                    {currentUser.avatar || (isAdmin ? '👑' : '🛡️')}
+                  <div style={{ width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-subtle)', borderRadius: '50%', border: '1px solid var(--border-subtle)', color: 'var(--color-primary)' }}>
+                    <Icon name={isAdmin ? 'shield' : 'user'} size={28} />
                   </div>
                   <div>
                     <h4 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>{currentUser.name}</h4>
@@ -628,8 +628,10 @@ export const SettingsModal = () => {
                       return (
                         <tr key={u.id}>
                           <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span>{u.avatar || '👤'}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--surface-subtle)', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: u.role === 'admin' ? '#f59e0b' : '#00f0ff' }}>
+                                <Icon name={u.role === 'admin' ? 'shield' : 'user'} size={14} />
+                              </div>
                               <div>
                                 <strong>{u.name}</strong>
                                 <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>@{u.username}</div>

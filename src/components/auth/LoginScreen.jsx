@@ -16,13 +16,6 @@ export const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Selector rápido de cuenta para pruebas o acceso en iPad/Laptop
-  const handleQuickSelect = (presetUser, presetPass) => {
-    setUsername(presetUser);
-    setPassword(presetPass);
-    setErrorMessage('');
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
@@ -70,10 +63,16 @@ export const LoginScreen = () => {
             <div className="scene-orbital-ring scene-orbital-ring-2" />
             <div className="scene-orbital-ring scene-orbital-ring-3" />
 
-            {/* Cristales geométricos flotantes secundarios */}
-            <div className="floating-gem floating-gem-1">🔷</div>
-            <div className="floating-gem floating-gem-2">🔹</div>
-            <div className="floating-gem floating-gem-3">💎</div>
+            {/* Destellos geométricos flotantes secundarios */}
+            <div className="floating-gem floating-gem-1">
+              <Icon name="sparkles" size={18} color="rgba(0, 240, 255, 0.85)" />
+            </div>
+            <div className="floating-gem floating-gem-2">
+              <Icon name="sparkles" size={14} color="rgba(168, 85, 247, 0.85)" />
+            </div>
+            <div className="floating-gem floating-gem-3">
+              <Icon name="sparkles" size={16} color="rgba(99, 102, 241, 0.85)" />
+            </div>
 
             {/* Cristal Prisma Central Protagónico que alberga el árbol de ChapApp */}
             <div className="crystal-core-prism animate-levitate">
@@ -124,31 +123,6 @@ export const LoginScreen = () => {
               </div>
               <h1 className="card-brand-name">ChapApp</h1>
               <p className="card-brand-motto">Acceso al Sistema Privado</p>
-            </div>
-
-            {/* Cuentas Rápidas Sembradas (Admin / Segundo al Mando) */}
-            <div className="quick-access-accounts">
-              <span className="quick-access-label">Cuentas autorizadas:</span>
-              <div className="quick-account-chips">
-                <button
-                  type="button"
-                  className={`chip-account-btn ${username === 'admin' ? 'active' : ''}`}
-                  onClick={() => handleQuickSelect('admin', '1234')}
-                  title="Seleccionar Administrador (1234)"
-                >
-                  <span className="chip-avatar">👑</span>
-                  <span className="chip-name">Administrador</span>
-                </button>
-                <button
-                  type="button"
-                  className={`chip-account-btn ${username === 'segundo' ? 'active' : ''}`}
-                  onClick={() => handleQuickSelect('segundo', '2345')}
-                  title="Seleccionar Segundo al Mando (2345)"
-                >
-                  <span className="chip-avatar">🛡️</span>
-                  <span className="chip-name">Segundo al Mando</span>
-                </button>
-              </div>
             </div>
 
             {/* Formulario de Login Hermético */}
@@ -224,9 +198,9 @@ export const LoginScreen = () => {
             {/* Paginación / Puntos de estado visual inspirados en la referencia */}
             <div className="card-bottom-indicators">
               <span className="indicator-line" />
-              <span className={`indicator-dot ${username === 'admin' ? 'active' : ''}`} />
-              <span className={`indicator-dot ${!username || (username !== 'admin' && username !== 'segundo') ? 'active' : ''}`} />
-              <span className={`indicator-dot ${username === 'segundo' ? 'active' : ''}`} />
+              <span className="indicator-dot active" />
+              <span className="indicator-dot" />
+              <span className="indicator-dot" />
               <span className="indicator-line" />
             </div>
 

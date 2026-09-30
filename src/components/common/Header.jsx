@@ -112,7 +112,7 @@ export const Header = () => {
               title={`Configuración (${currentUser.name})`} 
               aria-label="Configuración"
             >
-              <span>{currentUser.avatar || (currentUser.role === 'admin' ? '👑' : '🛡️')}</span>
+              <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={15} color="var(--color-primary)" />
               <span className="btn-text-hide-mobile">{currentUser.role === 'admin' ? 'Admin' : 'Operador'}</span>
               <Icon name="settings" size={13} style={{ opacity: 0.7 }} />
             </button>
@@ -217,7 +217,7 @@ export const Header = () => {
             title={`Configuración (${currentUser.name})`} 
             aria-label="Configuración"
           >
-            <span>{currentUser.avatar || (currentUser.role === 'admin' ? '👑' : '🛡️')}</span>
+            <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={15} color="var(--color-primary)" />
             <span className="btn-text-hide-mobile">{currentUser.role === 'admin' ? 'Admin' : 'Operador'}</span>
             <Icon name="settings" size={13} style={{ opacity: 0.7 }} />
           </button>

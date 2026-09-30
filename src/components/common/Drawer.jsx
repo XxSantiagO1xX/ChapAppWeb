@@ -157,7 +157,21 @@ export const Drawer = ({ filterTab, setFilterTab }) => {
         {currentUser && (
           <div className="drawer-user-panel glass-panel" style={{ margin: '14px 16px', padding: '12px 14px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.4rem' }}>{currentUser.avatar || (currentUser.role === 'admin' ? '👑' : '🛡️')}</span>
+              <div 
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'var(--surface-subtle)',
+                  border: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--color-primary)'
+                }}
+              >
+                <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={18} />
+              </div>
               <div>
                 <strong style={{ display: 'block', fontSize: '0.88rem', color: 'var(--text-primary)' }}>{currentUser.name}</strong>
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>
