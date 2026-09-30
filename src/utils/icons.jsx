@@ -47,6 +47,13 @@ import {
   RefreshCw,
   Settings,
   Key,
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff,
+  Shield,
+  LogOut,
+  Database,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -92,6 +99,13 @@ const ICON_MAP = {
   refresh: RefreshCw,
   settings: Settings,
   key: Key,
+  lock: Lock,
+  unlock: Unlock,
+  eye: Eye,
+  'eye-off': EyeOff,
+  shield: Shield,
+  logout: LogOut,
+  database: Database,
 };
 
 export const Icon = ({ name, size = 18, strokeWidth = 1.6, className = '', color = 'currentColor', ...props }) => {

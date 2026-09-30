@@ -13,6 +13,7 @@ import '../styles/glass.css';
 import '../styles/layout.css';
 import '../styles/components.css';
 import '../styles/charts.css';
+import '../styles/auth.css';
 
 const rootElement = document.getElementById('root');
 

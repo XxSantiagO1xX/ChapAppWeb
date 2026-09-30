@@ -11,6 +11,10 @@ import Drawer from './components/common/Drawer.jsx';
 import ToastContainer from './components/common/Toast.jsx';
 import ConfirmModal from './components/common/ConfirmModal.jsx';
 
+// Auth & Settings
+import LoginScreen from './components/auth/LoginScreen.jsx';
+import SettingsModal from './components/settings/SettingsModal.jsx';
+
 // Views
 import EventList from './components/events/EventList.jsx';
 import EventDashboard from './components/dashboard/EventDashboard.jsx';
@@ -25,8 +29,18 @@ import CutModal from './components/modals/CutModal.jsx';
 import AnalyticsModal from './components/analytics/AnalyticsModal.jsx';
 
 export const App = () => {
-  const { activeEvent } = useApp();
+  const { activeEvent, currentUser } = useApp();
   const [filterTab, setFilterTab] = useState('active');
+
+  // Si no hay usuario autenticado, renderizar la pantalla de Login Liquid Glass 3D
+  if (!currentUser) {
+    return (
+      <div className="app-container login-mode">
+        <LoginScreen />
+        <ToastContainer />
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
@@ -53,6 +67,7 @@ export const App = () => {
       <DirectoryModal />
       <CutModal />
       <AnalyticsModal />
+      <SettingsModal />
       <ConfirmModal />
 
       {/* Notificaciones Flotantes Toast */}

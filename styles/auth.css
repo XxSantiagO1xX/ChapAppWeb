@@ -1,0 +1,662 @@
+/**
+ * ChapApp - Estilos de Autenticación Liquid Glass 3D y Configuración por Roles
+ * Inspirado en la estética futurista de prisma cristalino, pedestal orbital y tarjetas de vidrio esmerilado
+ */
+
+/* ==========================================================================
+   1. VIEWPORT & CONTENEDOR GENERAL DE LOGIN
+   ========================================================================== */
+.login-viewport-container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: #060913;
+  overflow: hidden;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+/* Destellos y nebulosa luminosa de fondo */
+.login-bg-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.55;
+}
+
+.login-bg-glow-1 {
+  width: 550px;
+  height: 550px;
+  top: -120px;
+  left: 10%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, rgba(99, 102, 241, 0) 70%);
+}
+
+.login-bg-glow-2 {
+  width: 650px;
+  height: 650px;
+  bottom: -150px;
+  right: 5%;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.35) 0%, rgba(6, 182, 212, 0) 70%);
+}
+
+.login-bg-glow-3 {
+  width: 450px;
+  height: 450px;
+  top: 40%;
+  left: 45%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, rgba(168, 85, 247, 0) 70%);
+}
+
+/* ==========================================================================
+   2. LAYOUT DIVIDIDO (STAGE 3D IZQUIERDO + LOGIN CARD DERECHO)
+   ========================================================================== */
+.login-split-layout {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  max-width: 1140px;
+  width: 100%;
+  gap: 40px;
+  align-items: center;
+}
+
+@media (max-width: 960px) {
+  .login-split-layout {
+    grid-template-columns: 1fr;
+    max-width: 480px;
+    gap: 28px;
+  }
+}
+
+/* ==========================================================================
+   3. STAGE 3D DEL EMBLEMA PROTAGÓNICO Y PEDESTAL ORBITAL
+   ========================================================================== */
+.login-visual-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  padding: 20px 0;
+}
+
+.stage-top-brand {
+  margin-bottom: 24px;
+}
+
+.brand-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  backdrop-filter: blur(12px);
+  color: #E2E8F0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.brand-dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #00F0FF;
+  box-shadow: 0 0 10px #00F0FF;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+/* Escena 3D simulada */
+.stage-scene-3d {
+  position: relative;
+  width: 340px;
+  height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Anillos orbitales luminosos */
+.scene-orbital-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  pointer-events: none;
+}
+
+.scene-orbital-ring-1 {
+  width: 320px;
+  height: 140px;
+  border-color: rgba(0, 240, 255, 0.5);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);
+  transform: rotateX(72deg) rotateY(-18deg);
+  animation: spinSlow 18s linear infinite;
+}
+
+.scene-orbital-ring-2 {
+  width: 280px;
+  height: 130px;
+  border-color: rgba(168, 85, 247, 0.45);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  transform: rotateX(68deg) rotateY(25deg);
+  animation: spinSlowReverse 22s linear infinite;
+}
+
+.scene-orbital-ring-3 {
+  width: 230px;
+  height: 100px;
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+  transform: rotateX(65deg) rotateY(-5deg);
+  animation: spinSlow 14s linear infinite;
+}
+
+@keyframes spinSlow {
+  from { transform: rotateX(72deg) rotateY(-18deg) rotateZ(0deg); }
+  to { transform: rotateX(72deg) rotateY(-18deg) rotateZ(360deg); }
+}
+
+@keyframes spinSlowReverse {
+  from { transform: rotateX(68deg) rotateY(25deg) rotateZ(360deg); }
+  to { transform: rotateX(68deg) rotateY(25deg) rotateZ(0deg); }
+}
+
+/* Cristales geométricos flotantes */
+.floating-gem {
+  position: absolute;
+  font-size: 1.4rem;
+  filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.8));
+  animation: floatGem 4s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.floating-gem-1 { top: 20px; left: 30px; animation-delay: 0s; }
+.floating-gem-2 { bottom: 60px; right: 20px; animation-delay: 1.3s; font-size: 1.1rem; }
+.floating-gem-3 { top: 60px; right: 40px; animation-delay: 2.2s; font-size: 1.3rem; }
+
+@keyframes floatGem {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(15deg); }
+}
+
+/* Prisma cristalino central con el emblema */
+.crystal-core-prism {
+  position: relative;
+  z-index: 5;
+  width: 170px;
+  height: 170px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(13, 20, 36, 0.4) 60%, rgba(0, 240, 255, 0.25) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 36px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 
+    0 15px 45px rgba(0, 240, 255, 0.35),
+    inset 0 0 30px rgba(255, 255, 255, 0.3),
+    inset 0 0 15px rgba(0, 240, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-3deg);
+  transition: all 0.4s ease;
+}
+
+.crystal-core-prism:hover {
+  transform: rotate(0deg) scale(1.04);
+  box-shadow: 
+    0 20px 60px rgba(0, 240, 255, 0.5),
+    inset 0 0 35px rgba(255, 255, 255, 0.4);
+}
+
+.prism-glass-facet {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.prism-emblem-tree {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 16px rgba(0, 240, 255, 0.85));
+  animation: pulseScale 3s infinite ease-in-out;
+}
+
+@keyframes pulseScale {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.8)); }
+  50% { transform: scale(1.05); filter: drop-shadow(0 0 24px rgba(168, 85, 247, 0.95)); }
+}
+
+@keyframes levitate {
+  0%, 100% { transform: translateY(0px) rotate(-3deg); }
+  50% { transform: translateY(-14px) rotate(1deg); }
+}
+
+.animate-levitate {
+  animation: levitate 5s infinite ease-in-out;
+}
+
+/* Pedestal cilíndrico en la base */
+.scene-pedestal-platform {
+  position: absolute;
+  bottom: 10px;
+  width: 220px;
+  height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+.pedestal-top-disc {
+  width: 100%;
+  height: 20px;
+  background: linear-gradient(90deg, #1e293b 0%, #475569 50%, #1e293b 100%);
+  border: 1px solid rgba(0, 240, 255, 0.6);
+  border-radius: 50%;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+}
+
+.pedestal-cylinder-body {
+  width: 90%;
+  height: 24px;
+  background: linear-gradient(180deg, #334155 0%, #0f172a 100%);
+  border-radius: 0 0 16px 16px;
+  border-bottom: 2px solid rgba(0, 240, 255, 0.4);
+}
+
+.pedestal-glow-ground {
+  position: absolute;
+  bottom: -15px;
+  width: 240px;
+  height: 35px;
+  background: radial-gradient(ellipse, rgba(0, 240, 255, 0.45) 0%, rgba(0, 240, 255, 0) 70%);
+  border-radius: 50%;
+  filter: blur(8px);
+}
+
+.scene-mist-layer {
+  position: absolute;
+  bottom: -10px;
+  width: 320px;
+  height: 60px;
+  background: radial-gradient(ellipse at center, rgba(15, 23, 42, 0.8) 0%, rgba(6, 9, 19, 0) 80%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+.stage-bottom-info {
+  margin-top: 20px;
+}
+
+.stage-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #FFFFFF 0%, #00F0FF 60%, #A855F7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 6px 0;
+}
+
+.stage-tagline {
+  font-size: 0.92rem;
+  color: #94A3B8;
+  max-width: 360px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ==========================================================================
+   4. TARJETA DE VIDRIO LÍQUIDO (LIQUID GLASS CARD)
+   ========================================================================== */
+.login-card-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.liquid-glass-card {
+  width: 100%;
+  max-width: 440px;
+  background: rgba(13, 20, 36, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 28px;
+  padding: 36px 30px;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+/* En Modo Claro se adapta con elegancia */
+[data-theme='light'] .liquid-glass-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 20px 50px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.card-brand-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.card-floating-emblem {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  box-shadow: 0 8px 24px rgba(0, 240, 255, 0.25);
+}
+
+.card-tree-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.card-brand-name {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: #FFFFFF;
+}
+
+[data-theme='light'] .card-brand-name {
+  color: #0F172A;
+}
+
+.card-brand-motto {
+  font-size: 0.82rem;
+  color: #94A3B8;
+  margin: 2px 0 0 0;
+}
+
+/* Chips de acceso rápido a cuentas sembradas */
+.quick-access-accounts {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+
+.quick-access-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #94A3B8;
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quick-account-chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.chip-account-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #E2E8F0;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.chip-account-btn:hover {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: rgba(0, 240, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.chip-account-btn.active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: #00F0FF;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+  color: #FFFFFF;
+}
+
+[data-theme='light'] .chip-account-btn {
+  color: #1E293B;
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.chip-avatar {
+  font-size: 1.05rem;
+}
+
+/* Formulario */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-field-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #CBD5E1;
+}
+
+[data-theme='light'] .login-field-label {
+  color: #475569;
+}
+
+.login-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input-icon {
+  position: absolute;
+  left: 14px;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.login-input {
+  padding-left: 42px !important;
+  padding-right: 42px !important;
+  height: 46px;
+  border-radius: 14px !important;
+  font-size: 0.92rem;
+  width: 100%;
+}
+
+.btn-toggle-eye {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  transition: color 0.2s ease;
+}
+
+.btn-toggle-eye:hover {
+  color: #00F0FF;
+}
+
+/* Alerta de error con animación de sacudida */
+.login-alert-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 12px;
+  color: #FCA5A5;
+  font-size: 0.84rem;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Botón de Login Gradiente Neón */
+.btn-login-gradient {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 48px;
+  margin-top: 6px;
+  background: linear-gradient(135deg, #6366F1 0%, #3B82F6 50%, #06B6D4 100%);
+  color: #FFFFFF;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 25px rgba(59, 130, 246, 0.45);
+  transition: all 0.3s ease;
+}
+
+.btn-login-gradient:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(0, 240, 255, 0.6);
+  filter: brightness(1.1);
+}
+
+.btn-login-gradient:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-arrow-icon {
+  display: flex;
+  align-items: center;
+}
+
+.spinner-sm {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Indicadores de paginación / estado de la tarjeta */
+.card-bottom-indicators {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.indicator-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.indicator-dot.active {
+  width: 18px;
+  border-radius: 9999px;
+  background: #00F0FF;
+  box-shadow: 0 0 10px #00F0FF;
+}
+
+.card-security-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #64748B;
+}
+
+/* ==========================================================================
+   5. BOTÓN E INSIGNIA DE USUARIO EN EL HEADER
+   ========================================================================== */
+.user-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.user-header-badge:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+}
+
+.user-badge-avatar {
+  font-size: 0.95rem;
+}

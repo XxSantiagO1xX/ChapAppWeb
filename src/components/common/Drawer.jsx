@@ -7,7 +7,7 @@ import { useApp } from '../../context/AppContext.jsx';
 import { Icon } from '../../utils/icons.jsx';
 
 export const Drawer = ({ filterTab, setFilterTab }) => {
-  const { activeModal, closeModal, events = [], theme, toggleTheme, openModal, selectEvent } = useApp();
+  const { activeModal, closeModal, events = [], theme, toggleTheme, openModal, selectEvent, currentUser, logoutUser } = useApp();
 
   if (activeModal !== 'drawer') return null;
 
@@ -131,6 +131,18 @@ export const Drawer = ({ filterTab, setFilterTab }) => {
             <span className="drawer-badge">{archivedCount}</span>
           </button>
 
+          <button 
+            type="button" 
+            className="drawer-nav-item"
+            onClick={() => {
+              closeModal();
+              openModal('settings');
+            }}
+          >
+            <Icon name="settings" size={18} />
+            <span>Configuración del Sistema</span>
+          </button>
+
           <div className="nav-section-title">Apariencia</div>
           <button 
             type="button" 
@@ -141,6 +153,32 @@ export const Drawer = ({ filterTab, setFilterTab }) => {
             <span>Modo {theme === 'dark' ? 'Claro' : 'Oscuro'}</span>
           </button>
         </nav>
+
+        {currentUser && (
+          <div className="drawer-user-panel glass-panel" style={{ margin: '14px 16px', padding: '12px 14px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.4rem' }}>{currentUser.avatar || (currentUser.role === 'admin' ? '👑' : '🛡️')}</span>
+              <div>
+                <strong style={{ display: 'block', fontSize: '0.88rem', color: 'var(--text-primary)' }}>{currentUser.name}</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>
+                  {currentUser.role === 'admin' ? 'Administrador' : 'Segundo al Mando'}
+                </span>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              className="btn-icon-danger" 
+              onClick={() => {
+                closeModal();
+                logoutUser();
+              }}
+              title="Cerrar sesión"
+              aria-label="Cerrar sesión"
+            >
+              <Icon name="logout" size={16} />
+            </button>
+          </div>
+        )}
 
         <div className="drawer-footer">
           <p className="drawer-footer-text">ChapApp Web v5.0 • React + Vite</p>

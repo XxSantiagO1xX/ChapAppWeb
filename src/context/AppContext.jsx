@@ -10,6 +10,12 @@ import {
   getGlobalDirectory,
   subscribeToEventsListRealtime 
 } from '../services/database.js';
+import { 
+  getCurrentUser, 
+  login as authLogin, 
+  logout as authLogout, 
+  initAuthUsers 
+} from '../services/authService.js';
 import { CONFIG } from '../config/config.js';
 
 const AppContext = createContext(null);
@@ -36,7 +42,25 @@ export const AppProvider = ({ children }) => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
-  // 2. Estado de Eventos y Selección
+  // 2. Estado de Autenticación Hermética y Sesión
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
+
+  useEffect(() => {
+    initAuthUsers().catch((e) => console.warn('[AppProvider] Error sembrando usuarios:', e));
+  }, []);
+
+  const loginUser = useCallback(async (username, password) => {
+    const user = await authLogin(username, password);
+    setCurrentUser(user);
+    return user;
+  }, []);
+
+  const logoutUser = useCallback(() => {
+    authLogout();
+    setCurrentUser(null);
+  }, []);
+
+  // 3. Estado de Eventos y Selección
   const [events, setEvents] = useState([]);
   const [activeEvent, setActiveEvent] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -202,6 +226,9 @@ export const AppProvider = ({ children }) => {
   const value = {
     theme,
     toggleTheme,
+    currentUser,
+    loginUser,
+    logoutUser,
     events,
     setEvents,
     activeEvent,

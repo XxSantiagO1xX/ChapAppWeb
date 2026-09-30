@@ -8,7 +8,7 @@ import { useApp } from '../../context/AppContext.jsx';
 import { Icon } from '../../utils/icons.jsx';
 
 export const Header = () => {
-  const { theme, toggleTheme, activeEvent, selectEvent, isSyncing, syncCloud, liveSyncPulse, openModal } = useApp();
+  const { theme, toggleTheme, activeEvent, selectEvent, isSyncing, syncCloud, liveSyncPulse, openModal, currentUser } = useApp();
   const isDark = theme === 'dark';
 
   if (activeEvent) {
@@ -103,6 +103,21 @@ export const Header = () => {
             <Icon name={isDark ? 'moon' : 'sun'} size={18} />
           </button>
 
+          {currentUser && (
+            <button 
+              type="button" 
+              id="btn-open-settings-dash" 
+              onClick={() => openModal('settings')} 
+              className="btn-pill-glass user-header-badge" 
+              title={`Configuración (${currentUser.name})`} 
+              aria-label="Configuración"
+            >
+              <span>{currentUser.avatar || (currentUser.role === 'admin' ? '👑' : '🛡️')}</span>
+              <span className="btn-text-hide-mobile">{currentUser.role === 'admin' ? 'Admin' : 'Operador'}</span>
+              <Icon name="settings" size={13} style={{ opacity: 0.7 }} />
+            </button>
+          )}
+
           <button 
             id="btn-open-cut-modal" 
             onClick={() => openModal('cut')} 
@@ -192,6 +207,21 @@ export const Header = () => {
         >
           <Icon name={isDark ? 'moon' : 'sun'} size={18} />
         </button>
+
+        {currentUser && (
+          <button 
+            type="button" 
+            id="btn-open-settings-home" 
+            onClick={() => openModal('settings')} 
+            className="btn-pill-glass user-header-badge" 
+            title={`Configuración (${currentUser.name})`} 
+            aria-label="Configuración"
+          >
+            <span>{currentUser.avatar || (currentUser.role === 'admin' ? '👑' : '🛡️')}</span>
+            <span className="btn-text-hide-mobile">{currentUser.role === 'admin' ? 'Admin' : 'Operador'}</span>
+            <Icon name="settings" size={13} style={{ opacity: 0.7 }} />
+          </button>
+        )}
 
         <button 
           id="btn-open-directory" 
