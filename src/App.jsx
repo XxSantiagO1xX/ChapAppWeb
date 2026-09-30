@@ -10,6 +10,7 @@ import Header from './components/common/Header.jsx';
 import Drawer from './components/common/Drawer.jsx';
 import ToastContainer from './components/common/Toast.jsx';
 import ConfirmModal from './components/common/ConfirmModal.jsx';
+import BackgroundScene from './components/common/BackgroundScene.jsx';
 
 // Auth & Settings
 import LoginScreen from './components/auth/LoginScreen.jsx';
@@ -36,6 +37,7 @@ export const App = () => {
   if (!currentUser) {
     return (
       <div className="app-container login-mode">
+        <BackgroundScene />
         <LoginScreen />
         <ToastContainer />
       </div>
@@ -44,6 +46,9 @@ export const App = () => {
 
   return (
     <div className="app-container">
+      {/* Escena de Fondo 8K UHD y Microtextura Esmerilada */}
+      <BackgroundScene />
+
       {/* Header Fijo Liquid Glass con Emblema Central */}
       <Header />
 

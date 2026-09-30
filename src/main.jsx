@@ -14,6 +14,7 @@ import '../styles/layout.css';
 import '../styles/components.css';
 import '../styles/charts.css';
 import '../styles/auth.css';
+import '../styles/backgrounds.css';
 
 const rootElement = document.getElementById('root');
 

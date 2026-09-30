@@ -1,0 +1,319 @@
+/**
+ * ChapApp - Sistema de Fondos 8K UHD & Microtextura Esmerilada
+ * Resoluciones Ultra-HD vectoriales dinámicas con soporte de Temas Claro/Oscuro y Presets Personalizables
+ */
+
+/* ==========================================================================
+   1. ESCENA BASE FIJA DE FONDO (HARDWARE ACCELERATED)
+   ========================================================================== */
+.app-backdrop-scene {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  transform: translateZ(0);
+  transition: background 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Microtextura esmerilada de cuarzo 8K UHD (Vectorial SVG Fractal) */
+.backdrop-crystal-noise {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.032;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-repeat: repeat;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='crystalNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23crystalNoise)'/%3E%3C/svg%3E");
+}
+
+[data-theme='light'] .backdrop-crystal-noise {
+  opacity: 0.022;
+  mix-blend-mode: multiply;
+}
+
+/* Capa de orbes de luz dinámica / respiración */
+.backdrop-mesh-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mesh-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0.65;
+  transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: orbDrift 24s infinite alternate ease-in-out;
+}
+
+.mesh-orb-1 {
+  width: 750px;
+  height: 750px;
+  top: -150px;
+  left: 10%;
+  animation-duration: 22s;
+}
+
+.mesh-orb-2 {
+  width: 800px;
+  height: 800px;
+  bottom: -200px;
+  right: 5%;
+  animation-duration: 28s;
+  animation-direction: alternate-reverse;
+}
+
+.mesh-orb-3 {
+  width: 600px;
+  height: 600px;
+  top: 35%;
+  left: 40%;
+  animation-duration: 20s;
+}
+
+@keyframes orbDrift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(1.08); }
+  100% { transform: translate(-30px, 30px) scale(0.95); }
+}
+
+/* ==========================================================================
+   2. PRESET 1: NEBULOSA CÓSMICA (PREDETERMINADO / CIAN & ÍNDIGO 8K)
+   ========================================================================== */
+[data-bg-theme='nebulosa'],
+:root:not([data-bg-theme]) {
+  background-color: #060A14;
+}
+
+[data-bg-theme='nebulosa'] .mesh-orb-1,
+:root:not([data-bg-theme]) .mesh-orb-1 {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, rgba(99, 102, 241, 0) 70%);
+}
+
+[data-bg-theme='nebulosa'] .mesh-orb-2,
+:root:not([data-bg-theme]) .mesh-orb-2 {
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.40) 0%, rgba(0, 240, 255, 0) 70%);
+}
+
+[data-bg-theme='nebulosa'] .mesh-orb-3,
+:root:not([data-bg-theme]) .mesh-orb-3 {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, rgba(168, 85, 247, 0) 70%);
+}
+
+/* Modo Claro Nebulosa */
+[data-theme='light'][data-bg-theme='nebulosa'],
+[data-theme='light']:root:not([data-bg-theme]) {
+  background-color: #F1F5F9;
+}
+
+[data-theme='light'][data-bg-theme='nebulosa'] .mesh-orb-1,
+[data-theme='light']:root:not([data-bg-theme]) .mesh-orb-1 {
+  background: radial-gradient(circle, rgba(199, 210, 254, 0.65) 0%, rgba(199, 210, 254, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='nebulosa'] .mesh-orb-2,
+[data-theme='light']:root:not([data-bg-theme]) .mesh-orb-2 {
+  background: radial-gradient(circle, rgba(186, 230, 253, 0.65) 0%, rgba(186, 230, 253, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='nebulosa'] .mesh-orb-3,
+[data-theme='light']:root:not([data-bg-theme]) .mesh-orb-3 {
+  background: radial-gradient(circle, rgba(233, 213, 255, 0.55) 0%, rgba(233, 213, 255, 0) 70%);
+}
+
+/* ==========================================================================
+   3. PRESET 2: AURORA BOREAL (VERDE ESMERALDA & TURQUESA 8K)
+   ========================================================================== */
+[data-bg-theme='aurora'] {
+  background-color: #031412;
+}
+
+[data-bg-theme='aurora'] .mesh-orb-1 {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, rgba(16, 185, 129, 0) 70%);
+}
+
+[data-bg-theme='aurora'] .mesh-orb-2 {
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.40) 0%, rgba(6, 182, 212, 0) 70%);
+}
+
+[data-bg-theme='aurora'] .mesh-orb-3 {
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.35) 0%, rgba(52, 211, 153, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='aurora'] {
+  background-color: #F0FDF4;
+}
+
+[data-theme='light'][data-bg-theme='aurora'] .mesh-orb-1 {
+  background: radial-gradient(circle, rgba(167, 243, 208, 0.65) 0%, rgba(167, 243, 208, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='aurora'] .mesh-orb-2 {
+  background: radial-gradient(circle, rgba(186, 230, 253, 0.65) 0%, rgba(186, 230, 253, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='aurora'] .mesh-orb-3 {
+  background: radial-gradient(circle, rgba(204, 251, 241, 0.55) 0%, rgba(204, 251, 241, 0) 70%);
+}
+
+/* ==========================================================================
+   4. PRESET 3: OBSIDIANA PURA (CUARZO NEGRO & MONOCROMO 8K)
+   ========================================================================== */
+[data-bg-theme='obsidiana'] {
+  background-color: #04060A;
+}
+
+[data-bg-theme='obsidiana'] .mesh-orb-1 {
+  background: radial-gradient(circle, rgba(51, 65, 85, 0.55) 0%, rgba(51, 65, 85, 0) 70%);
+}
+
+[data-bg-theme='obsidiana'] .mesh-orb-2 {
+  background: radial-gradient(circle, rgba(71, 85, 105, 0.45) 0%, rgba(71, 85, 105, 0) 70%);
+}
+
+[data-bg-theme='obsidiana'] .mesh-orb-3 {
+  background: radial-gradient(circle, rgba(30, 41, 59, 0.60) 0%, rgba(30, 41, 59, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='obsidiana'] {
+  background-color: #F8FAFC;
+}
+
+[data-theme='light'][data-bg-theme='obsidiana'] .mesh-orb-1 {
+  background: radial-gradient(circle, rgba(226, 232, 240, 0.75) 0%, rgba(226, 232, 240, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='obsidiana'] .mesh-orb-2 {
+  background: radial-gradient(circle, rgba(241, 245, 249, 0.85) 0%, rgba(241, 245, 249, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='obsidiana'] .mesh-orb-3 {
+  background: radial-gradient(circle, rgba(203, 213, 225, 0.65) 0%, rgba(203, 213, 225, 0) 70%);
+}
+
+/* ==========================================================================
+   5. PRESET 4: ATARDECER CREPUSCULAR (ÁMBAR DORADO & CORAL 8K)
+   ========================================================================== */
+[data-bg-theme='sunset'] {
+  background-color: #120914;
+}
+
+[data-bg-theme='sunset'] .mesh-orb-1 {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.40) 0%, rgba(245, 158, 11, 0) 70%);
+}
+
+[data-bg-theme='sunset'] .mesh-orb-2 {
+  background: radial-gradient(circle, rgba(244, 63, 94, 0.38) 0%, rgba(244, 63, 94, 0) 70%);
+}
+
+[data-bg-theme='sunset'] .mesh-orb-3 {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, rgba(168, 85, 247, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='sunset'] {
+  background-color: #FFFBEB;
+}
+
+[data-theme='light'][data-bg-theme='sunset'] .mesh-orb-1 {
+  background: radial-gradient(circle, rgba(254, 243, 199, 0.75) 0%, rgba(254, 243, 199, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='sunset'] .mesh-orb-2 {
+  background: radial-gradient(circle, rgba(254, 205, 211, 0.70) 0%, rgba(254, 205, 211, 0) 70%);
+}
+
+[data-theme='light'][data-bg-theme='sunset'] .mesh-orb-3 {
+  background: radial-gradient(circle, rgba(245, 208, 254, 0.65) 0%, rgba(245, 208, 254, 0) 70%);
+}
+
+/* ==========================================================================
+   6. PRESET 5: IMAGEN PERSONALIZADA CON OVERLAY DE VIDRIO
+   ========================================================================== */
+.backdrop-custom-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(8px);
+  transform: scale(1.05);
+  transition: all 0.8s ease;
+}
+
+.backdrop-custom-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(6, 10, 20, 0.75);
+}
+
+[data-theme='light'] .backdrop-custom-overlay {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+/* ==========================================================================
+   7. COMPONENTES DEL SELECTOR DE FONDOS EN CONFIGURACIÓN
+   ========================================================================== */
+.bg-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.bg-preset-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  background: var(--surface-subtle);
+  border: 2px solid var(--border-subtle);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: center;
+}
+
+.bg-preset-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 16px var(--color-primary-glow);
+}
+
+.bg-preset-card.active {
+  border-color: var(--color-primary);
+  background: rgba(0, 240, 255, 0.12);
+  box-shadow: 0 0 16px var(--color-primary-glow);
+}
+
+.bg-preset-thumbnail {
+  width: 100%;
+  height: 60px;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.bg-preset-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bg-preset-badge {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
