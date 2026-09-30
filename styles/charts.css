@@ -159,57 +159,38 @@
 
 .progress-liquid-ring {
   fill: none;
-  stroke: url(#liquidAmberCopperGrad) !important;
+  stroke: url(#liquidProgressMystic);
   stroke-linecap: round;
   transition: stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.progress-head-beacon {
-  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.inner-guide-ring {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.08);
-  stroke-width: 1;
-}
-
-.satellite-group {
-  filter: drop-shadow(0 0 8px currentColor);
-}
-
-.liquid-hub-center {
+.liquid-hub-center-clean {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
-  background: var(--surface-card-elevated);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-glass-highlight);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+  text-align: center;
 }
 
-.hub-percentage-text {
-  font-size: 2.1rem;
+.hub-percentage-text-clean {
+  font-size: 2.5rem;
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: #FDE047;
-  text-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
+  color: #FFFFFF;
+  text-shadow: 0 0 24px rgba(0, 240, 255, 0.40), 0 2px 8px rgba(0, 0, 0, 0.75);
 }
 
-.hub-ratio-sub {
-  font-size: 0.72rem;
+.hub-ratio-sub-clean {
+  font-size: 0.82rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.85);
   font-variant-numeric: tabular-nums;
-  margin-top: 3px;
+  margin-top: 5px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .liquid-card-footer-pills {

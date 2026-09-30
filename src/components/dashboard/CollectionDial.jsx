@@ -1,6 +1,6 @@
 /**
  * ChapApp - Dial Circular Liquid Glass de Meta y Recaudación (CollectionDial) React
- * Rediseño armónico en tonos ámbar, cobre y oro líquido neón sin distorsiones ni elementos desalineados
+ * Paleta 2: Contraste Místico Multicromático (Hilos orbitales entrelazados en turquesa menta, violeta amatista y ámbar cálido)
  */
 
 import React from 'react';
@@ -11,7 +11,7 @@ export const CollectionDial = ({ collected = 0, total = 0, percentage = 0 }) => 
   const size = 220;
   const center = size / 2; // 110
   const trackRadius = 76;
-  const trackStrokeWidth = 13;
+  const trackStrokeWidth = 12;
   const trackCircumference = 2 * Math.PI * trackRadius; // ~477.52
 
   const clampedPercent = Math.min(100, Math.max(0, percentage));
@@ -24,8 +24,6 @@ export const CollectionDial = ({ collected = 0, total = 0, percentage = 0 }) => 
   const tipX = center + trackRadius * Math.cos(orbitAngle);
   const tipY = center + trackRadius * Math.sin(orbitAngle);
 
-  // Paleta cálida líquida: Ámbar / Cobre / Oro Neón (o Esmeralda si está cubierto al 100%)
-  const primaryGlow = isComplete ? '#10B981' : '#F59E0B';
   const remainingAmount = Math.max(0, total - collected);
 
   return (
@@ -33,7 +31,7 @@ export const CollectionDial = ({ collected = 0, total = 0, percentage = 0 }) => 
       {/* Cabecera de la tarjeta */}
       <div className="card-header-compact">
         <div className="header-icon-title-group">
-          <div className="chart-icon-box" style={{ color: '#F59E0B', background: 'rgba(245, 158, 11, 0.12)' }}>
+          <div className="chart-icon-box" style={{ color: '#00F0FF', background: 'rgba(0, 240, 255, 0.12)' }}>
             <Icon name="trending-up" size={18} />
           </div>
           <div>
@@ -42,59 +40,56 @@ export const CollectionDial = ({ collected = 0, total = 0, percentage = 0 }) => 
           </div>
         </div>
 
-        <div className={`badge-pill ${isComplete ? 'badge-emerald' : 'badge-amber'}`}>
+        <div className={`badge-pill ${isComplete ? 'badge-emerald' : 'badge-cyan'}`}>
           <span>{isComplete ? '✓ 100% Cubierto' : `${clampedPercent}% Recaudado`}</span>
         </div>
       </div>
 
       {/* Contenedor del Dial Circular Centrado */}
       <div className="liquid-gauge-container">
-        {/* Aura difuminada cálida */}
+        {/* Aura difuminada mística multicromática */}
         <div 
           className="liquid-glow-aura" 
-          style={{ background: `radial-gradient(circle, ${isComplete ? 'rgba(16, 185, 129, 0.22)' : 'rgba(245, 158, 11, 0.22)'} 0%, transparent 70%)` }} 
+          style={{ background: 'radial-gradient(circle, rgba(0, 240, 255, 0.18) 0%, rgba(192, 132, 252, 0.12) 45%, transparent 70%)' }} 
         />
 
         <div className="liquid-svg-wrapper">
           <svg className="liquid-dial-svg" viewBox={`0 0 ${size} ${size}`}>
             <defs>
-              {/* Degradado Cobre -> Ámbar -> Oro Líquido */}
-              <linearGradient id="liquidAmberCopperGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                {isComplete ? (
-                  <>
-                    <stop offset="0%" stopColor="#059669" />
-                    <stop offset="100%" stopColor="#10B981" />
-                  </>
-                ) : (
-                  <>
-                    <stop offset="0%" stopColor="#EA580C" />
-                    <stop offset="45%" stopColor="#F59E0B" />
-                    <stop offset="100%" stopColor="#FDE047" />
-                  </>
-                )}
+              {/* Degradado Barra de Progreso Turquesa Menta -> Cian Neón */}
+              <linearGradient id="liquidProgressMystic" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#2DD4BF" stopOpacity="0.85" />
+                <stop offset="50%" stopColor="#00F0FF" stopOpacity="0.95" />
+                <stop offset="100%" stopColor="#38BDF8" stopOpacity="1" />
               </linearGradient>
 
-              {/* Degradados Cálidos Ámbar/Cobre para las Elipses Orbitales Decorativas */}
-              <linearGradient id="orbitalWarmGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#EA580C" stopOpacity="0.40" />
-                <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#FDE047" stopOpacity="0.10" />
+              {/* Degradados Multicromáticos para los Hilos Orbitales Entrelazados */}
+              {/* Hilo 1: Ámbar Oro Solar */}
+              <linearGradient id="threadAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.80" />
+                <stop offset="100%" stopColor="#FB923C" stopOpacity="0.50" />
               </linearGradient>
 
-              <linearGradient id="orbitalWarmGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.35" />
-                <stop offset="60%" stopColor="#FB923C" stopOpacity="0.22" />
-                <stop offset="100%" stopColor="#EA580C" stopOpacity="0.12" />
+              {/* Hilo 2: Turquesa Menta Neón */}
+              <linearGradient id="threadTurquoise" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#00F0FF" stopOpacity="0.85" />
+                <stop offset="100%" stopColor="#2DD4BF" stopOpacity="0.45" />
               </linearGradient>
 
-              <linearGradient id="orbitalWarmGrad3" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#FDE047" stopOpacity="0.30" />
-                <stop offset="50%" stopColor="#F59E0B" stopOpacity="0.20" />
-                <stop offset="100%" stopColor="#FB923C" stopOpacity="0.10" />
+              {/* Hilo 3: Violeta Amatista Mística */}
+              <linearGradient id="threadViolet" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#C084FC" stopOpacity="0.80" />
+                <stop offset="100%" stopColor="#A855F7" stopOpacity="0.40" />
               </linearGradient>
 
-              {/* Filtro de resplandor para la punta del anillo */}
-              <filter id="liquidAmberTipGlow" x="-30%" y="-30%" width="160%" height="160%">
+              {/* Hilo 4: Esmeralda Menta */}
+              <linearGradient id="threadEmerald" x1="50%" y1="0%" x2="50%" y2="100%">
+                <stop offset="0%" stopColor="#34D399" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="#059669" stopOpacity="0.35" />
+              </linearGradient>
+
+              {/* Filtro de resplandor para el beacon */}
+              <filter id="beaconGlowFilter" x="-40%" y="-40%" width="180%" height="180%">
                 <feGaussianBlur stdDeviation="3" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
@@ -103,107 +98,100 @@ export const CollectionDial = ({ collected = 0, total = 0, percentage = 0 }) => 
               </filter>
             </defs>
 
-            {/* 1. Anillo exterior sutil concéntrico */}
-            <circle 
-              cx={center} 
-              cy={center} 
-              r={95} 
-              stroke="rgba(245, 158, 11, 0.12)" 
-              strokeWidth="1" 
-              strokeDasharray="4 6"
-              fill="none" 
-            />
-
-            {/* 2. Elipses orbitales decorativas asimétricas fusionadas con la paleta cálida */}
+            {/* Hilos orbitales entrelazados (Réplica exacta de la referencia multicromática) */}
             <ellipse 
               cx={center} 
               cy={center} 
               rx="93" 
-              ry="83" 
-              stroke="url(#orbitalWarmGrad1)" 
-              strokeWidth="1" 
+              ry="82" 
+              stroke="url(#threadAmber)" 
+              strokeWidth="1.1" 
               fill="none" 
-              transform={`rotate(-20 ${center} ${center})`} 
+              transform={`rotate(-22 ${center} ${center})`} 
             />
             <ellipse 
               cx={center} 
               cy={center} 
-              rx="87" 
-              ry="77" 
-              stroke="url(#orbitalWarmGrad2)" 
-              strokeWidth="1" 
+              rx="88" 
+              ry="76" 
+              stroke="url(#threadTurquoise)" 
+              strokeWidth="1.2" 
               fill="none" 
-              transform={`rotate(32 ${center} ${center})`} 
+              transform={`rotate(28 ${center} ${center})`} 
             />
             <ellipse 
               cx={center} 
               cy={center} 
               rx="91" 
-              ry="79" 
-              stroke="url(#orbitalWarmGrad3)" 
-              strokeWidth="0.8" 
+              ry="80" 
+              stroke="url(#threadViolet)" 
+              strokeWidth="1.1" 
               fill="none" 
-              transform={`rotate(75 ${center} ${center})`} 
+              transform={`rotate(72 ${center} ${center})`} 
+            />
+            <ellipse 
+              cx={center} 
+              cy={center} 
+              rx="86" 
+              ry="78" 
+              stroke="url(#threadEmerald)" 
+              strokeWidth="0.9" 
+              fill="none" 
+              transform={`rotate(-60 ${center} ${center})`} 
             />
 
-            {/* 2. Carril base translúcido (Track) */}
+            {/* Carril base circular muy sutil */}
             <circle 
               className="track-glass-ring" 
               cx={center} 
               cy={center} 
               r={trackRadius} 
               strokeWidth={trackStrokeWidth} 
-              stroke="rgba(255, 255, 255, 0.08)" 
+              stroke="rgba(255, 255, 255, 0.05)" 
               strokeLinecap="round"
               fill="none" 
             />
 
-            {/* 3. Anillo de progreso fluido continuo */}
+            {/* Barra fluida principal de progreso (Cian / Turquesa Menta) */}
             <circle 
               className="progress-liquid-ring" 
               cx={center} 
               cy={center} 
               r={trackRadius} 
               strokeWidth={trackStrokeWidth}
-              stroke="url(#liquidAmberCopperGrad)"
+              stroke="url(#liquidProgressMystic)"
               fill="none"
               strokeDasharray={trackCircumference}
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
               transform={`rotate(-90 ${center} ${center})`}
               style={{
+                stroke: 'url(#liquidProgressMystic)',
                 transition: 'stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1)',
               }}
             />
 
-            {/* 4. Punta luminosa sincronizada en el extremo del arco */}
+            {/* Indicador de punta (Beacon) con anillo exterior neón y núcleo blanco */}
             {clampedPercent > 0 && (
-              <g className="progress-head-beacon" filter="url(#liquidAmberTipGlow)">
-                <circle cx={tipX} cy={tipY} r="8.5" fill={primaryGlow} opacity="0.4" />
-                <circle cx={tipX} cy={tipY} r="4.5" fill={isComplete ? '#10B981' : '#FDE047'} stroke="#FFFFFF" strokeWidth="1.5" />
+              <g className="progress-head-beacon" filter="url(#beaconGlowFilter)">
+                <circle cx={tipX} cy={tipY} r="8.5" fill="#00F0FF" opacity="0.4" />
+                <circle cx={tipX} cy={tipY} r="5" fill="#0A1626" stroke="#00F0FF" strokeWidth="2" />
+                <circle cx={tipX} cy={tipY} r="2" fill="#FFFFFF" />
               </g>
             )}
           </svg>
 
-          {/* Núcleo central con Glassmorphism y tipografía ámbar/oro */}
-          <div className="liquid-hub-center glass-panel">
-            <span 
-              className="hub-percentage-text" 
-              style={{ 
-                color: isComplete ? '#10B981' : '#FDE047',
-                textShadow: isComplete ? '0 0 18px rgba(16, 185, 129, 0.45)' : '0 0 18px rgba(245, 158, 11, 0.45)' 
-              }}
-            >
-              {clampedPercent}%
-            </span>
-            <span className="hub-ratio-sub">
+          {/* Núcleo central limpio sin bloqueos opacos */}
+          <div className="liquid-hub-center-clean">
+            <span className="hub-percentage-text-clean">{clampedPercent}%</span>
+            <span className="hub-ratio-sub-clean">
               {formatCurrency(collected).split('.')[0]} / {formatCurrency(total).split('.')[0]}
             </span>
           </div>
         </div>
       </div>
 
-      {/* 5. Píldoras de balance monetario inferiores alineadas y con amplio espacio */}
+      {/* Píldoras de balance monetario inferiores alineadas y con amplio espacio */}
       <div className="liquid-card-footer-pills">
         <div className="balance-stat-col">
           <span className="balance-stat-label">Cobrado</span>
