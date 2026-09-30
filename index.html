@@ -32,19 +32,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <!-- Contenedor Principal de la App -->
-  <div id="app"></div>
-
-  <!-- Contenedor de Modales Nativos <dialog> -->
-  <div id="modals-mount"></div>
-
-  <!-- Contenedor de Alertas Toast -->
-  <div id="toast-container" class="toast-container"></div>
+  <!-- Contenedor Principal de React -->
+  <div id="root"></div>
 
   <!-- Variables de Entorno en Runtime/Build -->
-  <script src="/env.js?v=5.0"></script>
+  <script src="/env.js"></script>
 
-  <!-- Script Principal de la Aplicación (ES Module) -->
-  <script type="module" src="/src/app.js?v=5.0"></script>
+  <!-- Script Principal de la Aplicación React (Vite Entry Point) -->
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

@@ -121,6 +121,20 @@
   animation: fadeIn 0.25s ease-out;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 0.25s ease-out;
+}
+
 .glass-dialog .dialog-content {
   background: var(--surface-dialog);
   backdrop-filter: blur(36px) saturate(200%);

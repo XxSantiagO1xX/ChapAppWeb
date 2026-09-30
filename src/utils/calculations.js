@@ -4,8 +4,6 @@
  * soporte para invitados temporales prorrateados y cuadre de caja de doble partida.
  */
 
-import { store } from '../state/store.js';
-
 /**
  * Redondea un número a 2 decimales evitando errores de coma flotante.
  */
@@ -113,7 +111,26 @@ export const resolveEventGuests = (event, guestsInput = null) => {
     return guestsList;
   }
 
-  // Fallback a store
+  // Fallback a localStorage y store
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('chapapp_ticket_guests');
+      if (saved) {
+        const allGuests = JSON.parse(saved);
+        if (event?.id && allGuests[event.id]) {
+          const eventMap = allGuests[event.id];
+          Object.entries(eventMap).forEach(([sf, arr]) => {
+            if (Array.isArray(arr)) arr.forEach((g) => addGuest(g, sf));
+          });
+        } else {
+          Object.entries(allGuests).forEach(([sf, arr]) => {
+            if (Array.isArray(arr)) arr.forEach((g) => addGuest(g, sf));
+          });
+        }
+      }
+    }
+  } catch (e) {}
+
   try {
     if (typeof store !== 'undefined' && store?.getState) {
       const st = store.getState();

@@ -1,12 +1,23 @@
 {
   "name": "chapapp-web",
-  "version": "2.5.0",
-  "description": "ChapApp - Finanzas Familiares & Prorrateo Web",
+  "version": "5.0.0",
+  "description": "ChapApp - Finanzas Familiares & Prorrateo Web (React + Vite)",
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "node build-env.js",
-    "start": "npx serve ."
+    "dev": "vite",
+    "build": "node build-env.js && vite build",
+    "preview": "vite preview"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.475.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.1.0"
+  }
 }

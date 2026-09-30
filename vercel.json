@@ -1,23 +1,11 @@
 {
   "version": 2,
-  "framework": null,
-  "buildCommand": "node build-env.js",
-  "outputDirectory": ".",
-  "cleanUrls": false,
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    }
-  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/((?!api/|assets/|styles/|src/|env.js|favicon.ico|manifest.json).*)",
+      "source": "/((?!api/|assets/|env.js|favicon.ico).*)",
       "destination": "/index.html"
     }
   ]

@@ -2,7 +2,7 @@
  * ChapApp - Escáner de Tickets con Inteligencia Artificial (Google Gemini Vision)
  */
 
-import { CONFIG } from '../config.js';
+import { CONFIG } from '../config/config.js';
 
 const SYSTEM_PROMPT = `Eres un auditor contable experto. Tu tarea es analizar la imagen de un comprobante de gasto (ticket de caja, nota de remisión, factura, recibo o nota manuscrita con precios).
 

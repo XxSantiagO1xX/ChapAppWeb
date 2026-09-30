@@ -4,7 +4,7 @@
  */
 
 import { initSupabaseClient, getSupabase } from './supabase.js';
-import { CONFIG } from '../config.js';
+import { CONFIG } from '../config/config.js';
 
 export const generateUUID = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {

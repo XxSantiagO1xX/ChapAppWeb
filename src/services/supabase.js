@@ -1,13 +1,13 @@
 /**
- * ChapApp - Cliente Oficial Supabase para Web
- * Importación ESM moderna con soporte Realtime
+ * ChapApp - Cliente Oficial Supabase para Web (React + Vite)
+ * Soporte transparente para sincronización en tiempo real
  */
 
-import { CONFIG, isSupabaseConfigured } from '../config.js';
+import { createClient } from '@supabase/supabase-js';
+import { CONFIG, isSupabaseConfigured } from '../config/config.js';
 
 let supabaseClient = null;
 
-// Cargar cliente Supabase dinámicamente mediante ESM
 export const initSupabaseClient = async () => {
   if (supabaseClient) return supabaseClient;
 
@@ -17,26 +17,14 @@ export const initSupabaseClient = async () => {
   }
 
   try {
-    // Si Supabase ya fue cargado globalmente mediante script CDN
-    if (window.supabase && typeof window.supabase.createClient === 'function') {
-      supabaseClient = window.supabase.createClient(CONFIG.SUPABASE.URL, CONFIG.SUPABASE.ANON_KEY, {
-        auth: { persistSession: false },
-        realtime: { params: { eventsPerSecond: 10 } }
-      });
-      console.log('[Supabase Web] ✅ Cliente inicializado desde script global.');
-      return supabaseClient;
-    }
-
-    // Importación dinámica ESM
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
     supabaseClient = createClient(CONFIG.SUPABASE.URL, CONFIG.SUPABASE.ANON_KEY, {
       auth: { persistSession: false },
-      realtime: { params: { eventsPerSecond: 10 } }
+      realtime: { params: { eventsPerSecond: 10 } },
     });
-    console.log('[Supabase Web] ✅ Cliente Supabase inicializado vía ESM.');
+    console.log('[Supabase Web] ✅ Cliente Supabase inicializado.');
     return supabaseClient;
   } catch (err) {
-    console.warn('[Supabase Web] Error importando Supabase ESM, se usará modo local:', err.message);
+    console.warn('[Supabase Web] Error inicializando Supabase:', err.message);
     return null;
   }
 };

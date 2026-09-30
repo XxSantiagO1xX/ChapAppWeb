@@ -1,38 +1,4 @@
 /**
- * ChapApp - Configuración Centralizada de Servicios Web
- * Credenciales de Supabase y Google Gemini Vision
+ * Re-exportación de configuración para compatibilidad retroactiva
  */
-
-export const CONFIG = {
-  SUPABASE: {
-    URL: 'https://xpdvtsrdcrfljceafuuy.supabase.co',
-    ANON_KEY: 'sb_publishable_tG7pPEaA-_d1I7V8TKiaGg_6tyuC2vt',
-  },
-  GEMINI: {
-    API_KEY: (typeof window !== 'undefined' && (localStorage.getItem('chapapp_gemini_api_key') || window.__ENV?.GEMINI_API_KEY)) || '',
-    MODEL: 'gemini-2.0-flash',
-    FALLBACK_MODELS: [
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-2.0-flash-exp',
-      'gemini-1.5-pro'
-    ]
-  },
-  APP: {
-    NAME: 'ChapApp',
-    VERSION: '2.0.0',
-    DEFAULT_THEME: 'dark', // Tema oscuro predeterminado
-    STORAGE_KEYS: {
-      THEME: 'chapapp_theme_preference',
-      LOCAL_EVENTS: 'chapapp_cached_events',
-      LOCAL_DIRECTORY: 'chapapp_cached_directory',
-      BACKGROUND: 'chapapp_custom_background'
-    }
-  }
-};
-
-export const isSupabaseConfigured = Boolean(
-  CONFIG.SUPABASE.URL &&
-  CONFIG.SUPABASE.ANON_KEY &&
-  !CONFIG.SUPABASE.URL.includes('tu-proyecto.supabase.co')
-);
+export * from './config/config.js';

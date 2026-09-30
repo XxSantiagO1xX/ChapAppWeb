@@ -25,4 +25,9 @@ window.__ENV.GEMINI_API_KEY = ${JSON.stringify(geminiKey)};
 
 const targetPath = path.resolve('./env.js');
 fs.writeFileSync(targetPath, envContent, 'utf-8');
+
+const publicPath = path.resolve('./public/env.js');
+if (fs.existsSync(path.resolve('./public'))) {
+  fs.writeFileSync(publicPath, envContent, 'utf-8');
+}
 console.log('✅ [build-env.js] env.js generado exitosamente. Clave Gemini detectada:', Boolean(geminiKey));
