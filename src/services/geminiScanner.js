@@ -276,3 +276,76 @@ export const extractDataFromReceipt = async (fileOrBase64, mimeType = 'image/jpe
   missingErr.code = 'MISSING_API_KEY';
   throw missingErr;
 };
+
+/**
+ * Procesa múltiples imágenes de tickets en lotes con concurrencia controlada
+ * @param {File[]} files - Lista de archivos de imagen a procesar
+ * @param {Function} onProgress - Callback para reportar avance ({ current, total, result, error })
+ * @returns {Promise<Array>} Lista de resultados analizados
+ */
+export const batchExtractDataFromReceipts = async (files = [], onProgress = null) => {
+  if (!files || files.length === 0) return [];
+
+  const results = [];
+  const CONCURRENCY_LIMIT = 2; // Máximo 2 peticiones paralelas para respetar cuotas de Gemini
+  let currentIndex = 0;
+
+  const processFile = async (file, index) => {
+    try {
+      const extracted = await extractDataFromReceipt(file);
+      const item = {
+        id: 'batch_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substring(2, 6),
+        fileName: file.name,
+        fileSize: file.size,
+        title: extracted.title || 'Compra ' + (index + 1),
+        amount: typeof extracted.amount === 'number' ? extracted.amount : 0,
+        category: extracted.category || 'Comida',
+        confidence: extracted.confidence || 0.9,
+        status: 'success',
+        included: true,
+      };
+      results.push(item);
+      if (typeof onProgress === 'function') {
+        onProgress({ current: results.length, total: files.length, item, status: 'success' });
+      }
+      return item;
+    } catch (err) {
+      console.warn(`[Batch Scanner] Error escaneando "${file.name}":`, err);
+      const item = {
+        id: 'batch_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substring(2, 6),
+        fileName: file.name,
+        fileSize: file.size,
+        title: file.name.replace(/\.[^/.]+$/, '').slice(0, 30) || 'Gasto General',
+        amount: 0,
+        category: 'Comida',
+        confidence: 0,
+        status: 'error',
+        error: err.message || 'Error de lectura',
+        included: true,
+      };
+      results.push(item);
+      if (typeof onProgress === 'function') {
+        onProgress({ current: results.length, total: files.length, item, status: 'error' });
+      }
+      return item;
+    }
+  };
+
+  // Pool de ejecución concurrente
+  const pool = [];
+  for (let i = 0; i < files.length; i++) {
+    const promise = Promise.resolve().then(() => processFile(files[i], i));
+    pool.push(promise);
+
+    if (CONCURRENCY_LIMIT <= files.length) {
+      const e = promise.then(() => pool.splice(pool.indexOf(e), 1));
+      pool.push(e);
+      if (pool.length >= CONCURRENCY_LIMIT) {
+        await Promise.race(pool);
+      }
+    }
+  }
+
+  await Promise.all(pool);
+  return results;
+};

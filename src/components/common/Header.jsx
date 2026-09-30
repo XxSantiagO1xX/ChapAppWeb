@@ -8,7 +8,7 @@ import { useApp } from '../../context/AppContext.jsx';
 import { Icon } from '../../utils/icons.jsx';
 
 export const Header = () => {
-  const { theme, toggleTheme, activeEvent, selectEvent, isSyncing, syncCloud, openModal } = useApp();
+  const { theme, toggleTheme, activeEvent, selectEvent, isSyncing, syncCloud, liveSyncPulse, openModal } = useApp();
   const isDark = theme === 'dark';
 
   if (activeEvent) {
@@ -61,10 +61,37 @@ export const Header = () => {
             id="btn-sync-cloud" 
             onClick={syncCloud} 
             className={`btn-icon-glass sync-btn ${isSyncing ? 'syncing-spin' : ''}`} 
-            title="Sincronizar con Supabase Cloud" 
+            title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'} 
             aria-label="Sincronizar"
+            style={{ position: 'relative' }}
           >
             <Icon name="refresh" size={16} />
+            {liveSyncPulse && (
+              <span 
+                className="realtime-pulse-dot" 
+                style={{
+                  position: 'absolute',
+                  top: '5px',
+                  right: '5px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#10B981',
+                  boxShadow: '0 0 8px #10B981',
+                }} 
+              />
+            )}
+          </button>
+
+          <button 
+            type="button" 
+            id="btn-open-analytics-dash" 
+            onClick={() => openModal('analytics')} 
+            className="btn-icon-glass" 
+            title="Analítica Histórica y Estadísticas Globales" 
+            aria-label="Analítica"
+          >
+            <Icon name="chart" size={16} />
           </button>
 
           <button 
@@ -121,13 +148,40 @@ export const Header = () => {
 
       <div className="header-right">
         <button 
-          id="btn-sync-cloud" 
+          id="btn-sync-cloud-home" 
           onClick={syncCloud} 
           className={`btn-icon-glass sync-btn ${isSyncing ? 'syncing-spin' : ''}`} 
-          title="Sincronizar con Supabase Cloud" 
+          title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'} 
           aria-label="Sincronizar"
+          style={{ position: 'relative' }}
         >
           <Icon name="refresh" size={16} />
+          {liveSyncPulse && (
+            <span 
+              className="realtime-pulse-dot" 
+              style={{
+                position: 'absolute',
+                top: '5px',
+                right: '5px',
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: '#10B981',
+                boxShadow: '0 0 8px #10B981',
+              }} 
+            />
+          )}
+        </button>
+
+        <button 
+          type="button" 
+          id="btn-open-analytics-home" 
+          onClick={() => openModal('analytics')} 
+          className="btn-icon-glass" 
+          title="Analítica Histórica y Estadísticas Globales" 
+          aria-label="Analítica"
+        >
+          <Icon name="chart" size={16} />
         </button>
 
         <button 

@@ -22,6 +22,7 @@ import AddParticipantModal from './components/modals/AddParticipantModal.jsx';
 import CsvImportModal from './components/modals/CsvImportModal.jsx';
 import DirectoryModal from './components/modals/DirectoryModal.jsx';
 import CutModal from './components/modals/CutModal.jsx';
+import AnalyticsModal from './components/analytics/AnalyticsModal.jsx';
 
 export const App = () => {
   const { activeEvent } = useApp();
@@ -51,6 +52,7 @@ export const App = () => {
       <CsvImportModal />
       <DirectoryModal />
       <CutModal />
+      <AnalyticsModal />
       <ConfirmModal />
 
       {/* Notificaciones Flotantes Toast */}

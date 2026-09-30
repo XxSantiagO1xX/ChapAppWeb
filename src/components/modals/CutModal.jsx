@@ -1,26 +1,40 @@
 /**
  * ChapApp - Modal Corte de Caja y Liquidación (CutModal) React
+ * Con soporte para Excel Multi-Hoja Estructurado y PDF Ejecutivo
  */
 
 import React from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { formatCurrency, calculateEventTotals } from '../../utils/calculations.js';
 import { downloadEventCsv } from '../../utils/reports.js';
+import { downloadExecutiveExcel } from '../../utils/excelExporter.js';
+import { openExecutivePrintReport } from '../../utils/pdfReport.js';
 import { Icon } from '../../utils/icons.jsx';
 
 export const CutModal = () => {
-  const { activeModal, closeModal, activeEvent } = useApp();
+  const { activeModal, closeModal, activeEvent, showToast } = useApp();
 
   if (activeModal !== 'cut' || !activeEvent) return null;
 
   const totals = calculateEventTotals(activeEvent);
 
-  const handleDownloadCsv = () => {
-    downloadEventCsv(activeEvent, totals);
+  const handleDownloadExcel = () => {
+    try {
+      downloadExecutiveExcel(activeEvent, totals);
+      showToast('Libro de Excel generado y descargado exitosamente', 'success');
+    } catch (err) {
+      console.error('Error generando Excel:', err);
+      showToast('Error al generar archivo Excel', 'error');
+    }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadCsv = () => {
+    downloadEventCsv(activeEvent, totals);
+    showToast('Archivo CSV descargado', 'info');
+  };
+
+  const handlePrintExecutivePdf = () => {
+    openExecutivePrintReport(activeEvent, totals);
   };
 
   return (
@@ -126,7 +140,7 @@ export const CutModal = () => {
             </div>
           </div>
 
-          <div className="dialog-footer">
+          <div className="dialog-footer" style={{ flexWrap: 'wrap', gap: '8px' }}>
             <button type="button" className="btn-pill-glass btn-close-dialog" onClick={closeModal}>
               Cerrar
             </button>
@@ -134,17 +148,28 @@ export const CutModal = () => {
               type="button" 
               className="btn-pill-glass" 
               onClick={handleDownloadCsv}
+              title="Descargar datos en texto separado por comas"
             >
               <Icon name="download" size={16} />
               <span>Descargar CSV</span>
             </button>
             <button 
               type="button" 
+              className="btn-pill-cyan" 
+              onClick={handleDownloadExcel}
+              title="Descargar libro estructurado con 4 hojas"
+            >
+              <Icon name="file" size={16} />
+              <span>Excel Profesional</span>
+            </button>
+            <button 
+              type="button" 
               className="btn-pill-primary" 
-              onClick={handlePrint}
+              onClick={handlePrintExecutivePdf}
+              title="Generar vista ejecutiva para imprimir o guardar en PDF"
             >
               <Icon name="print" size={16} />
-              <span>Imprimir / PDF</span>
+              <span>PDF Ejecutivo</span>
             </button>
           </div>
         </div>

@@ -3,7 +3,7 @@
  * Gestión centralizada de Eventos, Tema Claro/Oscuro, Navegación, Modales y Alertas
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { 
   getAllEvents, 
   getEventById, 
@@ -41,6 +41,12 @@ export const AppProvider = ({ children }) => {
   const [activeEvent, setActiveEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [liveSyncPulse, setLiveSyncPulse] = useState(false);
+
+  const activeEventRef = useRef(activeEvent);
+  useEffect(() => {
+    activeEventRef.current = activeEvent;
+  }, [activeEvent]);
 
   // 3. Estado de Navegación del Dashboard
   const [activeDashboardTab, setActiveDashboardTab] = useState('summary');
@@ -111,12 +117,29 @@ export const AppProvider = ({ children }) => {
     loadInitialData();
   }, [loadInitialData]);
 
-  // Suscripción Realtime a Supabase
+  // Suscripción Realtime a Supabase con pulso visual y actualización reactiva
   useEffect(() => {
-    const unsubscribe = subscribeToEventsListRealtime(() => {
+    const unsubscribe = subscribeToEventsListRealtime(async () => {
       console.log('[AppProvider] Cambio detectado en Supabase Realtime, actualizando...');
-      loadInitialData();
+      setLiveSyncPulse(true);
+      setTimeout(() => setLiveSyncPulse(false), 2500);
+
+      // Refrescar lista de eventos y directorio
+      await loadInitialData();
+
+      // Si hay un evento abierto en este dispositivo, refrescar su detalle
+      if (activeEventRef.current?.id) {
+        try {
+          const refreshed = await getEventById(activeEventRef.current.id);
+          if (refreshed) {
+            setActiveEvent(refreshed);
+          }
+        } catch (err) {
+          console.warn('[AppProvider] Error refrescando evento activo en Realtime:', err);
+        }
+      }
     });
+
     return () => {
       if (typeof unsubscribe === 'function') unsubscribe();
     };
@@ -187,6 +210,7 @@ export const AppProvider = ({ children }) => {
     refreshActiveEvent,
     loading,
     isSyncing,
+    liveSyncPulse,
     syncCloud,
     activeDashboardTab,
     setActiveDashboardTab,

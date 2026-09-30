@@ -85,6 +85,18 @@ export const Drawer = ({ filterTab, setFilterTab }) => {
             className="drawer-nav-item"
             onClick={() => {
               closeModal();
+              openModal('analytics');
+            }}
+          >
+            <Icon name="chart" size={18} />
+            <span>Analítica Global</span>
+          </button>
+
+          <button 
+            type="button" 
+            className="drawer-nav-item"
+            onClick={() => {
+              closeModal();
               openModal('newEvent');
             }}
           >
