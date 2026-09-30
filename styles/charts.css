@@ -159,11 +159,13 @@
 
 .progress-liquid-ring {
   fill: none;
-  stroke: url(#liquidCollectionGrad) !important;
+  stroke: url(#liquidAmberCopperGrad) !important;
   stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: 110px 110px;
-  transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.progress-head-beacon {
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .inner-guide-ring {
@@ -198,8 +200,8 @@
   letter-spacing: -0.04em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-  text-shadow: 0 0 16px var(--color-primary-glow);
+  color: #FDE047;
+  text-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
 }
 
 .hub-ratio-sub {
@@ -210,18 +212,56 @@
   margin-top: 3px;
 }
 
-.liquid-card-footer {
+.liquid-card-footer-pills {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 14px;
-  border-top: 1px solid var(--border-subtle);
-  font-size: 0.84rem;
+  gap: 16px;
+  margin-top: 14px;
+  padding: 10px 16px;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.balance-stat-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.balance-stat-col.text-right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.balance-stat-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--text-secondary);
 }
 
-.liquid-card-footer strong {
+.balance-stat-val {
+  font-size: 1.05rem;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.text-emerald-bright {
+  color: #10B981;
+}
+
+.text-amber-bright {
+  color: #F59E0B;
+}
+
+.balance-stat-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border-subtle);
 }
 
 /* ==========================================================================
