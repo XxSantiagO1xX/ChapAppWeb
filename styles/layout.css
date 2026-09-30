@@ -885,3 +885,36 @@ dialog {
   gap: 10px;
   border-radius: var(--radius-xl);
 }
+
+/* ==========================================================================
+   OPTIMIZACIONES TEMA CLARO PARA CÁPSULA LATERAL
+   ========================================================================== */
+[data-theme="light"] .capsule-toggle-btn {
+  background: rgba(2, 132, 199, 0.12);
+  border-color: rgba(2, 132, 199, 0.45);
+  color: var(--color-primary);
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.20);
+}
+
+[data-theme="light"] .capsule-toggle-btn:hover {
+  background: var(--color-primary);
+  color: #FFFFFF;
+  border-color: #FFFFFF;
+  box-shadow: 0 0 18px rgba(2, 132, 199, 0.40);
+}
+
+[data-theme="light"] .capsule-tab-item.active {
+  background: rgba(2, 132, 199, 0.12);
+  border-color: rgba(2, 132, 199, 0.40);
+  color: var(--color-primary);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.15);
+}
+
+[data-theme="light"] .capsule-tab-item.active .capsule-tab-title {
+  color: var(--color-primary);
+}
+
+[data-theme="light"] .floating-capsule-sidebar.collapsed .capsule-tab-item.active {
+  background: rgba(2, 132, 199, 0.16);
+  border-color: rgba(2, 132, 199, 0.50);
+}
