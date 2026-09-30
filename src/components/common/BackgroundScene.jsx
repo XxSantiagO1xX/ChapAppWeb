@@ -1,34 +1,29 @@
 /**
- * ChapApp - Componente de Fondo Dinámico 8K UHD y Microtextura de Cristal (BackgroundScene)
- * Renderizado ultra-fluido acelerado por hardware con soporte de múltiples presets y fotos personalizadas
+ * ChapApp - Componente de Fondo Oficial (BackgroundScene)
+ * Alternancia automática y 100% nítida entre Modo Oscuro y Claro sin distorsión ni desenfoque (blur)
  */
 
 import React from 'react';
 import { useApp } from '../../context/AppContext.jsx';
+import bgDark from '../../assets/bg_dark.jpg';
+import bgLight from '../../assets/bg_light.jpg';
 
 export const BackgroundScene = () => {
-  const { backgroundTheme = 'nebulosa', customBgUrl } = useApp();
+  const { theme = 'dark' } = useApp();
+  const isLight = theme === 'light';
 
   return (
-    <div className="app-backdrop-scene" aria-hidden="true" data-bg-theme={backgroundTheme}>
-      {backgroundTheme === 'custom' && customBgUrl ? (
-        <>
-          <div 
-            className="backdrop-custom-image" 
-            style={{ backgroundImage: `url(${customBgUrl})` }} 
-          />
-          <div className="backdrop-custom-overlay" />
-        </>
-      ) : (
-        <div className="backdrop-mesh-canvas">
-          <div className="mesh-orb mesh-orb-1" />
-          <div className="mesh-orb mesh-orb-2" />
-          <div className="mesh-orb mesh-orb-3" />
-        </div>
-      )}
-
-      {/* Microtextura esmerilada de cuarzo físico 8K UHD */}
-      <div className="backdrop-crystal-noise" />
+    <div className="app-backdrop-scene" aria-hidden="true" data-theme={theme}>
+      {/* Capa de Flor de Loto Modo Oscuro */}
+      <div 
+        className={`app-background-layer bg-dark-layer ${!isLight ? 'active' : ''}`}
+        style={{ backgroundImage: `url(${bgDark})` }}
+      />
+      {/* Capa de Flor de Loto Modo Claro */}
+      <div 
+        className={`app-background-layer bg-light-layer ${isLight ? 'active' : ''}`}
+        style={{ backgroundImage: `url(${bgLight})` }}
+      />
     </div>
   );
 };

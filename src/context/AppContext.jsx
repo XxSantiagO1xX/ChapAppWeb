@@ -42,43 +42,6 @@ export const AppProvider = ({ children }) => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   }, []);
 
-  // 1.1 Estado del Fondo de Pantalla 8K UHD
-  const [backgroundTheme, setBackgroundTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.BACKGROUND);
-      if (saved) return saved;
-    }
-    return 'nebulosa';
-  });
-
-  const [customBgUrl, setCustomBgUrl] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('chapapp_custom_bg_url') || '';
-    }
-    return '';
-  });
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-bg-theme', backgroundTheme);
-      localStorage.setItem(CONFIG.APP.STORAGE_KEYS.BACKGROUND, backgroundTheme);
-    }
-  }, [backgroundTheme]);
-
-  const changeBackgroundTheme = useCallback((newTheme) => {
-    setBackgroundTheme(newTheme);
-  }, []);
-
-  const changeCustomBgUrl = useCallback((url) => {
-    setCustomBgUrl(url);
-    if (typeof window !== 'undefined') {
-      if (url) {
-        localStorage.setItem('chapapp_custom_bg_url', url);
-      } else {
-        localStorage.removeItem('chapapp_custom_bg_url');
-      }
-    }
-  }, []);
 
   // 2. Estado de Autenticación Hermética y Sesión
   const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
@@ -264,10 +227,6 @@ export const AppProvider = ({ children }) => {
   const value = {
     theme,
     toggleTheme,
-    backgroundTheme,
-    changeBackgroundTheme,
-    customBgUrl,
-    changeCustomBgUrl,
     currentUser,
     loginUser,
     logoutUser,

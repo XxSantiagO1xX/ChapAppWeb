@@ -19,14 +19,9 @@
   box-sizing: border-box;
 }
 
-/* Destellos y nebulosa luminosa de fondo */
+/* Destellos y nebulosa luminosa de fondo (Desactivados para preservar nitidez del fondo) */
 .login-bg-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(120px);
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.55;
+  display: none !important;
 }
 
 .login-bg-glow-1 {

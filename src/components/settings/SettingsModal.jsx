@@ -25,10 +25,6 @@ export const SettingsModal = () => {
     logoutUser, 
     theme, 
     toggleTheme, 
-    backgroundTheme,
-    changeBackgroundTheme,
-    customBgUrl,
-    changeCustomBgUrl,
     showToast,
     syncCloud,
     events = [] 
@@ -55,25 +51,6 @@ export const SettingsModal = () => {
   const [newUserRole, setNewUserRole] = useState('operator');
   const [creatingUser, setCreatingUser] = useState(false);
 
-  // Manejador para subir foto de fondo personalizada
-  const handleCustomImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      showToast('Por favor selecciona un archivo de imagen válido (PNG, JPG, WEBP)', 'info');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result;
-      if (dataUrl) {
-        changeCustomBgUrl(dataUrl);
-        changeBackgroundTheme('custom');
-        showToast('Fondo personalizado aplicado con éxito', 'success');
-      }
-    };
-    reader.readAsDataURL(file);
-  };
 
   // Cargar lista de usuarios si es admin
   const loadUsers = async () => {
@@ -405,119 +382,7 @@ export const SettingsModal = () => {
                 </button>
               </div>
 
-              {/* Selector de Fondos 8K UHD y Microtextura de Cristal */}
-              <div className="glass-panel" style={{ padding: '20px', borderRadius: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <strong style={{ fontSize: '1.0rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Icon name="sparkles" size={16} /> Ambiente Visual & Fondo 8K UHD
-                  </strong>
-                  <span className="badge-pill badge-cyan">Microtextura Esmerilada Activa</span>
-                </div>
-                <p style={{ margin: '0 0 14px 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  Lienzos orbitales ultra nítidos acelerados por GPU que realzan los reflejos Liquid Glass de la interfaz.
-                </p>
 
-                <div className="bg-selector-grid">
-                  {/* Preset 1: Nebulosa Cósmica */}
-                  <div 
-                    className={`bg-preset-card ${backgroundTheme === 'nebulosa' ? 'active' : ''}`}
-                    onClick={() => {
-                      changeBackgroundTheme('nebulosa');
-                      showToast('Ambiente "Nebulosa Cósmica 8K" activado', 'info');
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div 
-                      className="bg-preset-thumbnail" 
-                      style={{ background: 'linear-gradient(135deg, #060A14 0%, #4338CA 50%, #00F0FF 100%)' }}
-                    />
-                    <span className="bg-preset-name">🌌 Nebulosa</span>
-                    <span className="bg-preset-badge">Cian & Índigo</span>
-                  </div>
-
-                  {/* Preset 2: Aurora Boreal */}
-                  <div 
-                    className={`bg-preset-card ${backgroundTheme === 'aurora' ? 'active' : ''}`}
-                    onClick={() => {
-                      changeBackgroundTheme('aurora');
-                      showToast('Ambiente "Aurora Boreal 8K" activado', 'info');
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div 
-                      className="bg-preset-thumbnail" 
-                      style={{ background: 'linear-gradient(135deg, #031412 0%, #059669 50%, #00F0FF 100%)' }}
-                    />
-                    <span className="bg-preset-name">🌲 Aurora</span>
-                    <span className="bg-preset-badge">Esmeralda</span>
-                  </div>
-
-                  {/* Preset 3: Obsidiana Pura */}
-                  <div 
-                    className={`bg-preset-card ${backgroundTheme === 'obsidiana' ? 'active' : ''}`}
-                    onClick={() => {
-                      changeBackgroundTheme('obsidiana');
-                      showToast('Ambiente "Obsidiana Pura 8K" activado', 'info');
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div 
-                      className="bg-preset-thumbnail" 
-                      style={{ background: 'linear-gradient(135deg, #04060A 0%, #1E293B 50%, #475569 100%)' }}
-                    />
-                    <span className="bg-preset-name">🌑 Obsidiana</span>
-                    <span className="bg-preset-badge">Monocromo</span>
-                  </div>
-
-                  {/* Preset 4: Atardecer Crepuscular */}
-                  <div 
-                    className={`bg-preset-card ${backgroundTheme === 'sunset' ? 'active' : ''}`}
-                    onClick={() => {
-                      changeBackgroundTheme('sunset');
-                      showToast('Ambiente "Atardecer Crepuscular 8K" activado', 'info');
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div 
-                      className="bg-preset-thumbnail" 
-                      style={{ background: 'linear-gradient(135deg, #120914 0%, #D97706 50%, #E11D48 100%)' }}
-                    />
-                    <span className="bg-preset-name">🌅 Atardecer</span>
-                    <span className="bg-preset-badge">Ámbar & Coral</span>
-                  </div>
-
-                  {/* Preset 5: Imagen Personalizada */}
-                  <label 
-                    className={`bg-preset-card ${backgroundTheme === 'custom' ? 'active' : ''}`}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div 
-                      className="bg-preset-thumbnail" 
-                      style={{ 
-                        background: customBgUrl ? `url(${customBgUrl}) center/cover no-repeat` : 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#94A3B8'
-                      }}
-                    >
-                      <Icon name="upload" size={18} />
-                    </div>
-                    <span className="bg-preset-name">🖼️ Tu Imagen</span>
-                    <span className="bg-preset-badge">{customBgUrl ? 'Cargada' : 'Subir foto'}</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      style={{ display: 'none' }} 
-                      onChange={handleCustomImageUpload} 
-                    />
-                  </label>
-                </div>
-              </div>
             </div>
           )}
 

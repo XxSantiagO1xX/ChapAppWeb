@@ -40,11 +40,6 @@ export const LoginScreen = () => {
 
   return (
     <div className="login-viewport-container">
-      {/* Fondo inmersivo con gradientes de nebulosa y destellos */}
-      <div className="login-bg-glow login-bg-glow-1" />
-      <div className="login-bg-glow login-bg-glow-2" />
-      <div className="login-bg-glow login-bg-glow-3" />
-
       <div className="login-split-layout">
         {/* ============================================================== */}
         {/* LADO IZQUIERDO: ESCENA 3D DEL EMBLEMA PROTAGÓNICO EN PEDESTAL */}
