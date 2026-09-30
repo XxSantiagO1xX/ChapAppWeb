@@ -14,7 +14,8 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 15px;
+  zoom: 0.92;
   scroll-behavior: smooth;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
@@ -417,7 +418,7 @@ dialog {
   z-index: 998;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition-normal);
+  transition: none !important;
 }
 
 .drawer-backdrop.open {
@@ -436,7 +437,7 @@ dialog {
   display: flex;
   flex-direction: column;
   transform: translateX(-100%);
-  transition: transform var(--transition-bounce);
+  transition: none !important;
   padding: 24px;
   background: var(--surface-drawer);
 }
@@ -596,7 +597,7 @@ dialog {
     grid-template-columns: 240px 1fr;
     align-items: start;
     gap: 28px;
-    transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: none !important;
   }
 
   .dashboard-layout-container.sidebar-collapsed {
@@ -638,7 +639,7 @@ dialog {
   backdrop-filter: blur(28px) saturate(200%);
   -webkit-backdrop-filter: blur(28px) saturate(200%);
   box-shadow: var(--shadow-card);
-  transition: width var(--transition-normal), transform var(--transition-fast), border-radius var(--transition-normal);
+  transition: none !important;
 }
 
 @media (min-width: 860px) {

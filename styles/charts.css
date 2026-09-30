@@ -159,9 +159,8 @@
 
 .progress-liquid-ring {
   fill: none;
-  stroke: url(#liquidCollectionGrad);
+  stroke: url(#liquidCollectionGrad) !important;
   stroke-linecap: round;
-  filter: url(#liquidRayGlow);
   transform: rotate(-90deg);
   transform-origin: 110px 110px;
   transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);

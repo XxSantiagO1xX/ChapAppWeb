@@ -76,7 +76,7 @@ export const AppProvider = ({ children }) => {
   // 3. Estado de Navegación del Dashboard
   const [activeDashboardTab, setActiveDashboardTab] = useState('summary');
   const [selectedSubFamily, setSelectedSubFamily] = useState(null);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   // 4. Directorio Global
   const [directory, setDirectory] = useState([]);
@@ -204,6 +204,7 @@ export const AppProvider = ({ children }) => {
       if (ev) {
         setActiveEvent(ev);
         setActiveDashboardTab('summary');
+        setIsSidebarCollapsed(true);
         if (typeof window !== 'undefined') window.location.hash = `#/event/${eventId}`;
       }
     } catch (err) {

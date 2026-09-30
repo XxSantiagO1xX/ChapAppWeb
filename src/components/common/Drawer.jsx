@@ -11,20 +11,17 @@ export const Drawer = ({ filterTab, setFilterTab }) => {
 
   if (activeModal !== 'drawer') return null;
 
-  const activeCount = events.filter((e) => !e.isArchived).length;
-  const archivedCount = events.filter((e) => e.isArchived).length;
-
   return (
     <>
       <div 
         id="drawer-backdrop" 
-        className="drawer-backdrop active animate-fade-in" 
+        className="drawer-backdrop active" 
         onClick={closeModal} 
         aria-hidden="true" 
       />
       <aside 
         id="app-drawer" 
-        className="app-drawer glass-drawer open animate-slide-right" 
+        className="app-drawer glass-drawer open" 
         aria-label="Menú principal"
       >
         <div className="drawer-header">
@@ -104,32 +101,6 @@ export const Drawer = ({ filterTab, setFilterTab }) => {
             <span>Crear Nuevo Evento</span>
           </button>
 
-          <div className="nav-section-title">Filtro Rápido</div>
-          <button 
-            type="button" 
-            className="drawer-nav-item"
-            onClick={() => {
-              if (setFilterTab) setFilterTab('active');
-              closeModal();
-            }}
-          >
-            <span className="filter-dot active-dot"></span>
-            <span>Eventos Activos</span>
-            <span className="drawer-badge">{activeCount}</span>
-          </button>
-
-          <button 
-            type="button" 
-            className="drawer-nav-item"
-            onClick={() => {
-              if (setFilterTab) setFilterTab('archived');
-              closeModal();
-            }}
-          >
-            <span className="filter-dot archived-dot"></span>
-            <span>Eventos Archivados</span>
-            <span className="drawer-badge">{archivedCount}</span>
-          </button>
 
           <button 
             type="button" 

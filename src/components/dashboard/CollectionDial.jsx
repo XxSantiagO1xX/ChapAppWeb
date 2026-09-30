@@ -52,13 +52,13 @@ export const CollectionDial = ({ collected = 0, total = 0, percentage = 0 }) => 
         <div className="liquid-svg-wrapper">
           <svg className="liquid-dial-svg" viewBox={`0 0 ${size} ${size}`}>
             <defs>
-              <linearGradient id="liquidCollectionGradReact" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="liquidCollectionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#00F0FF" />
                 <stop offset="50%" stopColor="#C084FC" />
                 <stop offset="100%" stopColor={isComplete ? '#10B981' : '#00E599'} />
               </linearGradient>
 
-              <filter id="liquidRayGlowReact" x="-20%" y="-20%" width="140%" height="140%">
+              <filter id="liquidRayGlow" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="3.5" result="glow" />
                 <feMerge>
                   <feMergeNode in="glow" />
@@ -121,17 +121,17 @@ export const CollectionDial = ({ collected = 0, total = 0, percentage = 0 }) => 
               fill="none" 
             />
 
-            {/* 4. Barra fluida principal de progreso con filtro de rayos neón */}
+            {/* 4. Barra fluida principal de progreso que sigue al indicador circular */}
             <circle 
               className="progress-liquid-ring" 
               cx={center} 
               cy={center} 
               r={trackRadius} 
               strokeWidth={trackStrokeWidth}
-              stroke="url(#liquidCollectionGradReact)"
+              stroke="url(#liquidCollectionGrad)"
               fill="none"
-              filter="url(#liquidRayGlowReact)"
               style={{
+                stroke: 'url(#liquidCollectionGrad)',
                 strokeDasharray: trackCircumference,
                 strokeDashoffset: strokeDashoffset,
                 strokeLinecap: 'round',
