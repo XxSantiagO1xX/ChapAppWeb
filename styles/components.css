@@ -1337,6 +1337,26 @@ button:active {
   color: var(--color-primary);
 }
 
+.glow-highlight {
+  animation: fieldGlowPulse 1.8s ease-out forwards;
+  border-color: #00F0FF !important;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.45) !important;
+}
+
+@keyframes fieldGlowPulse {
+  0% {
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.70);
+    border-color: #00F0FF;
+  }
+  70% {
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+    border-color: #00F0FF;
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
 .expense-form-split-grid {
   display: grid;
   grid-template-columns: 1fr;

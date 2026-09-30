@@ -496,13 +496,17 @@ export const mountModals = () => {
         try {
           extracted = await extractDataFromReceipt(file);
         } catch (scanErr) {
-          if (scanErr.message === 'MISSING_API_KEY') {
-            const userKey = window.prompt('Para escanear tickets con IA, ingresa tu API Key de Google Gemini (puedes obtenerla gratis en aistudio.google.com):');
+          if (scanErr.message === 'MISSING_API_KEY' || scanErr.code === 'INVALID_API_KEY' || scanErr.message?.includes('inválida') || scanErr.message?.includes('API key')) {
+            const currentKey = getGeminiApiKey();
+            const userKey = window.prompt(
+              'Ingresa tu API Key de Google Gemini para escanear tickets (obtén tu clave gratuita en aistudio.google.com):',
+              currentKey || ''
+            );
             if (userKey && userKey.trim()) {
               setGeminiApiKey(userKey.trim());
               extracted = await extractDataFromReceipt(file);
             } else {
-              showToast('Se requiere una API Key de Gemini para escanear tickets', 'info');
+              showToast('Se requiere una API Key de Gemini para autocompletar con IA', 'info');
               return;
             }
           } else {
@@ -511,11 +515,20 @@ export const mountModals = () => {
         }
 
         if (extracted) {
-          if (extracted.amount > 0) {
-            document.getElementById('expense-amount').value = extracted.amount;
+          const amountInput = document.getElementById('expense-amount');
+          const titleInput = document.getElementById('expense-title');
+
+          if (amountInput && extracted.amount > 0) {
+            amountInput.value = extracted.amount;
+            amountInput.dispatchEvent(new Event('input', { bubbles: true }));
+            amountInput.dispatchEvent(new Event('change', { bubbles: true }));
+            amountInput.classList.add('glow-highlight');
           }
-          if (extracted.title) {
-            document.getElementById('expense-title').value = extracted.title;
+          if (titleInput && extracted.title) {
+            titleInput.value = extracted.title;
+            titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+            titleInput.dispatchEvent(new Event('change', { bubbles: true }));
+            titleInput.classList.add('glow-highlight');
           }
           if (extracted.category) {
             const catPills = document.querySelectorAll('#expense-category-pills .cat-pill-btn');
@@ -528,7 +541,12 @@ export const mountModals = () => {
             });
           }
 
-          showToast(`Ticket analizado con éxito: ${extracted.title} ($${extracted.amount})`, 'success');
+          setTimeout(() => {
+            if (amountInput) amountInput.classList.remove('glow-highlight');
+            if (titleInput) titleInput.classList.remove('glow-highlight');
+          }, 1800);
+
+          showToast(`¡Ticket analizado!: "${extracted.title}" ($${Number(extracted.amount).toFixed(2)})`, 'success');
         }
       } catch (err) {
         console.error('Error analizando ticket con Gemini:', err);

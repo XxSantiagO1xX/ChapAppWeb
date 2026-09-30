@@ -46,10 +46,6 @@ export const renderHeader = ({ isDashboard = false, event = null } = {}) => {
             ${renderIcon('receipt', { size: 16 })}
             <span>Corte</span>
           </button>
-          <button id="btn-open-expense-modal" class="btn-pill-cyan add-expense-header-btn" aria-label="Nuevo gasto">
-            ${renderIcon('plus', { size: 16 })}
-            <span class="btn-text-hide-mobile">Gasto</span>
-          </button>
         </div>
       </header>
     `;

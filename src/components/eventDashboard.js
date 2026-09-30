@@ -389,10 +389,6 @@ export const renderEventDashboard = (event) => {
               ${renderIcon('upload', { size: 16 })}
               <span>Importar CSV</span>
             </button>
-            <button id="btn-add-expense-tab" class="btn-pill-cyan">
-              ${renderIcon('plus', { size: 16 })}
-              <span>Gasto con IA</span>
-            </button>
           </div>
         </div>
 

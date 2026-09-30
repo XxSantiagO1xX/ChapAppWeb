@@ -1,41 +1,56 @@
 /**
  * Vercel Serverless Function - Google Gemini Vision Ticket Scanner
  * Lee automáticamente las variables de entorno configuradas en Vercel
- * (GEMINI_API_KEY, EXPO_PUBLIC_GEMINI_API_KEY, VITE_GEMINI_API_KEY, NEXT_PUBLIC_GEMINI_API_KEY)
  */
 
-const SYSTEM_PROMPT = `Eres un asistente experto en contabilidad y auditoría de gastos. Tu tarea es analizar la imagen de un comprobante de gasto (que puede ser un ticket impreso de caja registradora, una factura, una nota de remisión, o una nota manuscrita / escrita a mano con conceptos y precios).
+const SYSTEM_PROMPT = `Eres un auditor contable experto. Tu tarea es analizar la imagen de un comprobante de gasto (ticket de caja, nota de remisión, factura, recibo o nota manuscrita con precios).
 
-Instrucciones:
-1. Extrae o deduce el NOMBRE DEL COMERCIO o CONCEPTO PRINCIPAL de la compra (ej. 'Supermercado OXXO', 'Gasolina Pemex', 'Restaurante Los Arcos', 'Compra de verduras'). Si no hay nombre de comercio, describe brevemente qué se compró. Guarda esto en "title" (máximo 40 caracteres, conciso y claro).
-2. Extrae el MONTO TOTAL a pagar:
-   - Si el comprobante tiene un "TOTAL" explícito, usa ese monto.
-   - Si es una nota o lista escrita a mano con varios conceptos y precios sin total, calcula la suma total correcta de todos los conceptos y propinas/impuestos si los hay.
-   - Debe ser un número positivo (ej. 154.50), sin símbolos de moneda ni comas de miles. Guarda esto en "amount".
-3. Clasifica el gasto en exactamente una de estas 5 categorías válidas:
-   - "Comida": supermercado, abarrotes, restaurantes, cafeterías, alimentos, ingredientes.
-   - "Bebidas": licores, cervezas, vinos, refrescos, bar, botellas.
-   - "Transporte": gasolina, combustible, casetas, peajes, taxi, Uber, estacionamiento, pasajes.
-   - "Hospedaje": hotel, Airbnb, cabaña, estancia, alojamiento.
-   - "Varios": farmacia, recuerdos, propinas, entradas, ferretería u otros gastos generales.
-   Guarda esto en "category".
-4. Asigna un nivel de confianza entre 0.0 y 1.0 en "confidence" según la legibilidad y claridad de la imagen.
+Extrae exactamente:
+1. "title": Nombre del establecimiento o concepto principal de compra (máximo 40 caracteres, conciso, ej. 'Supermercado OXXO', 'Gasolina Pemex', 'Restaurante', 'Compra de Frutas'). Si no hay nombre de comercio, describe brevemente qué se compró.
+2. "amount": Monto total final pagado como número positivo con decimales si los tiene (ej. 154.50). Si es una nota o lista sin total, calcula la suma de todos los conceptos e impuestos/propinas.
+3. "category": Clasifica en exactamente una de estas 5 categorías: "Comida", "Bebidas", "Transporte", "Hospedaje", "Varios".
+4. "confidence": Número entre 0.0 y 1.0 según la claridad de la imagen.
 
 Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructura:
 {
   "title": "string",
   "amount": number,
-  "category": "Comida" | "Hospedaje" | "Transporte" | "Bebidas" | "Varios",
+  "category": "Comida" | "Bebidas" | "Transporte" | "Hospedaje" | "Varios",
   "confidence": number
 }`;
 
-const VALID_CATEGORIES = ['Comida', 'Hospedaje', 'Transporte', 'Bebidas', 'Varios'];
+const VALID_CATEGORIES = ['Comida', 'Bebidas', 'Transporte', 'Hospedaje', 'Varios'];
+
 const FALLBACK_MODELS = [
   'gemini-2.0-flash',
   'gemini-1.5-flash',
-  'gemini-2.0-flash-exp',
+  'gemini-2.5-flash',
   'gemini-1.5-pro'
 ];
+
+const parseAmount = (val) => {
+  if (typeof val === 'number') return Math.max(0, val);
+  if (!val) return 0;
+  let str = String(val).trim().replace(/[$€MXN\s]/gi, '');
+  
+  if (str.includes(',') && str.includes('.')) {
+    if (str.lastIndexOf('.') > str.lastIndexOf(',')) {
+      str = str.replace(/,/g, '');
+    } else {
+      str = str.replace(/\./g, '').replace(',', '.');
+    }
+  } else if (str.includes(',')) {
+    const parts = str.split(',');
+    if (parts.length === 2 && parts[1].length <= 2) {
+      str = str.replace(',', '.');
+    } else {
+      str = str.replace(/,/g, '');
+    }
+  }
+  
+  const num = parseFloat(str);
+  return isNaN(num) ? 0 : Math.max(0, num);
+};
 
 const parseJsonResponse = (responseText) => {
   let cleaned = responseText.trim();
@@ -44,7 +59,28 @@ const parseJsonResponse = (responseText) => {
   } else if (cleaned.startsWith('```')) {
     cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
   }
-  return JSON.parse(cleaned);
+
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    cleaned = jsonMatch[0];
+  }
+
+  const parsed = JSON.parse(cleaned);
+
+  const amount = parseAmount(parsed.amount);
+
+  let title = String(parsed.title || 'Gasto General').trim().slice(0, 50);
+  if (!title) title = 'Gasto General';
+
+  let category = 'Comida';
+  if (parsed.category) {
+    const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(parsed.category).toLowerCase());
+    if (matched) category = matched;
+  }
+
+  const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.9;
+
+  return { title, amount, category, confidence };
 };
 
 export default async function handler(req, res) {
@@ -86,13 +122,14 @@ export default async function handler(req, res) {
                    process.env.EXPO_PUBLIC_GEMINI_API_KEY || 
                    process.env.VITE_GEMINI_API_KEY || 
                    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
-                   process.env.REACT_APP_GEMINI_API_KEY;
+                   process.env.REACT_APP_GEMINI_API_KEY ||
+                   process.env.GEMINI_API;
 
     if (!apiKey) {
       console.warn('[Vercel Serverless] Variable GEMINI_API_KEY no encontrada en process.env');
       return res.status(500).json({ 
         error: 'MISSING_ENV_KEY',
-        message: 'No se encontró la variable GEMINI_API_KEY en las variables de entorno de Vercel. Asegúrate de que esté configurada en el Dashboard de Vercel.' 
+        message: 'No se encontró la variable GEMINI_API_KEY en las variables de entorno de Vercel.' 
       });
     }
 
@@ -107,8 +144,8 @@ export default async function handler(req, res) {
               parts: [
                 { text: SYSTEM_PROMPT },
                 {
-                  inline_data: {
-                    mime_type: mimeType,
+                  inlineData: {
+                    mimeType: mimeType || 'image/jpeg',
                     data: cleanBase64,
                   },
                 },
@@ -116,7 +153,7 @@ export default async function handler(req, res) {
             },
           ],
           generationConfig: {
-            response_mime_type: 'application/json',
+            responseMimeType: 'application/json',
             temperature: 0.1,
           },
         };
@@ -139,18 +176,7 @@ export default async function handler(req, res) {
         if (!rawText) continue;
 
         const parsed = parseJsonResponse(rawText);
-        let category = 'Comida';
-        if (parsed.category) {
-          const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(parsed.category).toLowerCase());
-          if (matched) category = matched;
-        }
-
-        return res.status(200).json({
-          title: String(parsed.title || 'Gasto General').slice(0, 50),
-          amount: typeof parsed.amount === 'number' ? Math.max(0, parsed.amount) : parseFloat(parsed.amount) || 0,
-          category,
-          confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.9,
-        });
+        return res.status(200).json(parsed);
       } catch (err) {
         lastError = err;
       }
