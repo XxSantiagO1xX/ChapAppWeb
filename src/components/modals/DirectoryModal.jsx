@@ -11,9 +11,9 @@ import {
   saveGlobalDirectory, 
   addParticipant,
   createFamilyGroup,
+  deleteFamilyGroup,
   addDirectoryContact,
   deleteDirectoryContact,
-  generateUUID,
   SEED_DIRECTORY
 } from '../../services/database.js';
 import { Icon } from '../../utils/icons.jsx';
@@ -51,22 +51,25 @@ export const DirectoryModal = () => {
 
   const [selectedForImport, setSelectedForImport] = useState(new Set());
   const [submitting, setSubmitting] = useState(false);
+
+  // Estados para diálogos de confirmación centrados en el medio de la pantalla
   const [contactToDelete, setContactToDelete] = useState(null); // { id, name }
+  const [familyToDelete, setFamilyToDelete] = useState(null);   // { id, name }
 
   // Carga inicial y refresco al abrir el modal
   useEffect(() => {
     if (activeModal === 'directory') {
       const loadData = async () => {
         try {
-          // 1. Cargar lo que tengamos en caché inmediatamente
+          // 1. Cargar lo que tengamos en caché inmediatamente sin resucitar eliminados
           const cached = getGlobalDirectory();
-          if (Array.isArray(cached) && cached.length > 0) {
+          if (Array.isArray(cached)) {
             setDirectory(cached);
           }
 
           // 2. Traer sincronizado desde Supabase
           const fresh = await fetchGlobalDirectoryFromSupabase();
-          if (Array.isArray(fresh) && fresh.length > 0) {
+          if (Array.isArray(fresh)) {
             setDirectory(fresh);
           }
 
@@ -89,6 +92,7 @@ export const DirectoryModal = () => {
       setSearch('');
       setActiveFormTab(null);
       setContactToDelete(null);
+      setFamilyToDelete(null);
       resetContactForm();
       resetGroupForm();
     }
@@ -196,21 +200,51 @@ export const DirectoryModal = () => {
     }
   };
 
-  // Confirmar y Ejecutar Eliminación de Contacto (Sin cerrar el modal)
+  // Confirmar y Ejecutar Eliminación de Contacto desde Base de Datos
   const handleExecuteDeleteContact = async () => {
     if (!contactToDelete) return;
 
+    setSubmitting(true);
     try {
       await deleteDirectoryContact(contactToDelete.id, contactToDelete.name);
       const currentDir = Array.isArray(directory) ? directory : [];
       const updated = currentDir.filter((d) => d.id !== contactToDelete.id);
       setDirectory(updated);
-      showToast(`"${contactToDelete.name}" eliminado del directorio`, 'info');
+      showToast(`"${contactToDelete.name}" eliminado permanentemente`, 'success');
     } catch (err) {
       console.error('Error eliminando contacto:', err);
       showToast('Error al eliminar contacto del directorio', 'error');
     } finally {
+      setSubmitting(false);
       setContactToDelete(null);
+    }
+  };
+
+  // Confirmar y Ejecutar Eliminación de Familia desde Base de Datos
+  const handleExecuteDeleteFamily = async () => {
+    if (!familyToDelete) return;
+
+    setSubmitting(true);
+    try {
+      await deleteFamilyGroup(familyToDelete.id);
+      // Reasignar integrantes de esta familia a Familia General
+      const currentDir = Array.isArray(directory) ? directory : [];
+      const updatedDir = currentDir.map((c) => {
+        if (c.grupo_familiar_id === familyToDelete.id) {
+          return { ...c, grupo_familiar_id: null, subFamily: 'Familia General' };
+        }
+        return c;
+      });
+      setDirectory(updatedDir);
+      saveGlobalDirectory(updatedDir);
+      await refreshFamilyGroups();
+      showToast(`Familia "${familyToDelete.name}" eliminada`, 'info');
+    } catch (err) {
+      console.error('Error eliminando familia:', err);
+      showToast('Error al eliminar grupo familiar', 'error');
+    } finally {
+      setSubmitting(false);
+      setFamilyToDelete(null);
     }
   };
 
@@ -372,32 +406,6 @@ export const DirectoryModal = () => {
           </div>
 
           <div className="directory-modal-body">
-            {/* Modal/Banner de Confirmación de Eliminación Local en el Directorio */}
-            {contactToDelete && (
-              <div className="glass-panel animate-fade-in" style={{ padding: '14px 18px', margin: '0 0 14px 0', borderRadius: '14px', background: 'rgba(239, 68, 68, 0.12)', border: '1.5px solid var(--border-neon-coral)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Icon name="alert" size={22} />
-                  <div>
-                    <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
-                      ¿Eliminar a "{contactToDelete.name}" del directorio?
-                    </strong>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
-                      Se desvinculará de la lista maestra y de Supabase.
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button type="button" className="btn-pill-glass btn-sm" onClick={() => setContactToDelete(null)}>
-                    Cancelar
-                  </button>
-                  <button type="button" className="btn-pill-danger btn-sm" onClick={handleExecuteDeleteContact}>
-                    <Icon name="trash" size={14} />
-                    <span>Eliminar</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* Barra superior de búsqueda y acciones */}
             <div className="directory-top-actions">
               <input 
@@ -639,7 +647,7 @@ export const DirectoryModal = () => {
                 <div className="glass-panel" style={{ padding: '28px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                   <p style={{ fontSize: '1.0rem', fontWeight: 700, marginBottom: '8px' }}>El Directorio Maestro está listo para comenzar.</p>
                   <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                    Puedes sembrar los contactos y familias iniciales o registrar integrantes manualmente.
+                    Puedes sembrar las familias iniciales o registrar integrantes manualmente.
                   </p>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
                     <button type="button" onClick={handleSeedDirectory} className="btn-pill-cyan">
@@ -680,18 +688,31 @@ export const DirectoryModal = () => {
                             </span>
                           </div>
 
-                          {/* Control de Independencia si es un sub-núcleo promovido a primer nivel */}
-                          {group.isIndependentChild && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {/* Control de Independencia si es un sub-núcleo promovido a primer nivel */}
+                            {group.isIndependentChild && (
+                              <button
+                                type="button"
+                                className="btn-toggle-independence is-indep"
+                                onClick={() => updateFamilyGroupIndependence(group.id, false)}
+                                title="Hacer dependiente para acumular (roll-up) en el ticket de su rama principal"
+                              >
+                                <Icon name="link" size={12} />
+                                <span>Hacer Dependiente de {parentGroup ? (parentGroup.nombre || parentGroup.name) : 'Padre'}</span>
+                              </button>
+                            )}
+
+                            {/* Botón para Eliminar la Familia */}
                             <button
                               type="button"
-                              className="btn-toggle-independence is-indep"
-                              onClick={() => updateFamilyGroupIndependence(group.id, false)}
-                              title="Hacer dependiente para acumular (roll-up) en el ticket de su rama principal"
+                              className="btn-icon-danger"
+                              style={{ width: '28px', height: '28px', borderRadius: 'var(--radius-pill)' }}
+                              onClick={() => setFamilyToDelete({ id: group.id, name: group.nombre })}
+                              title={`Eliminar familia ${group.nombre}`}
                             >
-                              <Icon name="link" size={12} />
-                              <span>Hacer Dependiente de {parentGroup ? (parentGroup.nombre || parentGroup.name) : 'Padre'}</span>
+                              <Icon name="trash" size={14} />
                             </button>
-                          )}
+                          </div>
                         </div>
 
                         {/* Integrantes directos del grupo */}
@@ -723,16 +744,29 @@ export const DirectoryModal = () => {
                                     </span>
                                   </div>
 
-                                  {/* Botón para independizar financieramente este sub-núcleo */}
-                                  <button
-                                    type="button"
-                                    className="btn-toggle-independence"
-                                    onClick={() => updateFamilyGroupIndependence(child.id, true)}
-                                    title="Independizar este núcleo para que genere su propio ticket de cobro y aparezca como tarjeta de primer nivel"
-                                  >
-                                    <Icon name="check" size={12} />
-                                    <span>Hacer Autónomo (Ticket Propio)</span>
-                                  </button>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {/* Botón para independizar financieramente este sub-núcleo */}
+                                    <button
+                                      type="button"
+                                      className="btn-toggle-independence"
+                                      onClick={() => updateFamilyGroupIndependence(child.id, true)}
+                                      title="Independizar este núcleo para que genere su propio ticket de cobro y aparezca como tarjeta de primer nivel"
+                                    >
+                                      <Icon name="check" size={12} />
+                                      <span>Hacer Autónomo (Ticket Propio)</span>
+                                    </button>
+
+                                    {/* Botón para eliminar este sub-núcleo */}
+                                    <button
+                                      type="button"
+                                      className="btn-icon-danger"
+                                      style={{ width: '26px', height: '26px', borderRadius: 'var(--radius-pill)' }}
+                                      onClick={() => setFamilyToDelete({ id: child.id, name: child.nombre })}
+                                      title={`Eliminar sub-núcleo ${child.nombre}`}
+                                    >
+                                      <Icon name="trash" size={13} />
+                                    </button>
+                                  </div>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
@@ -794,10 +828,77 @@ export const DirectoryModal = () => {
           </div>
         </div>
       </div>
+
+      {/* DIÁLOGO DEL SISTEMA: Mensaje de Confirmación Centrado en Medio de la Pantalla */}
+      {(contactToDelete || familyToDelete) && (
+        <div 
+          className="modal-backdrop animate-fade-in" 
+          style={{ 
+            zIndex: 100000, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.70)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)'
+          }}
+          onClick={() => { if (!submitting) { setContactToDelete(null); setFamilyToDelete(null); } }}
+        >
+          <div 
+            className="glass-dialog modal-sm animate-scale-in" 
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            style={{ 
+              textAlign: 'center', 
+              padding: '28px 24px', 
+              maxWidth: '420px', 
+              width: '92%',
+              border: '1.5px solid var(--border-neon-coral)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.65)'
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+              <div className="confirm-icon-box" style={{ color: 'var(--color-coral)', marginTop: '4px' }}>
+                <Icon name="alert" size={44} />
+              </div>
+              
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                {contactToDelete ? '¿Eliminar Integrante?' : '¿Eliminar Grupo Familiar?'}
+              </h3>
+              
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                {contactToDelete 
+                  ? `¿Estás seguro de que deseas eliminar a "${contactToDelete.name}" de la base de datos y del directorio? Esta acción no se puede deshacer.`
+                  : `¿Deseas eliminar el grupo familiar "${familyToDelete?.name}"? Los integrantes asignados se conservarán y pasarán a la sección de contactos generales.`}
+              </p>
+
+              <div className="dialog-footer confirm-footer" style={{ width: '100%', justifyContent: 'center', gap: '12px', marginTop: '12px' }}>
+                <button 
+                  type="button" 
+                  className="btn-pill-glass" 
+                  onClick={() => { setContactToDelete(null); setFamilyToDelete(null); }}
+                  disabled={submitting}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button" 
+                  className="btn-pill-danger"
+                  onClick={contactToDelete ? handleExecuteDeleteContact : handleExecuteDeleteFamily}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
-  // Renderizador de fila de contacto con eliminación en contexto
+  // Renderizador de fila de contacto
   function renderContactRow(d, subGroupName = null) {
     if (!d) return null;
     const isChild = d.category === 'nino' || d.categoria === 'nino';
@@ -839,7 +940,7 @@ export const DirectoryModal = () => {
           type="button"
           className="btn-icon-danger"
           onClick={() => setContactToDelete({ id: d.id, name: fullName })}
-          title="Eliminar del directorio maestro"
+          title={`Eliminar ${fullName} del directorio maestro`}
         >
           <Icon name="trash" size={14} />
         </button>
