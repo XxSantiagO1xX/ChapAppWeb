@@ -151,7 +151,15 @@ export const QuickExpenseModal = () => {
       }
     } catch (err) {
       console.error('Error analizando ticket:', err);
-      showToast(`Error al procesar ticket: ${err.message || 'Error de conexión'}. Ingresa datos manuales.`, 'error');
+      let userMsg = 'No fue posible leer el ticket automáticamente. Por favor ingresa el monto y concepto manualmente.';
+      if (err.code === 'INVALID_API_KEY' || err.message?.includes('inválida') || err.message?.includes('API key')) {
+        userMsg = 'La clave de Gemini no es válida o expiró. Haz clic en el ícono de llave para configurarla.';
+      } else if (err.message?.includes('cuota') || err.message?.includes('quota') || err.message?.includes('429')) {
+        userMsg = 'Límite temporal de consultas de IA alcanzado. Espera unos segundos y vuelve a intentar.';
+      } else if (err.message?.includes('network') || err.message?.includes('conexión') || err.message?.includes('fetch')) {
+        userMsg = 'Error de conexión al escanear comprobante. Verifica tu red o reintenta con otra foto.';
+      }
+      showToast(userMsg, 'warning');
     } finally {
       setIsAiScanning(false);
       if (singleFileInputRef.current) singleFileInputRef.current.value = '';
@@ -174,10 +182,17 @@ export const QuickExpenseModal = () => {
         setBatchItems((prev) => [...prev, { ...item, paidBy: 'caja_comun' }]);
       });
 
-      showToast(`¡Lote completado! ${results.filter((r) => r.status === 'success').length} de ${files.length} tickets leídos.`, 'success');
+      const successCount = results.filter((r) => r.status === 'success').length;
+      if (successCount === files.length) {
+        showToast(`¡Lote completado! ${successCount} tickets leídos exitosamente con IA.`, 'success');
+      } else if (successCount > 0) {
+        showToast(`Lote completado: ${successCount} de ${files.length} leídos con éxito. Revisa los restantes.`, 'info');
+      } else {
+        showToast('No se pudieron leer los tickets del lote automáticamente. Puedes completarlos manualmente.', 'warning');
+      }
     } catch (err) {
       console.error('Error procesando lote:', err);
-      showToast('Error procesando algunos tickets del lote', 'error');
+      showToast('Ocurrió un error al procesar el lote de comprobantes.', 'warning');
     } finally {
       setBatchProgress((prev) => ({ ...prev, active: false }));
       if (batchFileInputRef.current) batchFileInputRef.current.value = '';

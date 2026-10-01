@@ -23,10 +23,11 @@ Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructu
 const VALID_CATEGORIES = ['Comida', 'Bebidas', 'Transporte', 'Hospedaje', 'Varios'];
 
 const FALLBACK_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
   'gemini-2.5-flash',
-  'gemini-1.5-pro'
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-flash-latest'
 ];
 
 /**
@@ -106,14 +107,17 @@ export const parseJsonResponse = (responseText) => {
 
   const parsed = JSON.parse(cleaned);
 
-  const amount = parseAmount(parsed.amount);
+  const rawAmount = parsed.amount !== undefined ? parsed.amount : (parsed.total !== undefined ? parsed.total : (parsed.total_amount !== undefined ? parsed.total_amount : parsed.monto));
+  const amount = parseAmount(rawAmount);
 
-  let title = String(parsed.title || 'Gasto General').trim().slice(0, 50);
+  let rawTitle = parsed.title || parsed.concept || parsed.concepto || parsed.store || parsed.establecimiento || parsed.description || 'Gasto General';
+  let title = String(rawTitle).trim().slice(0, 50);
   if (!title) title = 'Gasto General';
 
   let category = 'Comida';
-  if (parsed.category) {
-    const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(parsed.category).toLowerCase());
+  const rawCategory = parsed.category || parsed.categoria;
+  if (rawCategory) {
+    const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(rawCategory).toLowerCase());
     if (matched) category = matched;
   }
 
@@ -193,6 +197,7 @@ export const extractDataFromReceipt = async (fileOrBase64, mimeType = 'image/jpe
         const requestBody = {
           contents: [
             {
+              role: 'user',
               parts: [
                 { text: SYSTEM_PROMPT },
                 {
@@ -212,7 +217,10 @@ export const extractDataFromReceipt = async (fileOrBase64, mimeType = 'image/jpe
 
         const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           body: JSON.stringify(requestBody),
         });
 
@@ -262,12 +270,17 @@ export const extractDataFromReceipt = async (fileOrBase64, mimeType = 'image/jpe
       }
     } else {
       const errData = await apiRes.json().catch(() => ({}));
+      if (errData.error === 'MISSING_ENV_KEY') {
+        const missingErr = new Error('MISSING_API_KEY');
+        missingErr.code = 'MISSING_API_KEY';
+        throw missingErr;
+      }
       if (errData.error === 'GEMINI_ERROR') {
         throw new Error(errData.message || 'Error en análisis con Gemini');
       }
     }
   } catch (serverErr) {
-    if (serverErr.code === 'INVALID_API_KEY') throw serverErr;
+    if (serverErr.code === 'INVALID_API_KEY' || serverErr.code === 'MISSING_API_KEY') throw serverErr;
     console.warn('[Gemini Scanner] Serverless intento:', serverErr.message);
   }
 

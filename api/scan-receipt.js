@@ -22,10 +22,11 @@ Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructu
 const VALID_CATEGORIES = ['Comida', 'Bebidas', 'Transporte', 'Hospedaje', 'Varios'];
 
 const FALLBACK_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
   'gemini-2.5-flash',
-  'gemini-1.5-pro'
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-flash-latest'
 ];
 
 const parseAmount = (val) => {
@@ -53,6 +54,9 @@ const parseAmount = (val) => {
 };
 
 const parseJsonResponse = (responseText) => {
+  if (!responseText || typeof responseText !== 'string') {
+    throw new Error('Respuesta vacía de Google Gemini');
+  }
   let cleaned = responseText.trim();
   if (cleaned.startsWith('```json')) {
     cleaned = cleaned.replace(/^```json\s*/i, '').replace(/\s*```$/, '');
@@ -67,14 +71,17 @@ const parseJsonResponse = (responseText) => {
 
   const parsed = JSON.parse(cleaned);
 
-  const amount = parseAmount(parsed.amount);
+  const rawAmount = parsed.amount !== undefined ? parsed.amount : (parsed.total !== undefined ? parsed.total : (parsed.total_amount !== undefined ? parsed.total_amount : parsed.monto));
+  const amount = parseAmount(rawAmount);
 
-  let title = String(parsed.title || 'Gasto General').trim().slice(0, 50);
+  let rawTitle = parsed.title || parsed.concept || parsed.concepto || parsed.store || parsed.establecimiento || parsed.description || 'Gasto General';
+  let title = String(rawTitle).trim().slice(0, 50);
   if (!title) title = 'Gasto General';
 
   let category = 'Comida';
-  if (parsed.category) {
-    const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(parsed.category).toLowerCase());
+  const rawCategory = parsed.category || parsed.categoria;
+  if (rawCategory) {
+    const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(rawCategory).toLowerCase());
     if (matched) category = matched;
   }
 
@@ -112,7 +119,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No se recibió la imagen en Base64' });
     }
 
-    const cleanBase64 = base64.replace(/^data:image\/[a-zA-Z0-9.+]+;base64,/, '');
+    let cleanBase64 = String(base64 || '').trim();
+    let finalMime = mimeType || 'image/jpeg';
+    if (cleanBase64.startsWith('data:')) {
+      const match = cleanBase64.match(/^data:(image\/[a-zA-Z0-9.+]+);base64,/);
+      if (match) {
+        finalMime = match[1];
+      }
+      cleanBase64 = cleanBase64.replace(/^data:image\/[a-zA-Z0-9.+]+;base64,/, '');
+    }
+    cleanBase64 = cleanBase64.replace(/\s+/g, '');
 
     const apiKey = process.env.GEMINI_API_KEY || 
                    process.env.GOOGLE_GEMINI_API_KEY || 
@@ -141,11 +157,12 @@ export default async function handler(req, res) {
         const requestBody = {
           contents: [
             {
+              role: 'user',
               parts: [
                 { text: SYSTEM_PROMPT },
                 {
                   inlineData: {
-                    mimeType: mimeType || 'image/jpeg',
+                    mimeType: finalMime,
                     data: cleanBase64,
                   },
                 },
@@ -160,7 +177,10 @@ export default async function handler(req, res) {
 
         const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           body: JSON.stringify(requestBody),
         });
 
