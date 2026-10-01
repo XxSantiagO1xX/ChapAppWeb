@@ -152,10 +152,92 @@ export const resolveEventGuests = (event, guestsInput = null) => {
 };
 
 /**
- * Calcula los totales financieros, distribución proporcional, cuadre de caja
- * y estado de corte/liquidación de un evento incluyendo invitados temporales.
+ * Resuelve la entidad o grupo de cobro aplicando la Regla de Oro del Modelo Híbrido:
+ * - Si un sub-grupo tiene es_independiente = false, la suma de sus unidades ponderadas
+ *   y su costo se acumula (roll-up) en el ticket del nodo_padre_id.
+ * - Si el sub-grupo tiene es_independiente = true, genera su propio ticket individual.
  */
-export const calculateEventTotals = (event, guestsInput = null) => {
+export const resolveBillingFamily = (participantOrSubfamily, familyGroups = []) => {
+  const fgMap = new Map();
+  let groups = familyGroups;
+  if (!Array.isArray(groups) || groups.length === 0) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('chapapp_cached_family_groups');
+        if (saved) groups = JSON.parse(saved);
+      }
+    } catch (e) {}
+  }
+
+  if (Array.isArray(groups)) {
+    groups.forEach((g) => {
+      if (g.id) fgMap.set(g.id, g);
+      if (g.nombre) fgMap.set(g.nombre.toLowerCase().trim(), g);
+    });
+  }
+
+  let group = null;
+  const groupId = participantOrSubfamily?.grupo_familiar_id || participantOrSubfamily?.grupoFamiliarId;
+  const groupName = participantOrSubfamily?.subFamily || participantOrSubfamily?.subfamily || (typeof participantOrSubfamily === 'string' ? participantOrSubfamily : '');
+
+  if (groupId && fgMap.has(groupId)) {
+    group = fgMap.get(groupId);
+  } else if (groupName && fgMap.has(groupName.toLowerCase().trim())) {
+    group = fgMap.get(groupName.toLowerCase().trim());
+  }
+
+  if (!group) {
+    const fallbackName = groupName || 'Familia General';
+    return {
+      id: fallbackName,
+      nombre: fallbackName,
+      nodo_padre_id: null,
+      es_independiente: true,
+      originalGroupName: fallbackName,
+      isRolledUp: false,
+    };
+  }
+
+  // Traversal para roll-up si es dependiente (es_independiente === false y tiene nodo_padre_id)
+  const visited = new Set();
+  let current = group;
+  while (current) {
+    if (visited.has(current.id)) break;
+    visited.add(current.id);
+
+    // Si es independiente o es Rama Principal (nodo_padre_id null), esta es la entidad de cobro
+    if (current.es_independiente || !current.nodo_padre_id) {
+      return {
+        ...current,
+        originalGroupName: group.nombre,
+        isRolledUp: current.id !== group.id,
+      };
+    }
+
+    const parent = fgMap.get(current.nodo_padre_id);
+    if (!parent) {
+      return {
+        ...current,
+        originalGroupName: group.nombre,
+        isRolledUp: false,
+      };
+    }
+    current = parent;
+  }
+
+  return {
+    ...current,
+    originalGroupName: group.nombre,
+    isRolledUp: current.id !== group.id,
+  };
+};
+
+/**
+ * Calcula los totales financieros, distribución proporcional, cuadre de caja
+ * y estado de corte/liquidación de un evento incluyendo invitados temporales
+ * y el modelo híbrido de jerarquía familiar con roll-up.
+ */
+export const calculateEventTotals = (event, guestsInput = null, familyGroups = []) => {
   const participants = event?.participants ?? [];
   const expenses = event?.expenses ?? [];
   const guestsList = resolveEventGuests(event, guestsInput);
@@ -227,7 +309,12 @@ export const calculateEventTotals = (event, guestsInput = null) => {
     const calculation = {
       participantId: participant.id,
       participantName: participant.name,
+      nombre: participant.nombre,
+      apellido_paterno: participant.apellido_paterno,
+      apellido_materno: participant.apellido_materno,
+      telefono: participant.telefono,
       subFamily: participant.subFamily || 'Familia General',
+      grupo_familiar_id: participant.grupo_familiar_id,
       category: participant.category,
       weight: typeof participant.weight === 'number' ? participant.weight : 1.0,
       isAttending,
@@ -255,13 +342,26 @@ export const calculateEventTotals = (event, guestsInput = null) => {
     };
   });
 
-  // 8. Agrupación y Consolidación por Subfamilia
+  // 8. Agrupación y Consolidación por Subfamilia con Roll-Up de Jerarquía Híbrida
   const subFamilyMap = new Map();
 
-  // 8.1 Agregar integrantes fijos a sus subfamilias
+  // 8.1 Agregar integrantes fijos resolviendo su entidad de cobro
   for (const calc of participantCalculations) {
-    const sfName = calc.subFamily || 'Familia General';
+    const billingGroup = resolveBillingFamily(calc, familyGroups);
+    const sfName = billingGroup.nombre;
+    const sfId = billingGroup.id;
+
+    calc.billingFamilyName = sfName;
+    calc.originalGroupName = billingGroup.originalGroupName;
+    calc.isRolledUp = billingGroup.isRolledUp;
+
     const existing = subFamilyMap.get(sfName) || {
+      subFamilyId: sfId,
+      subFamilyName: sfName,
+      nodo_padre_id: billingGroup.nodo_padre_id,
+      es_independiente: billingGroup.es_independiente,
+      isRoot: !billingGroup.nodo_padre_id,
+      subGroups: new Set(),
       membersCount: 0,
       attendingCount: 0,
       totalWeightedUnits: 0,
@@ -275,6 +375,7 @@ export const calculateEventTotals = (event, guestsInput = null) => {
       guests: [],
     };
 
+    existing.subGroups.add(billingGroup.originalGroupName);
     existing.membersCount += 1;
     if (calc.isAttending) {
       existing.attendingCount += 1;
@@ -293,8 +394,15 @@ export const calculateEventTotals = (event, guestsInput = null) => {
 
   // 8.2 Sumar invitados a sus respectivas subfamilias
   for (const guest of calculatedGuests) {
-    const sfName = guest.subFamily || 'Familia General';
+    const billingGroup = resolveBillingFamily(guest, familyGroups);
+    const sfName = billingGroup.nombre;
     const existing = subFamilyMap.get(sfName) || {
+      subFamilyId: billingGroup.id,
+      subFamilyName: sfName,
+      nodo_padre_id: billingGroup.nodo_padre_id,
+      es_independiente: billingGroup.es_independiente,
+      isRoot: !billingGroup.nodo_padre_id,
+      subGroups: new Set([billingGroup.originalGroupName]),
       membersCount: 0,
       attendingCount: 0,
       totalWeightedUnits: 0,
@@ -308,6 +416,7 @@ export const calculateEventTotals = (event, guestsInput = null) => {
       guests: [],
     };
 
+    existing.subGroups.add(billingGroup.originalGroupName);
     existing.attendingCount += 1;
     existing.totalWeightedUnits += guest.weightedUnits;
     existing.guestsTotalCost += guest.cost;
@@ -324,7 +433,13 @@ export const calculateEventTotals = (event, guestsInput = null) => {
     const finalBalance = roundToTwoDecimals(grossTotalQuota - val.totalPaid);
 
     const subFamilyCalc = {
+      subFamilyId: val.subFamilyId,
       subFamilyName: key,
+      nodo_padre_id: val.nodo_padre_id,
+      es_independiente: val.es_independiente,
+      isRoot: val.isRoot,
+      subGroups: Array.from(val.subGroups || []),
+      hasMultipleNuclei: val.subGroups && val.subGroups.size > 1,
       membersCount: val.membersCount,
       attendingCount: val.attendingCount,
       totalWeightedUnits: roundToTwoDecimals(val.totalWeightedUnits),

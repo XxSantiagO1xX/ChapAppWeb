@@ -32,6 +32,7 @@ export const CONFIG = {
       THEME: 'chapapp_theme_preference',
       LOCAL_EVENTS: 'chapapp_cached_events',
       LOCAL_DIRECTORY: 'chapapp_cached_directory',
+      FAMILY_GROUPS: 'chapapp_cached_family_groups',
       BACKGROUND: 'chapapp_custom_background'
     }
   }

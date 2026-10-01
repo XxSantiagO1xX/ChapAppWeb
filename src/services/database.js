@@ -25,19 +25,32 @@ export const isUUID = (str) => {
 };
 
 /**
+ * Semilla de Grupos y Ramas Familiares (Modelo Híbrido).
+ * - nodo_padre_id: null indica Rama Principal.
+ * - es_independiente: true indica que asume su propia cuenta/deuda en cortes, independizándose financieramente.
+ */
+export const SEED_FAMILY_GROUPS = [
+  { id: 'fg_1', nombre: 'Familia Santiago Chapantongo', nodo_padre_id: null, es_independiente: false, color: '#38BDF8' },
+  { id: 'fg_2', nombre: 'Familia Santiago Velázquez', nodo_padre_id: null, es_independiente: false, color: '#F59E0B' },
+  { id: 'fg_3', nombre: 'Familia Santiago Morales', nodo_padre_id: 'fg_1', es_independiente: false, color: '#10B981' },
+  { id: 'fg_4', nombre: 'Familia Roberto Santiago', nodo_padre_id: 'fg_2', es_independiente: true, color: '#EC4899' },
+  { id: 'fg_5', nombre: 'Amigos y Primos', nodo_padre_id: null, es_independiente: true, color: '#8B5CF6' },
+];
+
+/**
  * Directorio Global de Participantes Frecuentes.
  */
 export const SEED_DIRECTORY = [
-  { id: 'dir_1', name: 'Don Carlos Santiago', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo' },
-  { id: 'dir_2', name: 'Doña María Bustamante', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo' },
-  { id: 'dir_3', name: 'Juanito Santiago', category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Chapantongo' },
-  { id: 'dir_4', name: 'Roberto Santiago', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Velázquez' },
-  { id: 'dir_5', name: 'Patricia Velázquez', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Velázquez' },
-  { id: 'dir_6', name: 'Mateo Santiago', category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Velázquez' },
-  { id: 'dir_7', name: 'Fernando Santiago', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales' },
-  { id: 'dir_8', name: 'Carmen Morales', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales' },
-  { id: 'dir_9', name: 'Lucía Santiago', category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Morales' },
-  { id: 'dir_10', name: 'Alejandro Ruiz', category: 'adulto', weight: 1.0, subFamily: 'Amigos y Primos' },
+  { id: 'dir_1', nombre: 'Carlos', apellido_paterno: 'Santiago', apellido_materno: '', name: 'Don Carlos Santiago', telefono: '5512345601', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo', grupo_familiar_id: 'fg_1' },
+  { id: 'dir_2', nombre: 'María', apellido_paterno: 'Bustamante', apellido_materno: '', name: 'Doña María Bustamante', telefono: '5512345602', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo', grupo_familiar_id: 'fg_1' },
+  { id: 'dir_3', nombre: 'Juanito', apellido_paterno: 'Santiago', apellido_materno: 'Bustamante', name: 'Juanito Santiago', telefono: '', categoria: 'nino', ponderacion: 0.5, category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Chapantongo', grupo_familiar_id: 'fg_1' },
+  { id: 'dir_4', nombre: 'Roberto', apellido_paterno: 'Santiago', apellido_materno: 'Velázquez', name: 'Roberto Santiago', telefono: '5512345604', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Roberto Santiago', grupo_familiar_id: 'fg_4' },
+  { id: 'dir_5', nombre: 'Patricia', apellido_paterno: 'Velázquez', apellido_materno: '', name: 'Patricia Velázquez', telefono: '5512345605', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Velázquez', grupo_familiar_id: 'fg_2' },
+  { id: 'dir_6', nombre: 'Mateo', apellido_paterno: 'Santiago', apellido_materno: 'Velázquez', name: 'Mateo Santiago', telefono: '', categoria: 'nino', ponderacion: 0.5, category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Velázquez', grupo_familiar_id: 'fg_2' },
+  { id: 'dir_7', nombre: 'Fernando', apellido_paterno: 'Santiago', apellido_materno: 'Morales', name: 'Fernando Santiago', telefono: '5512345607', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales', grupo_familiar_id: 'fg_3' },
+  { id: 'dir_8', nombre: 'Carmen', apellido_paterno: 'Morales', apellido_materno: '', name: 'Carmen Morales', telefono: '5512345608', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales', grupo_familiar_id: 'fg_3' },
+  { id: 'dir_9', nombre: 'Lucía', apellido_paterno: 'Santiago', apellido_materno: 'Morales', name: 'Lucía Santiago', telefono: '', categoria: 'nino', ponderacion: 0.5, category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Morales', grupo_familiar_id: 'fg_3' },
+  { id: 'dir_10', nombre: 'Alejandro', apellido_paterno: 'Ruiz', apellido_materno: '', name: 'Alejandro Ruiz', telefono: '5512345610', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Amigos y Primos', grupo_familiar_id: 'fg_5' },
 ];
 
 export const INITIAL_SEED_EVENTS = [
@@ -83,7 +96,140 @@ export const inferSubFamily = (name, fallback = 'Familia General') => {
   return fallback;
 };
 
-// --- Manejo de Caché Local (LocalStorage) ---
+// --- Manejo de Caché Local de Grupos Familiares ---
+export const loadLocalFamilyGroups = () => {
+  try {
+    const raw = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.FAMILY_GROUPS || 'chapapp_cached_family_groups');
+    return raw ? JSON.parse(raw) : SEED_FAMILY_GROUPS;
+  } catch (e) {
+    return SEED_FAMILY_GROUPS;
+  }
+};
+
+export const saveLocalFamilyGroups = (groups) => {
+  try {
+    localStorage.setItem(CONFIG.APP.STORAGE_KEYS.FAMILY_GROUPS || 'chapapp_cached_family_groups', JSON.stringify(groups));
+  } catch (e) {
+    console.error('Error guardando family_groups en LocalStorage:', e);
+  }
+};
+
+/**
+ * Obtener todos los grupos familiares (Supabase Cloud + LocalStorage)
+ */
+export const getAllFamilyGroups = async () => {
+  const localList = loadLocalFamilyGroups();
+  const supabase = await initSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('family_groups')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (!error && Array.isArray(data)) {
+        if (data.length > 0) {
+          saveLocalFamilyGroups(data);
+          return data;
+        } else {
+          // Sembrar grupos familiares iniciales si la tabla existe y está vacía
+          for (const fg of SEED_FAMILY_GROUPS) {
+            await supabase.from('family_groups').insert({
+              id: fg.id.startsWith('fg_') ? generateUUID() : fg.id,
+              nombre: fg.nombre,
+              nodo_padre_id: fg.nodo_padre_id,
+              es_independiente: fg.es_independiente,
+              color: fg.color || '#38BDF8'
+            }).catch(() => {});
+          }
+          const { data: seeded } = await supabase.from('family_groups').select('*');
+          if (seeded && seeded.length > 0) {
+            saveLocalFamilyGroups(seeded);
+            return seeded;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[Database] Error consultando family_groups de Supabase, usando local:', err);
+    }
+  }
+  return localList;
+};
+
+/**
+ * Crear un nuevo Grupo Familiar o Sub-núcleo
+ */
+export const createFamilyGroup = async ({ nombre, nodo_padre_id = null, es_independiente = false, color = '#38BDF8' }) => {
+  const newGroup = {
+    id: generateUUID(),
+    nombre: nombre.trim(),
+    nodo_padre_id: nodo_padre_id || null,
+    es_independiente: Boolean(es_independiente),
+    color,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  const supabase = await initSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase.from('family_groups').insert(newGroup);
+    } catch (e) {
+      console.warn('[Database] Error insertando family_group en Supabase:', e);
+    }
+  }
+
+  const list = loadLocalFamilyGroups();
+  list.push(newGroup);
+  saveLocalFamilyGroups(list);
+  return newGroup;
+};
+
+/**
+ * Actualizar Grupo Familiar (ej. independizar, cambiar nombre o nodo_padre_id)
+ */
+export const updateFamilyGroup = async (id, fields = {}) => {
+  const supabase = await initSupabaseClient();
+  if (supabase && isUUID(id)) {
+    try {
+      await supabase.from('family_groups').update({
+        ...fields,
+        updated_at: new Date().toISOString()
+      }).eq('id', id);
+    } catch (e) {
+      console.warn('[Database] Error actualizando family_group en Supabase:', e);
+    }
+  }
+
+  const list = loadLocalFamilyGroups();
+  const idx = list.findIndex(g => g.id === id);
+  if (idx >= 0) {
+    list[idx] = { ...list[idx], ...fields, updated_at: new Date().toISOString() };
+    saveLocalFamilyGroups(list);
+    return list[idx];
+  }
+  return null;
+};
+
+/**
+ * Eliminar Grupo Familiar
+ */
+export const deleteFamilyGroup = async (id) => {
+  const supabase = await initSupabaseClient();
+  if (supabase && isUUID(id)) {
+    try {
+      await supabase.from('family_groups').delete().eq('id', id);
+    } catch (e) {
+      console.warn('[Database] Error eliminando family_group en Supabase:', e);
+    }
+  }
+
+  let list = loadLocalFamilyGroups();
+  list = list.filter(g => g.id !== id);
+  saveLocalFamilyGroups(list);
+};
+
+// --- Manejo de Caché Local de Eventos (LocalStorage) ---
 const loadLocalEvents = () => {
   try {
     const raw = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.LOCAL_EVENTS);
@@ -103,12 +249,15 @@ const saveLocalEvents = (events) => {
 
 /**
  * Parser de participante desde fila de Supabase o Local
+ * Conecta los campos nuevos (nombre, apellido_paterno, apellido_materno, telefono, categoria, ponderacion, grupo_familiar_id)
+ * con los campos legados de la aplicación para retrocompatibilidad total.
  */
 export const parseParticipantRow = (p) => {
   let days = [];
   let isAttending = true;
   let isSettled = false;
   let subFamily = '';
+  let grupo_familiar_id = p.grupo_familiar_id || p.grupoFamiliarId || null;
 
   if (p.active_days) {
     if (typeof p.active_days === 'object' && !Array.isArray(p.active_days) && p.active_days !== null) {
@@ -116,6 +265,7 @@ export const parseParticipantRow = (p) => {
       if (typeof p.active_days.isAttending === 'boolean') isAttending = p.active_days.isAttending;
       if (typeof p.active_days.isSettled === 'boolean') isSettled = p.active_days.isSettled;
       if (p.active_days.subFamily) subFamily = p.active_days.subFamily;
+      if (p.active_days.grupo_familiar_id) grupo_familiar_id = p.active_days.grupo_familiar_id;
     } else if (Array.isArray(p.active_days)) {
       days = p.active_days.filter((d) => typeof d === 'string' && !d.startsWith('__meta__:'));
       const metaItem = p.active_days.find((d) => typeof d === 'string' && d.startsWith('__meta__:'));
@@ -125,6 +275,7 @@ export const parseParticipantRow = (p) => {
           if (typeof meta.isSettled === 'boolean') isSettled = meta.isSettled;
           if (typeof meta.isAttending === 'boolean') isAttending = meta.isAttending;
           if (meta.subFamily) subFamily = meta.subFamily;
+          if (meta.grupo_familiar_id) grupo_familiar_id = meta.grupo_familiar_id;
         } catch (e) {}
       }
     }
@@ -132,18 +283,46 @@ export const parseParticipantRow = (p) => {
     days = p.activeDays;
   }
 
+  // Desglosar nombre, apellido paterno y materno
+  let nombre = p.nombre || '';
+  let apellido_paterno = p.apellido_paterno || p.apellidoPaterno || '';
+  let apellido_materno = p.apellido_materno || p.apellidoMaterno || '';
+
+  if (!nombre && p.name) {
+    const parts = p.name.trim().split(/\s+/);
+    nombre = parts[0] || '';
+    apellido_paterno = parts[1] || '';
+    apellido_materno = parts.slice(2).join(' ') || '';
+  }
+
+  const fullName = [nombre, apellido_paterno, apellido_materno].filter(Boolean).join(' ') || p.name || 'Integrante';
+
+  const categoria = String(p.categoria || p.category || 'adulto').toLowerCase();
+  const rawPonderacion = p.ponderacion !== undefined ? p.ponderacion : p.weight;
+  const ponderacion = typeof rawPonderacion === 'number'
+    ? rawPonderacion
+    : parseFloat(rawPonderacion) || (categoria === 'nino' ? 0.5 : 1.0);
+  const telefono = p.telefono || p.phone || '';
+
   const finalSubFamily =
     p.subFamily ||
     p.subfamily ||
     p.sub_family ||
     subFamily ||
-    inferSubFamily(p.name);
+    inferSubFamily(fullName);
 
   return {
     id: p.id,
-    name: p.name,
-    category: p.category || 'adulto',
-    weight: typeof p.weight === 'number' ? p.weight : parseFloat(p.weight) || (p.category === 'nino' ? 0.5 : 1.0),
+    nombre,
+    apellido_paterno,
+    apellido_materno,
+    name: fullName,
+    telefono,
+    categoria,
+    category: categoria,
+    ponderacion,
+    weight: ponderacion,
+    grupo_familiar_id,
     subFamily: finalSubFamily,
     activeDays: days,
     isAttending: typeof p.isAttending === 'boolean' ? p.isAttending : (typeof p.is_attending === 'boolean' ? p.is_attending : isAttending),
@@ -385,6 +564,9 @@ export const deleteEvent = async (id) => {
 /**
  * Agregar Participante
  */
+/**
+ * Agregar Participante
+ */
 export const addParticipant = async (eventId, participantData) => {
   const localList = loadLocalEvents();
   let currentEvent = localList.find((e) => e.id === eventId || e.slug === eventId);
@@ -396,14 +578,33 @@ export const addParticipant = async (eventId, participantData) => {
     ? currentEvent.availableDays
     : ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
 
+  const nombre = (participantData.nombre || (participantData.name ? participantData.name.trim().split(/\s+/)[0] : '')).trim();
+  const apellido_paterno = (participantData.apellido_paterno || (participantData.name ? (participantData.name.trim().split(/\s+/)[1] || '') : '')).trim();
+  const apellido_materno = (participantData.apellido_materno || (participantData.name ? (participantData.name.trim().split(/\s+/).slice(2).join(' ') || '') : '')).trim();
+  const fullName = [nombre, apellido_paterno, apellido_materno].filter(Boolean).join(' ') || participantData.name?.trim() || 'Integrante';
+  
+  const categoria = String(participantData.categoria || participantData.category || 'adulto').toLowerCase();
+  const ponderacion = typeof participantData.ponderacion === 'number'
+    ? participantData.ponderacion
+    : typeof participantData.weight === 'number'
+    ? participantData.weight
+    : (categoria === 'nino' ? 0.5 : 1.0);
+  const telefono = participantData.telefono || participantData.phone || '';
+  const grupo_familiar_id = participantData.grupo_familiar_id || null;
+
   const p = {
     id: isUUID(participantData.id) ? participantData.id : generateUUID(),
-    name: participantData.name.trim(),
-    category: participantData.category || 'adulto',
-    weight: typeof participantData.weight === 'number'
-      ? participantData.weight
-      : (participantData.category === 'nino' ? 0.5 : 1.0),
-    subFamily: participantData.subFamily || participantData.subfamily || inferSubFamily(participantData.name),
+    nombre,
+    apellido_paterno,
+    apellido_materno,
+    name: fullName,
+    telefono,
+    categoria,
+    category: categoria,
+    ponderacion,
+    weight: ponderacion,
+    grupo_familiar_id,
+    subFamily: participantData.subFamily || participantData.subfamily || inferSubFamily(fullName),
     activeDays: Array.isArray(participantData.activeDays) && participantData.activeDays.length > 0
       ? participantData.activeDays
       : [...defaultDays],
@@ -420,7 +621,6 @@ export const addParticipant = async (eventId, participantData) => {
         ? currentEvent.id
         : null;
 
-      // Si no es UUID, buscar el evento correspondiente en Supabase
       if (!targetEventId) {
         const { data: dbEvents } = await supabase.from('events').select('id').limit(1);
         if (dbEvents && dbEvents.length > 0) {
@@ -428,27 +628,48 @@ export const addParticipant = async (eventId, participantData) => {
         }
       }
 
-      const { data, error } = await supabase.from('participants').insert({
+      const activeDaysMeta = {
+        days: p.activeDays,
+        isAttending: p.isAttending,
+        isSettled: p.isSettled,
+        subFamily: p.subFamily,
+        grupo_familiar_id: p.grupo_familiar_id,
+        nombre: p.nombre,
+        apellido_paterno: p.apellido_paterno,
+        apellido_materno: p.apellido_materno,
+        telefono: p.telefono,
+      };
+
+      // Intentar primero con las nuevas columnas
+      const { error } = await supabase.from('participants').insert({
         id: p.id,
         event_id: targetEventId,
         name: p.name,
+        nombre: p.nombre,
+        apellido_paterno: p.apellido_paterno,
+        apellido_materno: p.apellido_materno,
+        telefono: p.telefono,
+        categoria: p.categoria,
         category: p.category,
+        ponderacion: p.ponderacion,
         weight: p.weight,
-        active_days: {
-          days: p.activeDays,
-          isAttending: p.isAttending,
-          isSettled: p.isSettled,
-          subFamily: p.subFamily,
-        },
+        grupo_familiar_id: p.grupo_familiar_id,
+        active_days: activeDaysMeta,
       });
 
-      if (error) {
-        console.error('[Database] Error insertando participante en Supabase:', error);
-      } else {
-        console.log('[Database] ✅ Participante guardado en Supabase:', p.name, p.id, 'en evento:', targetEventId);
+      if (error && error.message?.includes('does not exist')) {
+        // Fallback a columnas legadas si la migración de Supabase aún no se ha ejecutado
+        await supabase.from('participants').insert({
+          id: p.id,
+          event_id: targetEventId,
+          name: p.name,
+          category: p.category,
+          weight: p.weight,
+          active_days: activeDaysMeta,
+        });
       }
     } catch (e) {
-      console.error('[Database] Excepción insertando participante en Supabase:', e);
+      console.warn('[Database] Excepción insertando participante en Supabase:', e);
     }
   }
 
@@ -469,19 +690,42 @@ export const updateParticipant = async (eventId, participant) => {
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      await supabase.from('participants').update({
+      const activeDaysMeta = {
+        days: participant.activeDays,
+        isAttending: participant.isAttending,
+        isSettled: participant.isSettled,
+        subFamily: participant.subFamily,
+        grupo_familiar_id: participant.grupo_familiar_id,
+        nombre: participant.nombre,
+        apellido_paterno: participant.apellido_paterno,
+        apellido_materno: participant.apellido_materno,
+        telefono: participant.telefono,
+      };
+
+      const { error } = await supabase.from('participants').update({
         name: participant.name,
-        category: participant.category,
-        weight: participant.weight,
-        active_days: {
-          days: participant.activeDays,
-          isAttending: participant.isAttending,
-          isSettled: participant.isSettled,
-          subFamily: participant.subFamily,
-        },
+        nombre: participant.nombre,
+        apellido_paterno: participant.apellido_paterno,
+        apellido_materno: participant.apellido_materno,
+        telefono: participant.telefono,
+        categoria: participant.categoria || participant.category,
+        category: participant.category || participant.categoria,
+        ponderacion: participant.ponderacion || participant.weight,
+        weight: participant.weight || participant.ponderacion,
+        grupo_familiar_id: participant.grupo_familiar_id,
+        active_days: activeDaysMeta,
       }).eq('id', participant.id);
+
+      if (error && error.message?.includes('does not exist')) {
+        await supabase.from('participants').update({
+          name: participant.name,
+          category: participant.category,
+          weight: participant.weight,
+          active_days: activeDaysMeta,
+        }).eq('id', participant.id);
+      }
     } catch (e) {
-      console.error('[Database] Error actualizando participante en Supabase:', e);
+      console.warn('[Database] Error actualizando participante en Supabase:', e);
     }
   }
 
@@ -908,38 +1152,89 @@ export const saveGlobalDirectory = (directory) => {
 /**
  * Agregar Contacto al Directorio Maestro (y guardarlo en Supabase y LocalStorage)
  */
-export const addDirectoryContact = async ({ name, subFamily, category = 'adulto', weight = 1.0 }) => {
+export const addDirectoryContact = async ({
+  nombre = '',
+  apellido_paterno = '',
+  apellido_materno = '',
+  telefono = '',
+  name = '',
+  subFamily = '',
+  grupo_familiar_id = null,
+  category = 'adulto',
+  categoria = 'adulto',
+  weight = 1.0,
+  ponderacion = 1.0,
+}) => {
+  const nom = (nombre || (name ? name.trim().split(/\s+/)[0] : '')).trim();
+  const apePat = (apellido_paterno || (name ? (name.trim().split(/\s+/)[1] || '') : '')).trim();
+  const apeMat = (apellido_materno || (name ? (name.trim().split(/\s+/).slice(2).join(' ') || '') : '')).trim();
+  const fullName = [nom, apePat, apeMat].filter(Boolean).join(' ') || name.trim() || 'Integrante';
+  
+  const cat = String(categoria || category || 'adulto').toLowerCase();
+  const pond = typeof ponderacion === 'number'
+    ? ponderacion
+    : typeof weight === 'number'
+    ? weight
+    : (cat === 'nino' ? 0.5 : 1.0);
+
   const newContact = {
     id: generateUUID(),
-    name: name.trim(),
-    category,
-    weight: typeof weight === 'number' ? weight : (category === 'nino' ? 0.5 : 1.0),
-    subFamily: subFamily?.trim() || inferSubFamily(name),
+    nombre: nom,
+    apellido_paterno: apePat,
+    apellido_materno: apeMat,
+    name: fullName,
+    telefono: telefono.trim(),
+    categoria: cat,
+    category: cat,
+    ponderacion: pond,
+    weight: pond,
+    grupo_familiar_id: grupo_familiar_id || null,
+    subFamily: subFamily?.trim() || inferSubFamily(fullName),
   };
 
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('participants').insert({
+      const activeDaysMeta = {
+        days: [],
+        isAttending: true,
+        isSettled: false,
+        subFamily: newContact.subFamily,
+        grupo_familiar_id: newContact.grupo_familiar_id,
+        nombre: newContact.nombre,
+        apellido_paterno: newContact.apellido_paterno,
+        apellido_materno: newContact.apellido_materno,
+        telefono: newContact.telefono,
+      };
+
+      const { error } = await supabase.from('participants').insert({
         id: newContact.id,
         event_id: null,
         name: newContact.name,
+        nombre: newContact.nombre,
+        apellido_paterno: newContact.apellido_paterno,
+        apellido_materno: newContact.apellido_materno,
+        telefono: newContact.telefono,
+        categoria: newContact.categoria,
         category: newContact.category,
+        ponderacion: newContact.ponderacion,
         weight: newContact.weight,
-        active_days: {
-          days: [],
-          isAttending: true,
-          isSettled: false,
-          subFamily: newContact.subFamily,
-        },
+        grupo_familiar_id: newContact.grupo_familiar_id,
+        active_days: activeDaysMeta,
       });
-      if (error) {
-        console.error('[Database] Error guardando contacto en Supabase:', error);
-      } else {
-        console.log('[Database] ✅ Contacto del directorio guardado en Supabase:', newContact.name, newContact.id);
+
+      if (error && error.message?.includes('does not exist')) {
+        await supabase.from('participants').insert({
+          id: newContact.id,
+          event_id: null,
+          name: newContact.name,
+          category: newContact.category,
+          weight: newContact.weight,
+          active_days: activeDaysMeta,
+        });
       }
     } catch (e) {
-      console.error('[Database] Excepción guardando contacto en Supabase:', e);
+      console.warn('[Database] Excepción guardando contacto en Supabase:', e);
     }
   }
 

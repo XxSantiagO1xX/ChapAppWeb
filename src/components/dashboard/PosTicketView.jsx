@@ -32,7 +32,9 @@ export const PosTicketView = () => {
     setSelectedSubFamily, 
     refreshActiveEvent, 
     openModal, 
-    showToast 
+    showToast,
+    familyGroups,
+    updateFamilyGroupIndependence
   } = useApp();
 
   const [subFamilySearch, setSubFamilySearch] = useState('');
@@ -43,7 +45,7 @@ export const PosTicketView = () => {
 
   if (!activeEvent) return null;
 
-  const totals = calculateEventTotals(activeEvent);
+  const totals = calculateEventTotals(activeEvent, null, familyGroups);
   const subFamilies = totals.subFamilies;
 
   if (subFamilies.length === 0) {
@@ -274,10 +276,20 @@ export const PosTicketView = () => {
                     )}
                   </div>
                   
-                  <div className="master-item-sub-row">
+                  <div className="master-item-sub-row" style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span className="master-item-count">
                       {sf.attendingCount} de {sf.membersCount} asisten • {sf.totalWeightedUnits} uds
                     </span>
+                    {sf.hasMultipleNuclei && (
+                      <span className="badge-pill badge-cyan" style={{ fontSize: '0.68rem', padding: '1px 6px' }} title={`Consolida: ${(sf.subGroups || []).join(', ')}`}>
+                        Consolida {sf.subGroups.length} núcleos
+                      </span>
+                    )}
+                    {sf.nodo_padre_id && sf.es_independiente && (
+                      <span className="badge-pill badge-neutral" style={{ fontSize: '0.68rem', padding: '1px 6px' }}>
+                        Autónomo
+                      </span>
+                    )}
                   </div>
 
                   <div className="master-item-members-tags">
@@ -340,6 +352,37 @@ export const PosTicketView = () => {
             </div>
           </div>
 
+          {/* Banner de Jerarquía Híbrida: Roll-Up o Autonomía */}
+          {activeSf.hasMultipleNuclei && (
+            <div className="glass-panel" style={{ padding: '10px 16px', margin: '0 0 16px 0', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.08)', borderLeft: '4px solid var(--color-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem' }}>
+                <Icon name="users" size={18} />
+                <span>
+                  <strong>Roll-Up Financiero Consolidado:</strong> Este ticket acumula la cuenta y unidades de los sub-núcleos dependientes: <strong>{(activeSf.subGroups || []).join(', ')}</strong>.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {activeSf.nodo_padre_id && activeSf.es_independiente && (
+            <div className="glass-panel" style={{ padding: '10px 16px', margin: '0 0 16px 0', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.08)', borderLeft: '4px solid var(--color-emerald)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem' }}>
+                <Icon name="check" size={18} />
+                <span>
+                  <strong>Ticket Individual Autónomo:</strong> Este núcleo asume su propia deuda de forma separada a su rama genealógica padre.
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn-toggle-independence is-indep"
+                onClick={() => updateFamilyGroupIndependence(activeSf.subFamilyId, false)}
+                title="Reasociar financieramente a la rama principal"
+              >
+                <span>Hacer Dependiente del Padre</span>
+              </button>
+            </div>
+          )}
+
           {/* 3 Métricas HUD del Ticket Familiar */}
           <div className="ticket-metrics-row">
             <div className="metric-mini-box">
@@ -382,16 +425,30 @@ export const PosTicketView = () => {
                     const p = totals.byParticipantId[pId];
                     if (!p) return null;
 
+                    const displayName = p.nombre 
+                      ? `${p.nombre} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() 
+                      : p.participantName;
+
                     return (
                       <div key={pId} className={`pos-member-row glass-panel ${!p.isAttending ? 'is-absent' : ''}`}>
                         <div className="member-name-col">
                           <div className="member-title-line">
                             <strong className="member-display-name">
-                              <Icon name="user" size={14} /> {p.participantName}
+                              <Icon name="user" size={14} /> {displayName}
                             </strong>
                             {!p.isAttending && <span className="badge-absent-mini">No Asiste</span>}
                           </div>
                           <div className="member-badges-row">
+                            {p.isRolledUp && p.originalGroupName && p.originalGroupName !== activeSf.subFamilyName && (
+                              <span className="badge-branch-dependent" style={{ fontSize: '0.68rem', padding: '1px 7px' }}>
+                                ↳ {p.originalGroupName}
+                              </span>
+                            )}
+                            {p.telefono && (
+                              <span className="contact-phone-tag" style={{ fontSize: '0.74rem' }}>
+                                <Icon name="phone" size={11} /> {p.telefono}
+                              </span>
+                            )}
                             <span className="badge-pill badge-neutral">
                               {p.category.toUpperCase()} ({p.weight} ud)
                             </span>

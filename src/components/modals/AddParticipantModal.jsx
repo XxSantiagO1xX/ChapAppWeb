@@ -1,5 +1,6 @@
 /**
- * ChapApp - Modal Agregar Participante (AddParticipantModal) React
+ * ChapApp - Modal Agregar Participante al Evento (AddParticipantModal) React
+ * Soporte para Modelo Híbrido de Jerarquía Familiar (Campos separados y grupos familiares)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -8,23 +9,34 @@ import { addParticipant } from '../../services/database.js';
 import { Icon } from '../../utils/icons.jsx';
 
 export const AddParticipantModal = () => {
-  const { activeModal, closeModal, activeEvent, refreshActiveEvent, showToast } = useApp();
+  const { activeModal, closeModal, activeEvent, refreshActiveEvent, familyGroups, showToast } = useApp();
 
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastNamePaternal, setLastNamePaternal] = useState('');
+  const [lastNameMaternal, setLastNameMaternal] = useState('');
+  const [phone, setPhone] = useState('');
+  const [selectedGroupId, setSelectedGroupId] = useState('');
   const [category, setCategory] = useState('adulto');
   const [weight, setWeight] = useState(1.0);
-  const [subFamily, setSubFamily] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (activeModal === 'addParticipant') {
-      setName('');
+      setFirstName('');
+      setLastNamePaternal('');
+      setLastNameMaternal('');
+      setPhone('');
       setCategory('adulto');
       setWeight(1.0);
-      setSubFamily('');
       setSubmitting(false);
+
+      if (familyGroups && familyGroups.length > 0) {
+        setSelectedGroupId(familyGroups[0].id);
+      } else {
+        setSelectedGroupId('');
+      }
     }
-  }, [activeModal]);
+  }, [activeModal, familyGroups]);
 
   if (activeModal !== 'addParticipant' || !activeEvent) return null;
 
@@ -36,23 +48,28 @@ export const AddParticipantModal = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) {
+    if (!firstName.trim()) {
       showToast('Ingresa el nombre del participante', 'info');
       return;
     }
-    if (!subFamily.trim()) {
-      showToast('Ingresa la subfamilia o grupo familiar', 'info');
-      return;
-    }
+
+    const matchedGroup = (familyGroups || []).find((g) => g.id === selectedGroupId);
+    const subFamilyName = matchedGroup ? matchedGroup.nombre : 'Familia General';
+    const fullName = `${firstName.trim()} ${lastNamePaternal.trim()} ${lastNameMaternal.trim()}`.replace(/\s+/g, ' ').trim();
 
     setSubmitting(true);
     try {
       const availableDays = activeEvent.availableDays || ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
       await addParticipant(activeEvent.id, {
-        name: name.trim(),
+        nombre: firstName.trim(),
+        apellido_paterno: lastNamePaternal.trim() || '',
+        apellido_materno: lastNameMaternal.trim() || '',
+        telefono: phone.trim() || '',
+        name: fullName,
         category,
         weight: parseFloat(weight) || (category === 'nino' ? 0.5 : 1.0),
-        subFamily: subFamily.trim(),
+        grupo_familiar_id: selectedGroupId || null,
+        subFamily: subFamilyName,
         activeDays: [...availableDays],
         isAttending: true,
         isSettled: false,
@@ -60,7 +77,7 @@ export const AddParticipantModal = () => {
 
       await refreshActiveEvent();
       closeModal();
-      showToast(`Participante "${name.trim()}" agregado al evento`, 'success');
+      showToast(`Participante "${fullName}" agregado al evento`, 'success');
     } catch (err) {
       console.error('Error agregando participante:', err);
       showToast('Error al agregar integrante', 'error');
@@ -95,16 +112,56 @@ export const AddParticipantModal = () => {
 
           <form onSubmit={handleSubmit} className="dialog-form">
             <div className="form-group">
-              <label htmlFor="participant-name">Nombre Completo *</label>
+              <label htmlFor="participant-firstname">Nombre(s) *</label>
               <input 
                 type="text" 
-                id="participant-name" 
+                id="participant-firstname" 
                 className="glass-input" 
-                placeholder="ej. Don Carlos Santiago" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="ej. Ariel" 
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 required 
-                autocomplete="off"
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="form-row-2">
+              <div className="form-group">
+                <label htmlFor="participant-paternal">Apellido Paterno</label>
+                <input 
+                  type="text" 
+                  id="participant-paternal" 
+                  className="glass-input" 
+                  placeholder="ej. Santiago" 
+                  value={lastNamePaternal}
+                  onChange={(e) => setLastNamePaternal(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="participant-maternal">Apellido Materno</label>
+                <input 
+                  type="text" 
+                  id="participant-maternal" 
+                  className="glass-input" 
+                  placeholder="ej. Velázquez" 
+                  value={lastNameMaternal}
+                  onChange={(e) => setLastNameMaternal(e.target.value)}
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="participant-phone">Teléfono (WhatsApp)</label>
+              <input 
+                type="tel" 
+                id="participant-phone" 
+                className="glass-input" 
+                placeholder="ej. 5512345678" 
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                autoComplete="off"
               />
             </div>
 
@@ -137,25 +194,26 @@ export const AddParticipantModal = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="participant-subfamily">Subfamilia / Grupo Familiar *</label>
-              <input 
-                type="text" 
-                id="participant-subfamily" 
-                className="glass-input" 
-                placeholder="ej. Familia Santiago Chapantongo" 
-                value={subFamily}
-                onChange={(e) => setSubFamily(e.target.value)}
-                required 
-                list="subfamily-suggestions-react" 
-                autocomplete="off"
-              />
-              <datalist id="subfamily-suggestions-react">
-                <option value="Familia Santiago Chapantongo" />
-                <option value="Familia Santiago Velázquez" />
-                <option value="Familia Santiago Morales" />
-                <option value="Amigos y Primos" />
-                <option value="Familia General" />
-              </datalist>
+              <label htmlFor="participant-group">Grupo Familiar / Núcleo *</label>
+              <select 
+                id="participant-group" 
+                className="glass-select"
+                value={selectedGroupId}
+                onChange={(e) => setSelectedGroupId(e.target.value)}
+                required
+              >
+                {(familyGroups || []).map((g) => {
+                  const isSub = Boolean(g.nodo_padre_id);
+                  const label = isSub 
+                    ? `↳ ${g.nombre} (${g.es_independiente ? 'Autónomo' : 'Dependiente'})` 
+                    : `★ ${g.nombre} (Rama Principal)`;
+                  return (
+                    <option key={g.id} value={g.id}>
+                      {label}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
 
             <div className="dialog-footer">

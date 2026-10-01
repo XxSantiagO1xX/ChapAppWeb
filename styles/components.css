@@ -2765,3 +2765,173 @@ button:active {
   font-weight: 800;
   border-radius: var(--radius-pill);
 }
+
+/* ==========================================================================
+   MODELO HÍBRIDO DE JERARQUÍA FAMILIAR (DIRECTORIO Y POS)
+   ========================================================================== */
+.family-branch-card {
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-glass-card);
+  transition: all var(--transition-normal);
+  background: var(--bg-glass-card);
+}
+
+.family-branch-card:hover {
+  border-color: var(--border-neon-cyan);
+}
+
+.family-branch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.family-branch-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.family-branch-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-branch-root {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-branch-independent {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-branch-dependent {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-toggle-independence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  background: var(--bg-glass-element);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-independence:hover {
+  background: rgba(56, 189, 248, 0.20);
+  border-color: var(--border-neon-cyan);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.btn-toggle-independence.is-indep {
+  border-color: rgba(16, 185, 129, 0.40);
+  color: #10b981;
+}
+
+.btn-toggle-independence.is-indep:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.40);
+  color: #ef4444;
+}
+
+/* Sub-núcleo anidado/colapsado dentro de la Rama Principal */
+.family-subnucleus-nested {
+  margin-top: 14px;
+  margin-left: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border-left: 3px solid var(--color-cyan);
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 640px) {
+  .family-subnucleus-nested {
+    margin-left: 22px;
+    padding: 16px 20px;
+  }
+}
+
+.subnucleus-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+
+.subnucleus-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.contact-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.contact-phone-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-cyan);
+  font-size: 0.75rem;
+}
+

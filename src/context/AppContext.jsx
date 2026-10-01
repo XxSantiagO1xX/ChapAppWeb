@@ -8,6 +8,9 @@ import {
   getAllEvents, 
   getEventById, 
   getGlobalDirectory,
+  getAllFamilyGroups,
+  updateFamilyGroup,
+  createFamilyGroup,
   subscribeToEventsListRealtime 
 } from '../services/database.js';
 import { 
@@ -78,8 +81,9 @@ export const AppProvider = ({ children }) => {
   const [selectedSubFamily, setSelectedSubFamily] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
-  // 4. Directorio Global
+  // 4. Directorio Global y Jerarquía Familiar (Modelo Híbrido)
   const [directory, setDirectory] = useState([]);
+  const [familyGroups, setFamilyGroups] = useState([]);
 
   // 5. Sistema de Notificaciones Toast
   const [toasts, setToasts] = useState([]);
@@ -111,6 +115,42 @@ export const AppProvider = ({ children }) => {
     setModalProps({});
   }, []);
 
+  // Refrescar solo grupos familiares
+  const refreshFamilyGroups = useCallback(async () => {
+    try {
+      const groups = await getAllFamilyGroups();
+      setFamilyGroups(groups || []);
+      return groups;
+    } catch (e) {
+      console.warn('[AppContext] Error refrescando family_groups:', e);
+      return [];
+    }
+  }, []);
+
+  // Cambiar estatus de independencia de un grupo familiar
+  const updateFamilyGroupIndependence = useCallback(async (groupId, es_independiente) => {
+    try {
+      const updated = await updateFamilyGroup(groupId, { es_independiente });
+      if (updated) {
+        setFamilyGroups((prev) => prev.map((g) => (g.id === groupId ? { ...g, es_independiente } : g)));
+        showToast(
+          es_independiente 
+            ? 'Núcleo independizado: generará su propio corte y ticket individual' 
+            : 'Núcleo dependiente: se consolidará en el corte de su rama principal',
+          'success'
+        );
+        // Si hay evento activo, forzar refresco para recalcular tickets inmediatamente
+        if (activeEventRef.current?.id) {
+          const refreshed = await getEventById(activeEventRef.current.id);
+          if (refreshed) setActiveEvent(refreshed);
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling family group independence:', err);
+      showToast('Error al actualizar independencia del grupo', 'error');
+    }
+  }, [showToast]);
+
   // Cargar eventos iniciales desde Supabase o Caché local
   const loadInitialData = useCallback(async () => {
     setLoading(true);
@@ -119,6 +159,8 @@ export const AppProvider = ({ children }) => {
       setEvents(allEvents || []);
       const dir = getGlobalDirectory();
       setDirectory(dir || []);
+      const groups = await getAllFamilyGroups();
+      setFamilyGroups(groups || []);
 
       // Si la URL tiene un hash con ID de evento (ej. #/event/123)
       if (typeof window !== 'undefined') {
@@ -249,6 +291,10 @@ export const AppProvider = ({ children }) => {
     setIsSidebarCollapsed,
     directory,
     setDirectory,
+    familyGroups,
+    setFamilyGroups,
+    refreshFamilyGroups,
+    updateFamilyGroupIndependence,
     toasts,
     showToast,
     removeToast,
