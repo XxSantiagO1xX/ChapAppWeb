@@ -8,6 +8,7 @@ import {
   getAllEvents, 
   getEventById, 
   getGlobalDirectory,
+  fetchGlobalDirectoryFromSupabase,
   getAllFamilyGroups,
   updateFamilyGroup,
   createFamilyGroup,
@@ -157,7 +158,7 @@ export const AppProvider = ({ children }) => {
     try {
       const allEvents = await getAllEvents();
       setEvents(allEvents || []);
-      const dir = getGlobalDirectory();
+      const dir = await fetchGlobalDirectoryFromSupabase();
       setDirectory(dir || []);
       const groups = await getAllFamilyGroups();
       setFamilyGroups(groups || []);

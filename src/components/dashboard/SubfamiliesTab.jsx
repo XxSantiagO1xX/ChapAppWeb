@@ -89,15 +89,16 @@ export const SubfamiliesTab = () => {
   };
 
   const handleDeleteParticipant = (participant) => {
+    const pName = participant.name || `${participant.nombre || ''} ${participant.apellido_paterno || ''}`.trim() || 'Integrante';
     openModal('confirm', {
       title: '¿Eliminar Integrante?',
-      message: `¿Deseas eliminar a "${participant.name}" de este evento?`,
+      message: `¿Deseas eliminar a "${pName}" de este evento?`,
       variant: 'danger',
       onConfirm: async () => {
         try {
           await deleteParticipant(activeEvent.id, participant.id);
           await refreshActiveEvent();
-          showToast(`Integrante "${participant.name}" eliminado`, 'success');
+          showToast(`Integrante "${pName}" eliminado`, 'success');
         } catch (err) {
           console.error('Error eliminando participante:', err);
           showToast('Error al eliminar integrante', 'error');

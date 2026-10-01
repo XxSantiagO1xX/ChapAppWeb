@@ -8,20 +8,29 @@ import { Icon } from '../../utils/icons.jsx';
 
 export const ConfirmModal = () => {
   const { activeModal, modalProps, closeModal } = useApp();
+  const [submitting, setSubmitting] = React.useState(false);
 
   if (activeModal !== 'confirm') return null;
 
   const { title = '¿Estás seguro?', message = 'Esta acción no se puede deshacer.', variant = 'danger', onConfirm } = modalProps;
 
-  const handleConfirm = () => {
-    if (typeof onConfirm === 'function') {
-      onConfirm();
+  const handleConfirm = async () => {
+    setSubmitting(true);
+    try {
+      if (typeof onConfirm === 'function') {
+        await onConfirm();
+      }
+      closeModal();
+    } catch (err) {
+      console.error('[ConfirmModal] Error en onConfirm:', err);
+      closeModal();
+    } finally {
+      setSubmitting(false);
     }
-    closeModal();
   };
 
   return (
-    <div className="modal-backdrop animate-fade-in" onClick={closeModal}>
+    <div className="modal-backdrop animate-fade-in" onClick={() => !submitting && closeModal()}>
       <div 
         className="glass-dialog modal-sm animate-scale-in" 
         onClick={(e) => e.stopPropagation()}
@@ -40,15 +49,16 @@ export const ConfirmModal = () => {
             {message}
           </p>
           <div className="dialog-footer confirm-footer" style={{ width: '100%', justifyContent: 'center' }}>
-            <button type="button" className="btn-pill-glass" onClick={closeModal}>
+            <button type="button" className="btn-pill-glass" onClick={closeModal} disabled={submitting}>
               Cancelar
             </button>
             <button 
               type="button" 
               className={variant === 'danger' ? 'btn-pill-danger' : 'btn-pill-primary'} 
               onClick={handleConfirm}
+              disabled={submitting}
             >
-              Confirmar
+              {submitting ? 'Eliminando...' : 'Confirmar'}
             </button>
           </div>
         </div>

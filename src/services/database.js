@@ -848,9 +848,24 @@ export const deleteParticipant = async (eventId, participantId) => {
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      await supabase.from('participants').delete().eq('id', participantId);
+      // 1. Intentar borrar por id
+      const { error: err1 } = await supabase.from('participants').delete().eq('id', participantId);
+      if (err1) {
+        console.warn('[Database] Error borrando participante por id en Supabase:', err1);
+      }
+
+      // 2. Respaldo: si el ID es local o no coincidió, borrar por event_id y name
+      const event = await getEventById(eventId);
+      const targetPart = event?.participants?.find((p) => p.id === participantId);
+      if (targetPart && targetPart.name) {
+        await supabase
+          .from('participants')
+          .delete()
+          .eq('event_id', event.id)
+          .eq('name', targetPart.name);
+      }
     } catch (e) {
-      console.error('[Database] Error eliminando participante en Supabase:', e);
+      console.error('[Database] Excepción eliminando participante en Supabase:', e);
     }
   }
 
@@ -1042,48 +1057,67 @@ export const getGlobalDirectory = () => {
 
   const contactsMap = new Map();
 
-  // 1. Si Supabase NO está configurado y nunca se ha guardado directorio local, cargar semilla demo
-  if (!CONFIG.SUPABASE.URL || CONFIG.SUPABASE.URL.includes('tu-proyecto.supabase.co')) {
-    if (cachedDir === null && localList.length === 0) {
-      SEED_DIRECTORY.forEach((d) => {
-        if (d && d.name) contactsMap.set(d.name.toLowerCase().trim(), { ...d });
-      });
-      return Array.from(contactsMap.values());
-    }
-  }
-
-  // 2. Si hay un directorio guardado explícitamente en LocalStorage (incluyendo [] si se borraron todos)
-  if (Array.isArray(cachedDir)) {
+  // 1. Si hay un directorio guardado explícitamente en LocalStorage
+  if (Array.isArray(cachedDir) && cachedDir.length > 0) {
     cachedDir.forEach((d) => {
-      if (d && d.name) {
-        const key = d.name.toLowerCase().trim();
+      if (d && (d.name || d.nombre)) {
+        const fullName = (d.name || `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''}`).replace(/\s+/g, ' ').trim();
+        const key = fullName.toLowerCase().trim();
         contactsMap.set(key, {
           id: d.id || generateUUID(),
-          name: d.name,
-          category: d.category || 'adulto',
+          name: fullName,
+          nombre: d.nombre || fullName.split(' ')[0] || '',
+          apellido_paterno: d.apellido_paterno || '',
+          apellido_materno: d.apellido_materno || '',
+          telefono: d.telefono || '',
+          grupo_familiar_id: d.grupo_familiar_id || null,
+          category: d.category || d.categoria || 'adulto',
+          categoria: d.categoria || d.category || 'adulto',
           weight: typeof d.weight === 'number' ? d.weight : (d.category === 'nino' ? 0.5 : 1.0),
-          subFamily: d.subFamily || inferSubFamily(d.name),
+          ponderacion: typeof d.ponderacion === 'number' ? d.ponderacion : (d.weight || 1.0),
+          subFamily: d.subFamily || inferSubFamily(fullName),
         });
       }
     });
   }
 
-  // 3. Participantes de eventos en caché/memoria
+  // 2. Participantes de eventos en caché/memoria
   localList.forEach((ev) => {
     (ev.participants || []).forEach((p) => {
-      if (p && p.name) {
-        const key = p.name.toLowerCase().trim();
+      if (p && (p.name || p.nombre)) {
+        const fullName = (p.name || `${p.nombre || ''} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`).replace(/\s+/g, ' ').trim();
+        const key = fullName.toLowerCase().trim();
         const existing = contactsMap.get(key);
         contactsMap.set(key, {
           id: p.id || existing?.id || generateUUID(),
-          name: p.name,
+          name: fullName,
+          nombre: p.nombre || existing?.nombre || fullName.split(' ')[0] || '',
+          apellido_paterno: p.apellido_paterno || existing?.apellido_paterno || '',
+          apellido_materno: p.apellido_materno || existing?.apellido_materno || '',
+          telefono: p.telefono || existing?.telefono || '',
+          grupo_familiar_id: p.grupo_familiar_id || existing?.grupo_familiar_id || null,
           category: p.category || existing?.category || 'adulto',
+          categoria: p.categoria || existing?.categoria || 'adulto',
           weight: typeof p.weight === 'number' ? p.weight : (existing?.weight || (p.category === 'nino' ? 0.5 : 1.0)),
-          subFamily: p.subFamily || existing?.subFamily || inferSubFamily(p.name),
+          ponderacion: typeof p.ponderacion === 'number' ? p.ponderacion : (existing?.ponderacion || 1.0),
+          subFamily: p.subFamily || existing?.subFamily || inferSubFamily(fullName),
         });
       }
     });
   });
+
+  // 3. Si no hay nada en caché ni eventos, sembrar con SEED_DIRECTORY
+  if (contactsMap.size === 0) {
+    SEED_DIRECTORY.forEach((d) => {
+      if (d && (d.name || d.nombre)) {
+        const fullName = (d.name || `${d.nombre || ''} ${d.apellido_paterno || ''}`).replace(/\s+/g, ' ').trim();
+        contactsMap.set(fullName.toLowerCase().trim(), { ...d, name: fullName });
+      }
+    });
+    const seededList = Array.from(contactsMap.values());
+    saveGlobalDirectory(seededList);
+    return seededList;
+  }
 
   return Array.from(contactsMap.values());
 };
@@ -1093,25 +1127,33 @@ export const fetchGlobalDirectoryFromSupabase = async () => {
   if (supabase) {
     try {
       const { data, error } = await supabase.from('participants').select('*');
-      if (!error && Array.isArray(data)) {
+      if (!error && Array.isArray(data) && data.length > 0) {
         const contactsMap = new Map();
 
         // 1. Mapear todos los participantes existentes actualmente en Supabase
         data.forEach((row) => {
           const p = parseParticipantRow(row);
-          if (p && p.name) {
-            const key = p.name.toLowerCase().trim();
+          if (p && (p.name || p.nombre)) {
+            const fullName = (p.name || `${p.nombre || ''} ${p.apellido_paterno || ''} ${p.apellido_materno || ''}`).replace(/\s+/g, ' ').trim();
+            const key = fullName.toLowerCase().trim();
             contactsMap.set(key, {
               id: p.id || generateUUID(),
-              name: p.name,
+              name: fullName,
+              nombre: p.nombre || fullName.split(' ')[0] || '',
+              apellido_paterno: p.apellido_paterno || '',
+              apellido_materno: p.apellido_materno || '',
+              telefono: p.telefono || '',
+              grupo_familiar_id: p.grupo_familiar_id || null,
               category: p.category || 'adulto',
+              categoria: p.categoria || p.category || 'adulto',
               weight: typeof p.weight === 'number' ? p.weight : (p.category === 'nino' ? 0.5 : 1.0),
-              subFamily: p.subFamily || inferSubFamily(p.name),
+              ponderacion: typeof p.ponderacion === 'number' ? p.ponderacion : p.weight,
+              subFamily: p.subFamily || inferSubFamily(fullName),
             });
           }
         });
 
-        // 2. Si el usuario creó contactos manuales en el directorio local (con id empezando por 'dir_')
+        // 2. Conservar también contactos manuales guardados localmente
         const cachedDir = (() => {
           try {
             const raw = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.LOCAL_DIRECTORY);
@@ -1123,10 +1165,11 @@ export const fetchGlobalDirectoryFromSupabase = async () => {
 
         if (Array.isArray(cachedDir)) {
           cachedDir.forEach((d) => {
-            if (d && d.name && String(d.id).startsWith('dir_')) {
-              const key = d.name.toLowerCase().trim();
+            if (d && (d.name || d.nombre)) {
+              const fullName = (d.name || `${d.nombre || ''} ${d.apellido_paterno || ''}`).replace(/\s+/g, ' ').trim();
+              const key = fullName.toLowerCase().trim();
               if (!contactsMap.has(key)) {
-                contactsMap.set(key, { ...d });
+                contactsMap.set(key, { ...d, name: fullName });
               }
             }
           });
@@ -1147,6 +1190,31 @@ export const saveGlobalDirectory = (directory) => {
   try {
     localStorage.setItem(CONFIG.APP.STORAGE_KEYS.LOCAL_DIRECTORY, JSON.stringify(directory));
   } catch (e) {}
+};
+
+export const deleteDirectoryContact = async (contactId, contactName) => {
+  const supabase = await initSupabaseClient();
+  if (supabase) {
+    try {
+      if (isUUID(contactId)) {
+        await supabase.from('participants').delete().eq('id', contactId);
+      }
+      if (contactName) {
+        await supabase.from('participants').delete().eq('name', contactName.trim());
+      }
+    } catch (e) {
+      console.warn('[Database] Error borrando contacto de Supabase:', e);
+    }
+  }
+
+  let dir = getGlobalDirectory();
+  dir = dir.filter((d) => {
+    const dName = (d.name || `${d.nombre || ''} ${d.apellido_paterno || ''}`).toLowerCase().trim();
+    const targetName = (contactName || '').toLowerCase().trim();
+    return d.id !== contactId && (!targetName || dName !== targetName);
+  });
+  saveGlobalDirectory(dir);
+  return dir;
 };
 
 /**
@@ -1244,25 +1312,7 @@ export const addDirectoryContact = async ({
   return newContact;
 };
 
-/**
- * Eliminar Contacto del Directorio Maestro (y de Supabase si existe)
- */
-export const deleteDirectoryContact = async (contactId, contactName) => {
-  const supabase = await initSupabaseClient();
-  if (supabase && isUUID(contactId)) {
-    try {
-      await supabase.from('participants').delete().eq('id', contactId);
-      console.log('[Database] ✅ Contacto eliminado de Supabase:', contactName, contactId);
-    } catch (e) {
-      console.error('[Database] Error eliminando contacto en Supabase:', e);
-    }
-  }
 
-  let dir = getGlobalDirectory();
-  dir = dir.filter((d) => d.id !== contactId && d.name.toLowerCase().trim() !== (contactName || '').toLowerCase().trim());
-  saveGlobalDirectory(dir);
-  return dir;
-};
 
 /**
  * Alternar rol/categoría de un contacto en el Directorio Maestro (y en Supabase)

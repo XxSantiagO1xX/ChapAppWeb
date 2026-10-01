@@ -7,10 +7,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { 
   getGlobalDirectory, 
+  fetchGlobalDirectoryFromSupabase,
   saveGlobalDirectory, 
   addParticipant,
   createFamilyGroup,
-  generateUUID
+  addDirectoryContact,
+  deleteDirectoryContact,
+  generateUUID,
+  SEED_DIRECTORY
 } from '../../services/database.js';
 import { Icon } from '../../utils/icons.jsx';
 
@@ -25,8 +29,7 @@ export const DirectoryModal = () => {
     familyGroups,
     refreshFamilyGroups,
     updateFamilyGroupIndependence,
-    showToast,
-    openModal 
+    showToast
   } = useApp();
 
   const [search, setSearch] = useState('');
@@ -48,27 +51,44 @@ export const DirectoryModal = () => {
 
   const [selectedForImport, setSelectedForImport] = useState(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState(null); // { id, name }
 
+  // Carga inicial y refresco al abrir el modal
   useEffect(() => {
     if (activeModal === 'directory') {
-      try {
-        const dir = getGlobalDirectory();
-        setDirectory(dir || []);
-        if (activeEvent && dir) {
-          const existingNames = new Set((activeEvent.participants || []).map((p) => p.name?.toLowerCase()));
-          const available = dir
-            .filter((d) => {
-              const fullName = `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''}`.trim() || d.name || '';
-              return !existingNames.has(fullName.toLowerCase()) && !existingNames.has((d.name || '').toLowerCase());
-            })
-            .map((d) => d.id);
-          setSelectedForImport(new Set(available));
+      const loadData = async () => {
+        try {
+          // 1. Cargar lo que tengamos en caché inmediatamente
+          const cached = getGlobalDirectory();
+          if (Array.isArray(cached) && cached.length > 0) {
+            setDirectory(cached);
+          }
+
+          // 2. Traer sincronizado desde Supabase
+          const fresh = await fetchGlobalDirectoryFromSupabase();
+          if (Array.isArray(fresh) && fresh.length > 0) {
+            setDirectory(fresh);
+          }
+
+          if (activeEvent && Array.isArray(fresh)) {
+            const existingNames = new Set((activeEvent.participants || []).map((p) => (p.name || '').toLowerCase()));
+            const available = fresh
+              .filter((d) => {
+                const fullName = (d.name || `${d.nombre || ''} ${d.apellido_paterno || ''}`).trim();
+                return !existingNames.has(fullName.toLowerCase());
+              })
+              .map((d) => d.id);
+            setSelectedForImport(new Set(available));
+          }
+        } catch (err) {
+          console.warn('[DirectoryModal] Error cargando directorio:', err);
         }
-      } catch (err) {
-        console.warn('[DirectoryModal] Error cargando directorio:', err);
-      }
+      };
+
+      loadData();
       setSearch('');
       setActiveFormTab(null);
+      setContactToDelete(null);
       resetContactForm();
       resetGroupForm();
     }
@@ -76,8 +96,9 @@ export const DirectoryModal = () => {
 
   // Si no hay grupo seleccionado por defecto, tomar el primero disponible
   useEffect(() => {
-    if (familyGroups && familyGroups.length > 0 && !selectedGroupId) {
-      setSelectedGroupId(familyGroups[0].id);
+    const groups = Array.isArray(familyGroups) ? familyGroups : [];
+    if (groups.length > 0 && !selectedGroupId) {
+      setSelectedGroupId(groups[0].id);
     }
   }, [familyGroups, selectedGroupId]);
 
@@ -96,7 +117,12 @@ export const DirectoryModal = () => {
     setNewGroupIsIndependent(false);
   };
 
-  if (activeModal !== 'directory') return null;
+  // Cargar datos demo de semilla si está vacío
+  const handleSeedDirectory = () => {
+    saveGlobalDirectory(SEED_DIRECTORY);
+    setDirectory(SEED_DIRECTORY);
+    showToast('Directorio sembrado con familias iniciales', 'success');
+  };
 
   // Guardar Nuevo Contacto
   const handleSaveContact = async (e) => {
@@ -106,31 +132,35 @@ export const DirectoryModal = () => {
       return;
     }
 
-    const matchedGroup = familyGroups.find((g) => g.id === selectedGroupId);
-    const subFamilyName = matchedGroup ? matchedGroup.nombre : 'Familia General';
+    const groups = Array.isArray(familyGroups) ? familyGroups : [];
+    const matchedGroup = groups.find((g) => g.id === selectedGroupId);
+    const subFamilyName = matchedGroup ? (matchedGroup.nombre || matchedGroup.name) : 'Familia General';
     const fullName = `${firstName.trim()} ${lastNamePaternal.trim()} ${lastNameMaternal.trim()}`.replace(/\s+/g, ' ').trim();
 
-    const newContact = {
-      id: generateUUID(),
-      name: fullName,
-      nombre: firstName.trim(),
-      apellido_paterno: lastNamePaternal.trim() || '',
-      apellido_materno: lastNameMaternal.trim() || '',
-      telefono: phone.trim() || '',
-      grupo_familiar_id: selectedGroupId || null,
-      subFamily: subFamilyName,
-      category,
-      weight: parseFloat(weight) || (category === 'nino' ? 0.5 : 1.0),
-      isAttending: true,
-      activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'],
-    };
+    try {
+      const newContact = await addDirectoryContact({
+        name: fullName,
+        nombre: firstName.trim(),
+        apellido_paterno: lastNamePaternal.trim() || '',
+        apellido_materno: lastNameMaternal.trim() || '',
+        telefono: phone.trim() || '',
+        grupo_familiar_id: selectedGroupId || null,
+        subFamily: subFamilyName,
+        category,
+        categoria: category,
+        weight: parseFloat(weight) || (category === 'nino' ? 0.5 : 1.0),
+        ponderacion: parseFloat(weight) || (category === 'nino' ? 0.5 : 1.0),
+      });
 
-    const updated = [...directory, newContact];
-    setDirectory(updated);
-    saveGlobalDirectory(updated);
-    resetContactForm();
-    setActiveFormTab(null);
-    showToast(`"${fullName}" agregado al directorio maestro`, 'success');
+      const currentDir = Array.isArray(directory) ? directory : [];
+      setDirectory([...currentDir, newContact]);
+      resetContactForm();
+      setActiveFormTab(null);
+      showToast(`"${fullName}" agregado al directorio maestro`, 'success');
+    } catch (err) {
+      console.error('Error guardando contacto:', err);
+      showToast('Error al registrar integrante', 'error');
+    }
   };
 
   // Guardar Nuevo Grupo / Rama Familiar
@@ -166,19 +196,22 @@ export const DirectoryModal = () => {
     }
   };
 
-  // Eliminar Contacto
-  const handleDeleteContact = (contactId, contactName) => {
-    openModal('confirm', {
-      title: '¿Eliminar del Directorio?',
-      message: `¿Deseas eliminar a "${contactName}" del directorio maestro?`,
-      variant: 'danger',
-      onConfirm: () => {
-        const updated = directory.filter((d) => d.id !== contactId);
-        setDirectory(updated);
-        saveGlobalDirectory(updated);
-        showToast(`"${contactName}" eliminado del directorio`, 'info');
-      },
-    });
+  // Confirmar y Ejecutar Eliminación de Contacto (Sin cerrar el modal)
+  const handleExecuteDeleteContact = async () => {
+    if (!contactToDelete) return;
+
+    try {
+      await deleteDirectoryContact(contactToDelete.id, contactToDelete.name);
+      const currentDir = Array.isArray(directory) ? directory : [];
+      const updated = currentDir.filter((d) => d.id !== contactToDelete.id);
+      setDirectory(updated);
+      showToast(`"${contactToDelete.name}" eliminado del directorio`, 'info');
+    } catch (err) {
+      console.error('Error eliminando contacto:', err);
+      showToast('Error al eliminar contacto del directorio', 'error');
+    } finally {
+      setContactToDelete(null);
+    }
   };
 
   // Toggle Selección para Importar
@@ -198,7 +231,8 @@ export const DirectoryModal = () => {
     setSubmitting(true);
     try {
       const availableDays = activeEvent.availableDays || ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
-      const toImport = directory.filter((d) => selectedForImport.has(d.id));
+      const currentDir = Array.isArray(directory) ? directory : [];
+      const toImport = currentDir.filter((d) => selectedForImport.has(d.id));
 
       for (const item of toImport) {
         await addParticipant(activeEvent.id, {
@@ -228,11 +262,13 @@ export const DirectoryModal = () => {
     }
   };
 
-  // Filtrado de contactos según búsqueda
+  // Filtrado de contactos seguro
   const filteredContacts = useMemo(() => {
-    if (!search.trim()) return directory;
+    const rawList = Array.isArray(directory) ? directory : [];
+    if (!search.trim()) return rawList;
     const q = search.toLowerCase();
-    return directory.filter((d) => {
+    return rawList.filter((d) => {
+      if (!d) return false;
       const full = `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''} ${d.name || ''}`.toLowerCase();
       const phoneMatch = (d.telefono || '').toLowerCase().includes(q);
       const sfMatch = (d.subFamily || '').toLowerCase().includes(q);
@@ -240,22 +276,23 @@ export const DirectoryModal = () => {
     });
   }, [directory, search]);
 
-  // Agrupación Jerárquica Híbrida:
-  // Ramas Principales = sin nodo_padre_id O con es_independiente === true
-  // Sub-núcleos dependientes = con nodo_padre_id Y es_independiente === false (anidados en su padre)
+  // Agrupación Jerárquica Híbrida 100% segura
   const { topLevelCards, unassignedContacts } = useMemo(() => {
     const assignedIds = new Set();
-    const groupsMap = new Map();
-    (familyGroups || []).forEach((g) => groupsMap.set(g.id, g));
+    const rawGroups = Array.isArray(familyGroups) ? familyGroups : [];
 
     // Determinar Ramas Principales y Sub-núcleos Autónomos
-    const topGroups = (familyGroups || []).filter((g) => !g.nodo_padre_id || g.es_independiente);
+    const topGroups = rawGroups.filter((g) => !g.nodo_padre_id || g.es_independiente);
 
     const cards = topGroups.map((group) => {
+      const gName = (group.nombre || group.name || '').toLowerCase();
+
       // Contactos directos de este grupo
       const directContacts = filteredContacts.filter((c) => {
-        const matchesId = c.grupo_familiar_id === group.id;
-        const matchesName = !c.grupo_familiar_id && (c.subFamily || '').toLowerCase() === group.nombre.toLowerCase();
+        if (!c) return false;
+        const matchesId = c.grupo_familiar_id && c.grupo_familiar_id === group.id;
+        const cSfName = (c.subFamily || '').toLowerCase();
+        const matchesName = !c.grupo_familiar_id && gName && cSfName === gName;
         if (matchesId || matchesName) {
           assignedIds.add(c.id);
           return true;
@@ -264,29 +301,34 @@ export const DirectoryModal = () => {
       });
 
       // Sub-núcleos dependientes que cuelgan de este grupo
-      const dependentChildren = (familyGroups || []).filter(
-        (child) => child.nodo_padre_id === group.id && !child.es_independiente
-      ).map((child) => {
-        const childContacts = filteredContacts.filter((c) => {
-          const matchesId = c.grupo_familiar_id === child.id;
-          const matchesName = !c.grupo_familiar_id && (c.subFamily || '').toLowerCase() === child.nombre.toLowerCase();
-          if (matchesId || matchesName) {
-            assignedIds.add(c.id);
-            return true;
-          }
-          return false;
-        });
+      const dependentChildren = rawGroups
+        .filter((child) => child.nodo_padre_id === group.id && !child.es_independiente)
+        .map((child) => {
+          const chName = (child.nombre || child.name || '').toLowerCase();
+          const childContacts = filteredContacts.filter((c) => {
+            if (!c) return false;
+            const matchesId = c.grupo_familiar_id && c.grupo_familiar_id === child.id;
+            const cSfName = (c.subFamily || '').toLowerCase();
+            const matchesName = !c.grupo_familiar_id && chName && cSfName === chName;
+            if (matchesId || matchesName) {
+              assignedIds.add(c.id);
+              return true;
+            }
+            return false;
+          });
 
-        return {
-          ...child,
-          contacts: childContacts,
-        };
-      });
+          return {
+            ...child,
+            nombre: child.nombre || child.name || 'Sub-núcleo',
+            contacts: childContacts,
+          };
+        });
 
       const totalMembers = directContacts.length + dependentChildren.reduce((acc, c) => acc + c.contacts.length, 0);
 
       return {
         ...group,
+        nombre: group.nombre || group.name || 'Familia',
         directContacts,
         dependentChildren,
         totalMembers,
@@ -295,10 +337,15 @@ export const DirectoryModal = () => {
       };
     });
 
-    const unassigned = filteredContacts.filter((c) => !assignedIds.has(c.id));
+    const unassigned = filteredContacts.filter((c) => c && !assignedIds.has(c.id));
 
     return { topLevelCards: cards, unassignedContacts: unassigned };
   }, [familyGroups, filteredContacts]);
+
+  if (activeModal !== 'directory') return null;
+
+  const rawGroups = Array.isArray(familyGroups) ? familyGroups : [];
+  const rawDirectory = Array.isArray(directory) ? directory : [];
 
   return (
     <div className="modal-backdrop animate-fade-in" onClick={closeModal}>
@@ -325,6 +372,32 @@ export const DirectoryModal = () => {
           </div>
 
           <div className="directory-modal-body">
+            {/* Modal/Banner de Confirmación de Eliminación Local en el Directorio */}
+            {contactToDelete && (
+              <div className="glass-panel animate-fade-in" style={{ padding: '14px 18px', margin: '0 0 14px 0', borderRadius: '14px', background: 'rgba(239, 68, 68, 0.12)', border: '1.5px solid var(--border-neon-coral)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Icon name="alert" size={22} />
+                  <div>
+                    <strong style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>
+                      ¿Eliminar a "{contactToDelete.name}" del directorio?
+                    </strong>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
+                      Se desvinculará de la lista maestra y de Supabase.
+                    </p>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" className="btn-pill-glass btn-sm" onClick={() => setContactToDelete(null)}>
+                    Cancelar
+                  </button>
+                  <button type="button" className="btn-pill-danger btn-sm" onClick={handleExecuteDeleteContact}>
+                    <Icon name="trash" size={14} />
+                    <span>Eliminar</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Barra superior de búsqueda y acciones */}
             <div className="directory-top-actions">
               <input 
@@ -427,11 +500,11 @@ export const DirectoryModal = () => {
                       onChange={(e) => setSelectedGroupId(e.target.value)}
                       required
                     >
-                      {familyGroups.map((g) => {
+                      {rawGroups.map((g) => {
                         const isSub = Boolean(g.nodo_padre_id);
                         const label = isSub 
-                          ? `↳ ${g.nombre} (${g.es_independiente ? 'Autónomo' : 'Dependiente'})` 
-                          : `★ ${g.nombre} (Rama Principal)`;
+                          ? `↳ ${g.nombre || g.name} (${g.es_independiente ? 'Autónomo' : 'Dependiente'})` 
+                          : `★ ${g.nombre || g.name} (Rama Principal)`;
                         return (
                           <option key={g.id} value={g.id}>
                             {label}
@@ -515,9 +588,9 @@ export const DirectoryModal = () => {
                       onChange={(e) => setNewGroupParentId(e.target.value)}
                     >
                       <option value="">(Ninguno) - Es una Rama Principal</option>
-                      {familyGroups.filter((g) => !g.nodo_padre_id).map((root) => (
+                      {rawGroups.filter((g) => !g.nodo_padre_id).map((root) => (
                         <option key={root.id} value={root.id}>
-                          Cuelga de: {root.nombre}
+                          Cuelga de: {root.nombre || root.name}
                         </option>
                       ))}
                     </select>
@@ -562,17 +635,29 @@ export const DirectoryModal = () => {
 
             {/* LISTA JERÁRQUICA DE RAMAS PRINCIPALES Y SUB-NÚCLEOS */}
             <div className="directory-cards-list-container" style={{ marginTop: '12px', maxHeight: '460px', overflowY: 'auto' }}>
-              {directory.length === 0 ? (
-                <div className="glass-panel" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  <p style={{ fontSize: '0.95rem', marginBottom: '8px' }}>No hay integrantes en el directorio maestro.</p>
-                  <p style={{ fontSize: '0.80rem', color: 'var(--text-muted)' }}>Toca "+ Integrante" para registrar a tu familia.</p>
+              {rawDirectory.length === 0 ? (
+                <div className="glass-panel" style={{ padding: '28px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <p style={{ fontSize: '1.0rem', fontWeight: 700, marginBottom: '8px' }}>El Directorio Maestro está listo para comenzar.</p>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                    Puedes sembrar los contactos y familias iniciales o registrar integrantes manualmente.
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                    <button type="button" onClick={handleSeedDirectory} className="btn-pill-cyan">
+                      <Icon name="users" size={16} />
+                      <span>Cargar Familias Iniciales</span>
+                    </button>
+                    <button type="button" onClick={() => setActiveFormTab('contact')} className="btn-pill-primary">
+                      <Icon name="user-plus" size={16} />
+                      <span>+ Nuevo Integrante</span>
+                    </button>
+                  </div>
                 </div>
               ) : topLevelCards.length === 0 && unassignedContacts.length === 0 ? (
                 <p className="empty-text">Sin coincidencias con la búsqueda "{search}".</p>
               ) : (
                 <>
                   {topLevelCards.map((group) => {
-                    const parentGroup = group.nodo_padre_id ? familyGroups.find((p) => p.id === group.nodo_padre_id) : null;
+                    const parentGroup = group.nodo_padre_id ? rawGroups.find((p) => p.id === group.nodo_padre_id) : null;
                     return (
                       <div key={group.id} className="family-branch-card">
                         {/* Cabecera de la Rama Principal / Sub-núcleo Autónomo */}
@@ -585,7 +670,7 @@ export const DirectoryModal = () => {
                             {group.isRoot ? (
                               <span className="badge-branch-root">Rama Principal</span>
                             ) : (
-                              <span className="badge-branch-independent" title={`Cuelga de ${parentGroup ? parentGroup.nombre : 'Rama Principal'}`}>
+                              <span className="badge-branch-independent" title={`Cuelga de ${parentGroup ? (parentGroup.nombre || parentGroup.name) : 'Rama Principal'}`}>
                                 Sub-núcleo Autónomo
                               </span>
                             )}
@@ -604,7 +689,7 @@ export const DirectoryModal = () => {
                               title="Hacer dependiente para acumular (roll-up) en el ticket de su rama principal"
                             >
                               <Icon name="link" size={12} />
-                              <span>Hacer Dependiente de {parentGroup ? parentGroup.nombre : 'Padre'}</span>
+                              <span>Hacer Dependiente de {parentGroup ? (parentGroup.nombre || parentGroup.name) : 'Padre'}</span>
                             </button>
                           )}
                         </div>
@@ -673,7 +758,7 @@ export const DirectoryModal = () => {
                       <div className="family-branch-header">
                         <div className="family-branch-title-group">
                           <span className="family-branch-name">
-                            <Icon name="users" size={18} /> Otros Integrantes / Sin Rama
+                            <Icon name="users" size={18} /> Otros Integrantes / Sin Rama Asignada
                           </span>
                           <span className="badge-pill badge-neutral">
                             {unassignedContacts.length} integrante{unassignedContacts.length === 1 ? '' : 's'}
@@ -712,10 +797,11 @@ export const DirectoryModal = () => {
     </div>
   );
 
-  // Renderizador de fila de contacto
+  // Renderizador de fila de contacto con eliminación en contexto
   function renderContactRow(d, subGroupName = null) {
-    const isChild = d.category === 'nino';
-    const fullName = `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || d.name;
+    if (!d) return null;
+    const isChild = d.category === 'nino' || d.categoria === 'nino';
+    const fullName = `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || d.name || 'Integrante';
 
     return (
       <div key={d.id} className="directory-contact-card glass-panel" style={{ padding: '8px 12px' }}>
@@ -752,8 +838,8 @@ export const DirectoryModal = () => {
         <button 
           type="button"
           className="btn-icon-danger"
-          onClick={() => handleDeleteContact(d.id, fullName)}
-          title="Eliminar del directorio"
+          onClick={() => setContactToDelete({ id: d.id, name: fullName })}
+          title="Eliminar del directorio maestro"
         >
           <Icon name="trash" size={14} />
         </button>
