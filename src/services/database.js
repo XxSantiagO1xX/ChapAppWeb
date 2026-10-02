@@ -100,64 +100,102 @@ export const inferSubFamily = (name, fallback = 'Familia General') => {
 export const loadLocalFamilyGroups = () => {
   try {
     const raw = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.FAMILY_GROUPS || 'chapapp_cached_family_groups');
-    return raw ? JSON.parse(raw) : SEED_FAMILY_GROUPS;
+    return raw ? JSON.parse(raw) : [];
   } catch (e) {
-    return SEED_FAMILY_GROUPS;
+    return [];
   }
 };
 
 export const saveLocalFamilyGroups = (groups) => {
   try {
-    localStorage.setItem(CONFIG.APP.STORAGE_KEYS.FAMILY_GROUPS || 'chapapp_cached_family_groups', JSON.stringify(groups));
+    localStorage.setItem(CONFIG.APP.STORAGE_KEYS.FAMILY_GROUPS || 'chapapp_cached_family_groups', JSON.stringify(groups || []));
   } catch (e) {
     console.error('Error guardando family_groups en LocalStorage:', e);
   }
 };
 
 /**
- * Obtener todos los grupos familiares (Supabase Cloud + LocalStorage)
+ * Obtener todos los grupos familiares directamente desde Supabase Cloud
  */
 export const getAllFamilyGroups = async () => {
-  const localList = loadLocalFamilyGroups();
   const supabase = await initSupabaseClient();
   if (supabase) {
+    // 1. Intentar consultar tabla dedicada public.family_groups
     try {
       const { data, error } = await supabase
         .from('family_groups')
         .select('*')
         .order('created_at', { ascending: true });
 
-      if (!error && Array.isArray(data)) {
-        if (data.length > 0) {
-          saveLocalFamilyGroups(data);
-          return data;
-        } else {
-          // Sembrar grupos familiares iniciales si la tabla existe y está vacía
-          for (const fg of SEED_FAMILY_GROUPS) {
-            await supabase.from('family_groups').insert({
-              id: fg.id.startsWith('fg_') ? generateUUID() : fg.id,
-              nombre: fg.nombre,
-              nodo_padre_id: fg.nodo_padre_id,
-              es_independiente: fg.es_independiente,
-              color: fg.color || '#38BDF8'
-            }).catch(() => {});
-          }
-          const { data: seeded } = await supabase.from('family_groups').select('*');
-          if (seeded && seeded.length > 0) {
-            saveLocalFamilyGroups(seeded);
-            return seeded;
-          }
-        }
+      if (!error && Array.isArray(data) && data.length > 0) {
+        saveLocalFamilyGroups(data);
+        return data;
       }
+    } catch (e) {}
+
+    // 2. Fallback de Supabase: registros persistidos en participants con event_id: null y name prefijado con __FG__
+    try {
+      const { data: fgRows, error: fgErr } = await supabase
+        .from('participants')
+        .select('*')
+        .is('event_id', null)
+        .like('name', '__FG__%');
+
+      if (!fgErr && Array.isArray(fgRows) && fgRows.length > 0) {
+        const groups = fgRows.map((r) => {
+          const meta = r.active_days && typeof r.active_days === 'object' ? r.active_days : {};
+          return {
+            id: r.id,
+            nombre: meta.nombre || r.name.replace('__FG__', ''),
+            nodo_padre_id: meta.nodo_padre_id || null,
+            es_independiente: Boolean(meta.es_independiente),
+            color: meta.color || '#38BDF8',
+            created_at: r.created_at,
+          };
+        });
+        saveLocalFamilyGroups(groups);
+        return groups;
+      }
+
+      // 3. Si no hay núcleos en Supabase aún, sembrar familias iniciales directamente en Supabase Cloud con UUIDs reales
+      const initialGroups = [
+        { id: 'a0000000-0000-0000-0000-000000000001', nombre: 'Familia Santiago Chapantongo', nodo_padre_id: null, es_independiente: false, color: '#38BDF8' },
+        { id: 'a0000000-0000-0000-0000-000000000002', nombre: 'Familia Santiago Velázquez', nodo_padre_id: null, es_independiente: false, color: '#F59E0B' },
+        { id: 'a0000000-0000-0000-0000-000000000003', nombre: 'Familia Santiago Morales', nodo_padre_id: 'a0000000-0000-0000-0000-000000000001', es_independiente: false, color: '#10B981' },
+        { id: 'a0000000-0000-0000-0000-000000000004', nombre: 'Familia Roberto Santiago (Independiente)', nodo_padre_id: 'a0000000-0000-0000-0000-000000000002', es_independiente: true, color: '#EC4899' },
+        { id: 'a0000000-0000-0000-0000-000000000005', nombre: 'Amigos y Primos', nodo_padre_id: null, es_independiente: true, color: '#8B5CF6' },
+      ];
+
+      for (const fg of initialGroups) {
+        await supabase.from('participants').upsert({
+          id: fg.id,
+          event_id: null,
+          name: `__FG__${fg.nombre}`,
+          category: 'adulto',
+          weight: 0,
+          active_days: {
+            isFamilyGroup: true,
+            id: fg.id,
+            nombre: fg.nombre,
+            nodo_padre_id: fg.nodo_padre_id,
+            es_independiente: fg.es_independiente,
+            color: fg.color
+          }
+        });
+      }
+
+      saveLocalFamilyGroups(initialGroups);
+      return initialGroups;
     } catch (err) {
-      console.warn('[Database] Error consultando family_groups de Supabase, usando local:', err);
+      console.warn('[Database] Error consultando grupos familiares en Supabase:', err);
     }
   }
-  return localList;
+
+  return loadLocalFamilyGroups();
 };
 
 /**
- * Crear un nuevo Grupo Familiar o Sub-núcleo
+ * Crear un nuevo Grupo Familiar o Sub-núcleo directamente en Supabase
  */
 export const createFamilyGroup = async ({ nombre, nodo_padre_id = null, es_independiente = false, color = '#38BDF8' }) => {
   const newGroup = {
@@ -172,10 +210,33 @@ export const createFamilyGroup = async ({ nombre, nodo_padre_id = null, es_indep
 
   const supabase = await initSupabaseClient();
   if (supabase) {
+    let savedToTable = false;
     try {
-      await supabase.from('family_groups').insert(newGroup);
-    } catch (e) {
-      console.warn('[Database] Error insertando family_group en Supabase:', e);
+      const { error } = await supabase.from('family_groups').insert(newGroup);
+      if (!error) savedToTable = true;
+    } catch (e) {}
+
+    if (!savedToTable) {
+      try {
+        await supabase.from('participants').upsert({
+          id: newGroup.id,
+          event_id: null,
+          name: `__FG__${newGroup.nombre}`,
+          category: 'adulto',
+          weight: 0,
+          active_days: {
+            isFamilyGroup: true,
+            id: newGroup.id,
+            nombre: newGroup.nombre,
+            nodo_padre_id: newGroup.nodo_padre_id,
+            es_independiente: newGroup.es_independiente,
+            color: newGroup.color
+          }
+        });
+        console.log('[Database] ✅ Grupo familiar persistido en Supabase:', newGroup.nombre);
+      } catch (err) {
+        console.error('[Database] Error guardando grupo familiar en Supabase:', err);
+      }
     }
   }
 
@@ -186,18 +247,33 @@ export const createFamilyGroup = async ({ nombre, nodo_padre_id = null, es_indep
 };
 
 /**
- * Actualizar Grupo Familiar (ej. independizar, cambiar nombre o nodo_padre_id)
+ * Actualizar Grupo Familiar directamente en Supabase
  */
 export const updateFamilyGroup = async (id, fields = {}) => {
   const supabase = await initSupabaseClient();
   if (supabase && isUUID(id)) {
+    let updatedInTable = false;
     try {
-      await supabase.from('family_groups').update({
+      const { error } = await supabase.from('family_groups').update({
         ...fields,
         updated_at: new Date().toISOString()
       }).eq('id', id);
-    } catch (e) {
-      console.warn('[Database] Error actualizando family_group en Supabase:', e);
+      if (!error) updatedInTable = true;
+    } catch (e) {}
+
+    if (!updatedInTable) {
+      try {
+        const { data: existing } = await supabase.from('participants').select('*').eq('id', id).single();
+        const currentMeta = existing?.active_days && typeof existing.active_days === 'object' ? existing.active_days : {};
+        const updatedMeta = { ...currentMeta, ...fields, id };
+        await supabase.from('participants').update({
+          name: fields.nombre ? `__FG__${fields.nombre}` : (existing?.name || '__FG__Familia'),
+          active_days: updatedMeta,
+        }).eq('id', id);
+        console.log('[Database] ✅ Grupo familiar actualizado en Supabase:', id, fields.nombre);
+      } catch (err) {
+        console.warn('[Database] Error actualizando grupo familiar en Supabase:', err);
+      }
     }
   }
 
@@ -226,20 +302,20 @@ export const updateFamilyGroup = async (id, fields = {}) => {
 };
 
 /**
- * Eliminar Grupo Familiar
+ * Eliminar Grupo Familiar directamente de Supabase
  */
 export const deleteFamilyGroup = async (id) => {
   const supabase = await initSupabaseClient();
-  if (supabase) {
+  if (supabase && isUUID(id)) {
     try {
-      if (isUUID(id)) {
-        await supabase.from('family_groups').delete().eq('id', id);
-        await supabase.from('family_groups').update({ nodo_padre_id: null, es_independiente: true }).eq('nodo_padre_id', id);
-        await supabase.from('participants').update({ grupo_familiar_id: null }).eq('grupo_familiar_id', id);
-      }
-    } catch (e) {
-      console.warn('[Database] Error eliminando family_group en Supabase:', e);
-    }
+      await supabase.from('family_groups').delete().eq('id', id);
+      await supabase.from('family_groups').update({ nodo_padre_id: null, es_independiente: true }).eq('nodo_padre_id', id);
+      await supabase.from('participants').update({ grupo_familiar_id: null }).eq('grupo_familiar_id', id);
+    } catch (e) {}
+
+    try {
+      await supabase.from('participants').delete().eq('id', id);
+    } catch (e) {}
   }
 
   let list = loadLocalFamilyGroups();
@@ -335,10 +411,22 @@ export const parseParticipantRow = (p) => {
 
   const categoria = String(p.categoria || p.category || 'adulto').toLowerCase();
   const rawPonderacion = p.ponderacion !== undefined ? p.ponderacion : p.weight;
-  const ponderacion = typeof rawPonderacion === 'number'
+  let ponderacion = typeof rawPonderacion === 'number'
     ? rawPonderacion
     : parseFloat(rawPonderacion) || (categoria === 'nino' ? 0.5 : 1.0);
-  const telefono = p.telefono || p.phone || '';
+  let telefono = p.telefono || p.phone || '';
+
+  // Extraer campos detallados si fueron almacenados en JSONB active_days
+  if (p.active_days && typeof p.active_days === 'object' && !Array.isArray(p.active_days)) {
+    if (p.active_days.nombre && !p.nombre) nombre = p.active_days.nombre;
+    if (p.active_days.apellido_paterno && !p.apellido_paterno) apellido_paterno = p.active_days.apellido_paterno;
+    if (p.active_days.apellido_materno && !p.apellido_materno) apellido_materno = p.active_days.apellido_materno;
+    if (p.active_days.telefono && !p.telefono) telefono = p.active_days.telefono;
+    if (p.active_days.categoria && !p.categoria) categoria = p.active_days.categoria;
+    if (p.active_days.ponderacion !== undefined && p.ponderacion === undefined) {
+      ponderacion = typeof p.active_days.ponderacion === 'number' ? p.active_days.ponderacion : parseFloat(p.active_days.ponderacion) || ponderacion;
+    }
+  }
 
   const finalSubFamily =
     p.subFamily ||
@@ -1081,80 +1169,60 @@ export const deleteExpense = async (eventId, expenseId) => {
  * SEED_DIRECTORY sólo se utiliza como demo si Supabase NO está configurado y no hay nada en almacenamiento local.
  */
 export const getGlobalDirectory = () => {
-  const cachedDir = (() => {
-    try {
-      const raw = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.LOCAL_DIRECTORY);
-      return raw !== null ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
+  try {
+    const raw = localStorage.getItem(CONFIG.APP.STORAGE_KEYS.LOCAL_DIRECTORY);
+    if (raw !== null) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
     }
-  })();
-
-  // 1. Si el usuario ya tiene un directorio guardado explícitamente en LocalStorage (incluso si está vacío [])
-  if (Array.isArray(cachedDir)) {
-    return cachedDir;
+  } catch (e) {
+    console.warn('[Database] Error leyendo directorio local:', e);
   }
-
-  // 2. Si nunca se ha inicializado el directorio local (cachedDir === null)
-  const seededList = SEED_DIRECTORY.map((d) => ({
-    ...d,
-    name: d.name || `${d.nombre || ''} ${d.apellido_paterno || ''}`.trim()
-  }));
-  saveGlobalDirectory(seededList);
-  return seededList;
+  return [];
 };
 
 export const fetchGlobalDirectoryFromSupabase = async () => {
-  const cached = getGlobalDirectory();
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
       const { data, error } = await supabase.from('participants').select('*');
       if (!error && Array.isArray(data)) {
-        if (data.length > 0) {
-          const contactsMap = new Map();
-          data.forEach((row) => {
-            const p = parseParticipantRow(row);
-            if (p && (p.name || p.nombre)) {
-              const fullName = (p.name || `${p.nombre || ''} ${p.apellido_paterno || ''}`).replace(/\s+/g, ' ').trim();
-              const key = p.id || fullName.toLowerCase().trim();
-              contactsMap.set(key, {
-                id: p.id || generateUUID(),
-                name: fullName,
-                nombre: p.nombre || fullName.split(' ')[0] || '',
-                apellido_paterno: p.apellido_paterno || '',
-                apellido_materno: p.apellido_materno || '',
-                telefono: p.telefono || '',
-                grupo_familiar_id: p.grupo_familiar_id || null,
-                category: p.category || 'adulto',
-                categoria: p.categoria || p.category || 'adulto',
-                weight: typeof p.weight === 'number' ? p.weight : (p.category === 'nino' ? 0.5 : 1.0),
-                ponderacion: typeof p.ponderacion === 'number' ? p.ponderacion : p.weight,
-                subFamily: p.subFamily || inferSubFamily(fullName),
-              });
-            }
-          });
+        const contactsMap = new Map();
+        data.forEach((row) => {
+          // Ignorar grupos familiares guardados en participants como fallback
+          if (row.name?.startsWith('__FG__') || row.active_days?.isFamilyGroup) {
+            return;
+          }
+          const p = parseParticipantRow(row);
+          if (p && (p.name || p.nombre)) {
+            const fullName = (p.name || `${p.nombre || ''} ${p.apellido_paterno || ''}`).replace(/\s+/g, ' ').trim();
+            const key = p.id || fullName.toLowerCase().trim();
+            contactsMap.set(key, {
+              id: p.id || generateUUID(),
+              name: fullName,
+              nombre: p.nombre || fullName.split(' ')[0] || '',
+              apellido_paterno: p.apellido_paterno || '',
+              apellido_materno: p.apellido_materno || '',
+              telefono: p.telefono || '',
+              grupo_familiar_id: p.grupo_familiar_id || null,
+              category: p.category || 'adulto',
+              categoria: p.categoria || p.category || 'adulto',
+              weight: typeof p.weight === 'number' ? p.weight : (p.category === 'nino' ? 0.5 : 1.0),
+              ponderacion: typeof p.ponderacion === 'number' ? p.ponderacion : (typeof p.weight === 'number' ? p.weight : 1.0),
+              subFamily: p.subFamily || inferSubFamily(fullName),
+            });
+          }
+        });
 
-          // Respetar contactos locales con prefijo dir_ creados manualmente
-          (cached || []).forEach((c) => {
-            if (c.id && String(c.id).startsWith('dir_')) {
-              const key = c.id;
-              if (!contactsMap.has(key)) {
-                contactsMap.set(key, c);
-              }
-            }
-          });
-
-          const synced = Array.from(contactsMap.values());
-          saveGlobalDirectory(synced);
-          return synced;
-        }
+        const synced = Array.from(contactsMap.values());
+        saveGlobalDirectory(synced);
+        return synced;
       }
     } catch (err) {
       console.warn('[Database] Error consultando participantes de Supabase para el directorio:', err);
     }
   }
-  return cached;
+  return getGlobalDirectory();
 };
 
 export const saveGlobalDirectory = (directory) => {
@@ -1227,7 +1295,7 @@ export const addDirectoryContact = async ({
   const apeMat = (apellido_materno || (name ? (name.trim().split(/\s+/).slice(2).join(' ') || '') : '')).trim();
   const fullName = [nom, apePat, apeMat].filter(Boolean).join(' ') || name.trim() || 'Integrante';
   
-  const cat = String(categoria || category || 'adulto').toLowerCase();
+  const cat = String(categoria || category || 'adulto').toLowerCase() === 'nino' ? 'nino' : 'adulto';
   const pond = typeof ponderacion === 'number'
     ? ponderacion
     : typeof weight === 'number'
@@ -1262,6 +1330,8 @@ export const addDirectoryContact = async ({
         apellido_paterno: newContact.apellido_paterno,
         apellido_materno: newContact.apellido_materno,
         telefono: newContact.telefono,
+        categoria: newContact.categoria,
+        ponderacion: newContact.ponderacion,
       };
 
       const { error } = await supabase.from('participants').insert({
@@ -1280,8 +1350,9 @@ export const addDirectoryContact = async ({
         active_days: activeDaysMeta,
       });
 
-      if (error && error.message?.includes('does not exist')) {
-        await supabase.from('participants').insert({
+      if (error) {
+        console.warn('[Database] Full insert en participants falló, reintentando con columnas base + JSONB metadata:', error.message);
+        const { error: fallbackError } = await supabase.from('participants').insert({
           id: newContact.id,
           event_id: null,
           name: newContact.name,
@@ -1289,6 +1360,13 @@ export const addDirectoryContact = async ({
           weight: newContact.weight,
           active_days: activeDaysMeta,
         });
+        if (fallbackError) {
+          console.error('[Database] ❌ Error en insert de respaldo en Supabase:', fallbackError);
+        } else {
+          console.log('[Database] ✅ Integrante guardado exitosamente en Supabase (fallback JSONB)');
+        }
+      } else {
+        console.log('[Database] ✅ Integrante guardado exitosamente en Supabase (columnas nativas)');
       }
     } catch (e) {
       console.warn('[Database] Excepción guardando contacto en Supabase:', e);
@@ -1301,20 +1379,19 @@ export const addDirectoryContact = async ({
   return newContact;
 };
 
-
-
 /**
  * Alternar rol/categoría de un contacto en el Directorio Maestro (y en Supabase)
  */
 export const updateDirectoryContactRole = async (contactId, category, weight) => {
   const supabase = await initSupabaseClient();
+  const normalizedCat = category === 'nino' ? 'nino' : 'adulto';
   if (supabase && isUUID(contactId)) {
     try {
       await supabase.from('participants').update({
-        category,
+        category: normalizedCat,
         weight,
       }).eq('id', contactId);
-      console.log('[Database] ✅ Rol de contacto actualizado en Supabase:', contactId, category);
+      console.log('[Database] ✅ Rol de contacto actualizado en Supabase:', contactId, normalizedCat);
     } catch (e) {
       console.error('[Database] Error actualizando rol en Supabase:', e);
     }
@@ -1323,8 +1400,10 @@ export const updateDirectoryContactRole = async (contactId, category, weight) =>
   const dir = getGlobalDirectory();
   const contact = dir.find((d) => d.id === contactId);
   if (contact) {
-    contact.category = category;
+    contact.category = normalizedCat;
+    contact.categoria = normalizedCat;
     contact.weight = weight;
+    contact.ponderacion = weight;
     saveGlobalDirectory(dir);
   }
   return dir;
@@ -1340,6 +1419,8 @@ export const updateDirectoryContact = async (contactId, fields = {}) => {
   const pat = fields.apellido_paterno || '';
   const mat = fields.apellido_materno || '';
   const computedName = `${firstName} ${pat} ${mat}`.replace(/\s+/g, ' ').trim() || fields.name || 'Integrante';
+  const normalizedCat = String(fields.categoria || fields.category || 'adulto').toLowerCase() === 'nino' ? 'nino' : 'adulto';
+  const pond = parseFloat(fields.ponderacion ?? fields.weight) || (normalizedCat === 'nino' ? 0.5 : 1.0);
 
   const merged = {
     ...fields,
@@ -1348,10 +1429,10 @@ export const updateDirectoryContact = async (contactId, fields = {}) => {
     apellido_paterno: pat,
     apellido_materno: mat,
     telefono: fields.telefono || '',
-    category: fields.category || fields.categoria || 'adulto',
-    categoria: fields.categoria || fields.category || 'adulto',
-    weight: parseFloat(fields.weight ?? fields.ponderacion) || 1.0,
-    ponderacion: parseFloat(fields.ponderacion ?? fields.weight) || 1.0,
+    category: normalizedCat,
+    categoria: normalizedCat,
+    weight: pond,
+    ponderacion: pond,
     grupo_familiar_id: fields.grupo_familiar_id || null,
     subFamily: fields.subFamily || 'Familia General',
   };
@@ -1368,6 +1449,8 @@ export const updateDirectoryContact = async (contactId, fields = {}) => {
         apellido_paterno: merged.apellido_paterno,
         apellido_materno: merged.apellido_materno,
         telefono: merged.telefono,
+        categoria: merged.categoria,
+        ponderacion: merged.ponderacion,
       };
 
       const updatePayload = {
@@ -1385,15 +1468,22 @@ export const updateDirectoryContact = async (contactId, fields = {}) => {
       };
 
       const { error } = await supabase.from('participants').update(updatePayload).eq('id', contactId);
-      if (error && error.message?.includes('does not exist')) {
-        await supabase.from('participants').update({
+      if (error) {
+        console.warn('[Database] Full update falló en participants, reintentando con columnas base + JSONB metadata:', error.message);
+        const { error: fallbackError } = await supabase.from('participants').update({
           name: merged.name,
           category: merged.category,
           weight: merged.weight,
           active_days: activeDaysMeta,
         }).eq('id', contactId);
+        if (fallbackError) {
+          console.error('[Database] ❌ Error en update fallback de Supabase:', fallbackError);
+        } else {
+          console.log('[Database] ✅ Contacto actualizado exitosamente en Supabase (fallback JSONB)');
+        }
+      } else {
+        console.log('[Database] ✅ Contacto actualizado en Supabase (columnas nativas)');
       }
-      console.log('[Database] ✅ Contacto del directorio actualizado en Supabase:', contactId, merged.name);
     } catch (e) {
       console.warn('[Database] Error actualizando contacto en Supabase:', e);
     }
@@ -1421,6 +1511,7 @@ export const subscribeToEventsListRealtime = (callback) => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => callback())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, () => callback())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => callback())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'family_groups' }, () => callback())
       .subscribe();
   });
 

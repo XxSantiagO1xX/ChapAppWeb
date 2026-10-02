@@ -51,8 +51,14 @@
   --border-neon-cyan: rgba(0, 240, 255, 0.45);
   --border-neon-emerald: rgba(16, 185, 129, 0.45);
   --border-neon-amber: rgba(245, 158, 11, 0.45);
-  --border-neon-coral: rgba(244, 63, 94, 0.45);
-  --border-neon-purple: rgba(168, 85, 247, 0.45);
+  /* Superficies de Alto Contraste para Tarjetas y Directorio (Dark Mode) */
+  --bg-glass-card: rgba(10, 16, 30, 0.92);
+  --border-glass-card: rgba(255, 255, 255, 0.12);
+  --bg-glass-nested: rgba(15, 23, 42, 0.88);
+  --bg-glass-contact: rgba(18, 27, 48, 0.92);
+  --border-glass-contact: rgba(255, 255, 255, 0.10);
+  --bg-glass-element: rgba(255, 255, 255, 0.08);
+  --color-cyan: #00F0FF;
 
   /* Colores de Texto de Alta Legibilidad */
   --text-primary: #FFFFFF;
@@ -112,6 +118,15 @@
   --border-neon-amber: rgba(217, 119, 6, 0.45);
   --border-neon-coral: rgba(225, 29, 72, 0.45);
   --border-neon-purple: rgba(147, 51, 234, 0.45);
+
+  /* Superficies de Alto Contraste para Tarjetas y Directorio (Light Mode) */
+  --bg-glass-card: rgba(255, 255, 255, 0.90);
+  --border-glass-card: rgba(226, 232, 240, 0.90);
+  --bg-glass-nested: rgba(248, 250, 252, 0.92);
+  --bg-glass-contact: rgba(255, 255, 255, 0.96);
+  --border-glass-contact: rgba(226, 232, 240, 0.90);
+  --bg-glass-element: rgba(15, 23, 42, 0.05);
+  --color-cyan: #0284C7;
 
   /* Textos de Alto Contraste */
   --text-primary: #0F172A;

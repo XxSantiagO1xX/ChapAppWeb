@@ -1932,27 +1932,30 @@ button:active {
 
 /* Tarjetas del Directorio Maestro y Subfamilias */
 .directory-contact-card {
-  padding: 14px 18px;
-  min-height: 72px;
+  padding: 12px 16px;
+  min-height: 64px;
   border-radius: var(--radius-lg);
-  background: rgba(0, 0, 0, 0.32);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-glass-contact);
+  border: 1px solid var(--border-glass-contact);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   transition: all var(--transition-fast);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.40);
 }
 
 [data-theme="light"] .directory-contact-card {
-  background: rgba(255, 255, 255, 0.70);
-  border-color: rgba(226, 232, 240, 0.85);
+  background: var(--bg-glass-contact);
+  border-color: var(--border-glass-contact);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
 .directory-contact-card:hover {
   background: var(--surface-card-hover);
-  border-color: var(--border-glass);
+  border-color: var(--border-neon-cyan);
   transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.50);
 }
 
 .dir-contact-left {
@@ -2770,16 +2773,26 @@ button:active {
    MODELO HÍBRIDO DE JERARQUÍA FAMILIAR (DIRECTORIO Y POS)
    ========================================================================== */
 .family-branch-card {
-  padding: 18px 20px;
-  margin-bottom: 16px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
   border-radius: var(--radius-xl);
   border: 1px solid var(--border-glass-card);
   transition: all var(--transition-normal);
   background: var(--bg-glass-card);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="light"] .family-branch-card {
+  background: var(--bg-glass-card);
+  border-color: var(--border-glass-card);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .family-branch-card:hover {
   border-color: var(--border-neon-cyan);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 240, 255, 0.15);
 }
 
 .family-branch-header {
@@ -2788,58 +2801,63 @@ button:active {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .family-branch-title-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .family-branch-name {
-  font-size: 1.05rem;
+  font-size: 1.18rem;
   font-weight: 800;
-  color: var(--text-primary);
+  color: #FFFFFF !important;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  letter-spacing: -0.01em;
+}
+
+[data-theme="light"] .family-branch-name {
+  color: #0F172A !important;
 }
 
 .badge-branch-root {
-  background: rgba(56, 189, 248, 0.15);
+  background: rgba(56, 189, 248, 0.18);
   color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  font-size: 0.72rem;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  font-size: 0.74rem;
   font-weight: 800;
-  padding: 3px 9px;
+  padding: 3px 10px;
   border-radius: var(--radius-pill);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .badge-branch-independent {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.18);
   color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  font-size: 0.72rem;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  font-size: 0.74rem;
   font-weight: 800;
-  padding: 3px 9px;
+  padding: 3px 10px;
   border-radius: var(--radius-pill);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .badge-branch-dependent {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.18);
   color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  font-size: 0.72rem;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  font-size: 0.74rem;
   font-weight: 800;
-  padding: 3px 9px;
+  padding: 3px 10px;
   border-radius: var(--radius-pill);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2849,32 +2867,36 @@ button:active {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  font-size: 0.76rem;
+  padding: 5px 14px;
+  font-size: 0.78rem;
   font-weight: 700;
   border-radius: var(--radius-pill);
   background: var(--bg-glass-element);
   border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
+  color: #E2E8F0;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
+[data-theme="light"] .btn-toggle-independence {
+  color: var(--text-secondary);
+}
+
 .btn-toggle-independence:hover {
-  background: rgba(56, 189, 248, 0.20);
+  background: rgba(56, 189, 248, 0.22);
   border-color: var(--border-neon-cyan);
-  color: var(--text-primary);
+  color: #FFFFFF;
   transform: translateY(-1px);
 }
 
 .btn-toggle-independence.is-indep {
-  border-color: rgba(16, 185, 129, 0.40);
+  border-color: rgba(16, 185, 129, 0.45);
   color: #10b981;
 }
 
 .btn-toggle-independence.is-indep:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.40);
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.45);
   color: #ef4444;
 }
 
@@ -2882,19 +2904,20 @@ button:active {
 .family-subnucleus-nested {
   margin-top: 14px;
   margin-left: 12px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border-radius: var(--radius-lg);
-  border-left: 3px solid var(--color-cyan);
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 1px solid var(--border-subtle);
-  border-right: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
+  border-left: 3.5px solid var(--color-primary);
+  background: var(--bg-glass-nested);
+  border-top: 1px solid var(--border-glass-card);
+  border-right: 1px solid var(--border-glass-card);
+  border-bottom: 1px solid var(--border-glass-card);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
 }
 
 @media (min-width: 640px) {
   .family-subnucleus-nested {
-    margin-left: 22px;
-    padding: 16px 20px;
+    margin-left: 20px;
+    padding: 18px 22px;
   }
 }
 
@@ -2904,34 +2927,67 @@ button:active {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px dashed var(--border-subtle);
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="light"] .subnucleus-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
 }
 
 .subnucleus-title {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #FFFFFF !important;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+[data-theme="light"] .subnucleus-title {
+  color: #0F172A !important;
 }
 
 .contact-meta-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.78rem;
-  color: var(--text-secondary);
+  font-size: 0.80rem;
+  color: #CBD5E1 !important;
   flex-wrap: wrap;
+}
+
+[data-theme="light"] .contact-meta-row {
+  color: #475569 !important;
 }
 
 .contact-phone-tag {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--color-cyan);
-  font-size: 0.75rem;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.directory-header-card {
+  background: var(--bg-glass-card) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid var(--border-glass-card) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65) !important;
+}
+
+[data-theme="light"] .directory-header-card {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08) !important;
+}
+
+.directory-form-panel {
+  background: var(--bg-glass-card) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid var(--border-glass-card) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.70) !important;
 }
 

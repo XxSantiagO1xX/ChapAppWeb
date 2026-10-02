@@ -78,16 +78,19 @@ export const DirectoryView = () => {
         if (Array.isArray(cached) && cached.length > 0) {
           setDirectory(cached);
         }
-        const fresh = await fetchGlobalDirectoryFromSupabase();
-        if (Array.isArray(fresh)) {
-          setDirectory(fresh);
+        const [freshDir, freshGroups] = await Promise.all([
+          fetchGlobalDirectoryFromSupabase(),
+          refreshFamilyGroups()
+        ]);
+        if (Array.isArray(freshDir)) {
+          setDirectory(freshDir);
         }
       } catch (err) {
         console.warn('[DirectoryView] Error cargando directorio:', err);
       }
     };
     loadData();
-  }, [setDirectory]);
+  }, [setDirectory, refreshFamilyGroups]);
 
   // Asignar primer grupo familiar por defecto si no hay seleccionado
   useEffect(() => {
@@ -426,7 +429,7 @@ export const DirectoryView = () => {
   return (
     <div className="directory-fullview-container animate-fade-in" style={{ width: '100%', maxWidth: '1240px', margin: '0 auto', padding: '0 12px 60px 12px' }}>
       {/* Barra de Navegación y Encabezado Protagónico */}
-      <div className="glass-panel" style={{ padding: '22px 26px', borderRadius: '24px', marginBottom: '22px' }}>
+      <div className="glass-panel directory-header-card" style={{ padding: '22px 26px', borderRadius: '24px', marginBottom: '22px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
@@ -507,7 +510,7 @@ export const DirectoryView = () => {
       {activeFormTab === 'contact' && (
         <form 
           onSubmit={handleSaveContact}
-          className="glass-panel animate-scale-in" 
+          className="glass-panel directory-form-panel animate-scale-in" 
           style={{ padding: '24px 26px', marginBottom: '22px', borderRadius: '22px', border: '1.5px solid var(--border-neon-cyan)' }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
@@ -637,7 +640,7 @@ export const DirectoryView = () => {
       {activeFormTab === 'group' && (
         <form 
           onSubmit={handleSaveGroup}
-          className="glass-panel animate-scale-in" 
+          className="glass-panel directory-form-panel animate-scale-in" 
           style={{ padding: '24px 26px', marginBottom: '22px', borderRadius: '22px', border: '1.5px solid var(--border-neon-emerald)' }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
