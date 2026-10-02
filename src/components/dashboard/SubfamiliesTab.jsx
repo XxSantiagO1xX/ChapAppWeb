@@ -174,7 +174,7 @@ export const SubfamiliesTab = () => {
         <div className="tab-buttons-group">
           <button 
             type="button" 
-            onClick={() => openModal('directory')} 
+            onClick={() => openModal('importParticipants')} 
             className="btn-pill-glass"
           >
             <Icon name="users" size={16} />

@@ -77,7 +77,15 @@ export const AppProvider = ({ children }) => {
     activeEventRef.current = activeEvent;
   }, [activeEvent]);
 
-  // 3. Estado de Navegación del Dashboard
+  // 3. Estado de Navegación Global y Dashboard
+  const [currentView, setCurrentView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash === '#/directory') return 'directory';
+      if (hash.startsWith('#/event/')) return 'dashboard';
+    }
+    return 'events';
+  });
   const [activeDashboardTab, setActiveDashboardTab] = useState('summary');
   const [selectedSubFamily, setSelectedSubFamily] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
@@ -163,14 +171,17 @@ export const AppProvider = ({ children }) => {
       const groups = await getAllFamilyGroups();
       setFamilyGroups(groups || []);
 
-      // Si la URL tiene un hash con ID de evento (ej. #/event/123)
+      // Si la URL tiene un hash específico
       if (typeof window !== 'undefined') {
         const hash = window.location.hash;
-        if (hash.startsWith('#/event/')) {
+        if (hash === '#/directory') {
+          setCurrentView('directory');
+        } else if (hash.startsWith('#/event/')) {
           const eventId = hash.replace('#/event/', '').split('?')[0];
           const found = (allEvents || []).find((e) => e.id === eventId);
           if (found) {
             setActiveEvent(found);
+            setCurrentView('dashboard');
           }
         }
       }
@@ -184,6 +195,32 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     loadInitialData();
   }, [loadInitialData]);
+
+  // Manejar navegación por historial del navegador (hashchange)
+  useEffect(() => {
+    const handleHash = () => {
+      if (typeof window === 'undefined') return;
+      const hash = window.location.hash;
+      if (hash === '#/directory') {
+        setCurrentView('directory');
+      } else if (hash.startsWith('#/event/')) {
+        const eventId = hash.replace('#/event/', '').split('?')[0];
+        if (activeEventRef.current?.id !== eventId) {
+          getEventById(eventId).then((ev) => {
+            if (ev) setActiveEvent(ev);
+          });
+        }
+        setCurrentView('dashboard');
+      } else if (hash === '#/' || !hash) {
+        if (!activeEventRef.current) {
+          setCurrentView('events');
+        }
+      }
+    };
+
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   // Suscripción Realtime a Supabase con pulso visual y actualización reactiva
   useEffect(() => {
@@ -238,6 +275,7 @@ export const AppProvider = ({ children }) => {
   const selectEvent = useCallback(async (eventId) => {
     if (!eventId) {
       setActiveEvent(null);
+      setCurrentView('events');
       if (typeof window !== 'undefined') window.location.hash = '#/';
       return;
     }
@@ -248,12 +286,35 @@ export const AppProvider = ({ children }) => {
         setActiveEvent(ev);
         setActiveDashboardTab('summary');
         setIsSidebarCollapsed(true);
+        setCurrentView('dashboard');
         if (typeof window !== 'undefined') window.location.hash = `#/event/${eventId}`;
       }
     } catch (err) {
       console.error('Error seleccionando evento:', err);
     }
   }, []);
+
+  // Navegación centralizada entre vistas (events, dashboard, directory)
+  const navigateToView = useCallback((viewName, params = {}) => {
+    if (viewName === 'directory') {
+      setCurrentView('directory');
+      if (typeof window !== 'undefined') window.location.hash = '#/directory';
+    } else if (viewName === 'dashboard') {
+      const targetId = params.eventId || activeEventRef.current?.id;
+      if (targetId) {
+        selectEvent(targetId);
+      } else {
+        setCurrentView('events');
+      }
+    } else {
+      // 'events'
+      setCurrentView('events');
+      if (params.clearActiveEvent !== false) {
+        setActiveEvent(null);
+        if (typeof window !== 'undefined') window.location.hash = '#/';
+      }
+    }
+  }, [selectEvent]);
 
   // Refrescar evento activo tras cambios (gasto, participante, etc.)
   const refreshActiveEvent = useCallback(async () => {
@@ -274,6 +335,9 @@ export const AppProvider = ({ children }) => {
     currentUser,
     loginUser,
     logoutUser,
+    currentView,
+    setCurrentView,
+    navigateToView,
     events,
     setEvents,
     activeEvent,

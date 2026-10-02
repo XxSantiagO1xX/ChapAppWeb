@@ -7,7 +7,18 @@ import { useApp } from '../../context/AppContext.jsx';
 import { Icon } from '../../utils/icons.jsx';
 
 export const Drawer = ({ filterTab, setFilterTab }) => {
-  const { activeModal, closeModal, events = [], theme, toggleTheme, openModal, selectEvent, currentUser, logoutUser } = useApp();
+  const { 
+    activeModal, 
+    closeModal, 
+    events = [], 
+    theme, 
+    toggleTheme, 
+    openModal, 
+    selectEvent, 
+    navigateToView, 
+    currentUser, 
+    logoutUser 
+  } = useApp();
 
   if (activeModal !== 'drawer') return null;
 
@@ -70,11 +81,11 @@ export const Drawer = ({ filterTab, setFilterTab }) => {
             className="drawer-nav-item"
             onClick={() => {
               closeModal();
-              openModal('directory');
+              navigateToView('directory');
             }}
           >
             <Icon name="users" size={18} />
-            <span>Directorio Global</span>
+            <span>Directorio General</span>
           </button>
 
           <button 

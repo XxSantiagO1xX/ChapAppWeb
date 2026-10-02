@@ -19,18 +19,19 @@ import SettingsModal from './components/settings/SettingsModal.jsx';
 // Views
 import EventList from './components/events/EventList.jsx';
 import EventDashboard from './components/dashboard/EventDashboard.jsx';
+import DirectoryView from './components/directory/DirectoryView.jsx';
 
 // Modals
 import NewEventModal from './components/modals/NewEventModal.jsx';
 import QuickExpenseModal from './components/modals/QuickExpenseModal.jsx';
 import AddParticipantModal from './components/modals/AddParticipantModal.jsx';
 import CsvImportModal from './components/modals/CsvImportModal.jsx';
-import DirectoryModal from './components/modals/DirectoryModal.jsx';
+import ImportParticipantsModal from './components/modals/ImportParticipantsModal.jsx';
 import CutModal from './components/modals/CutModal.jsx';
 import AnalyticsModal from './components/analytics/AnalyticsModal.jsx';
 
 export const App = () => {
-  const { activeEvent, currentUser } = useApp();
+  const { currentView, activeEvent, currentUser } = useApp();
   const [filterTab, setFilterTab] = useState('active');
 
   // Si no hay usuario autenticado, renderizar la pantalla de Login Liquid Glass 3D
@@ -55,9 +56,11 @@ export const App = () => {
       {/* Menú Deslizante (Drawer) */}
       <Drawer filterTab={filterTab} setFilterTab={setFilterTab} />
 
-      {/* Contenido Dinámico: Dashboard del Evento o Lista de Eventos */}
+      {/* Contenido Dinámico: Pantalla Completa de Directorio, Dashboard del Evento o Lista de Eventos */}
       <main className="main-content-flow">
-        {activeEvent ? (
+        {currentView === 'directory' ? (
+          <DirectoryView />
+        ) : activeEvent ? (
           <EventDashboard />
         ) : (
           <EventList filterTab={filterTab} setFilterTab={setFilterTab} />
@@ -69,7 +72,7 @@ export const App = () => {
       <QuickExpenseModal />
       <AddParticipantModal />
       <CsvImportModal />
-      <DirectoryModal />
+      <ImportParticipantsModal />
       <CutModal />
       <AnalyticsModal />
       <SettingsModal />

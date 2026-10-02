@@ -204,8 +204,22 @@ export const updateFamilyGroup = async (id, fields = {}) => {
   const list = loadLocalFamilyGroups();
   const idx = list.findIndex(g => g.id === id);
   if (idx >= 0) {
+    const oldName = list[idx].nombre;
     list[idx] = { ...list[idx], ...fields, updated_at: new Date().toISOString() };
     saveLocalFamilyGroups(list);
+
+    // Si cambió el nombre del grupo familiar, actualizar subFamily en contactos asociados
+    if (fields.nombre && fields.nombre !== oldName) {
+      const dir = getGlobalDirectory();
+      const updatedDir = dir.map((c) => {
+        if (c.grupo_familiar_id === id || (oldName && c.subFamily?.toLowerCase() === oldName.toLowerCase())) {
+          return { ...c, subFamily: fields.nombre };
+        }
+        return c;
+      });
+      saveGlobalDirectory(updatedDir);
+    }
+
     return list[idx];
   }
   return null;
@@ -1314,6 +1328,85 @@ export const updateDirectoryContactRole = async (contactId, category, weight) =>
     saveGlobalDirectory(dir);
   }
   return dir;
+};
+
+/**
+ * Actualizar Contacto del Directorio Maestro (Nombre, Apellidos, Teléfono, Categoría, Ponderación, Grupo Familiar)
+ */
+export const updateDirectoryContact = async (contactId, fields = {}) => {
+  const supabase = await initSupabaseClient();
+  
+  const firstName = fields.nombre || '';
+  const pat = fields.apellido_paterno || '';
+  const mat = fields.apellido_materno || '';
+  const computedName = `${firstName} ${pat} ${mat}`.replace(/\s+/g, ' ').trim() || fields.name || 'Integrante';
+
+  const merged = {
+    ...fields,
+    name: computedName,
+    nombre: firstName,
+    apellido_paterno: pat,
+    apellido_materno: mat,
+    telefono: fields.telefono || '',
+    category: fields.category || fields.categoria || 'adulto',
+    categoria: fields.categoria || fields.category || 'adulto',
+    weight: parseFloat(fields.weight ?? fields.ponderacion) || 1.0,
+    ponderacion: parseFloat(fields.ponderacion ?? fields.weight) || 1.0,
+    grupo_familiar_id: fields.grupo_familiar_id || null,
+    subFamily: fields.subFamily || 'Familia General',
+  };
+
+  if (supabase && isUUID(contactId)) {
+    try {
+      const activeDaysMeta = {
+        days: [],
+        isAttending: true,
+        isSettled: false,
+        subFamily: merged.subFamily,
+        grupo_familiar_id: merged.grupo_familiar_id,
+        nombre: merged.nombre,
+        apellido_paterno: merged.apellido_paterno,
+        apellido_materno: merged.apellido_materno,
+        telefono: merged.telefono,
+      };
+
+      const updatePayload = {
+        name: merged.name,
+        nombre: merged.nombre,
+        apellido_paterno: merged.apellido_paterno,
+        apellido_materno: merged.apellido_materno,
+        telefono: merged.telefono,
+        categoria: merged.categoria,
+        category: merged.category,
+        ponderacion: merged.ponderacion,
+        weight: merged.weight,
+        grupo_familiar_id: merged.grupo_familiar_id,
+        active_days: activeDaysMeta,
+      };
+
+      const { error } = await supabase.from('participants').update(updatePayload).eq('id', contactId);
+      if (error && error.message?.includes('does not exist')) {
+        await supabase.from('participants').update({
+          name: merged.name,
+          category: merged.category,
+          weight: merged.weight,
+          active_days: activeDaysMeta,
+        }).eq('id', contactId);
+      }
+      console.log('[Database] ✅ Contacto del directorio actualizado en Supabase:', contactId, merged.name);
+    } catch (e) {
+      console.warn('[Database] Error actualizando contacto en Supabase:', e);
+    }
+  }
+
+  const dir = getGlobalDirectory();
+  const idx = dir.findIndex((d) => d.id === contactId);
+  if (idx >= 0) {
+    dir[idx] = { ...dir[idx], ...merged };
+    saveGlobalDirectory(dir);
+    return dir[idx];
+  }
+  return null;
 };
 
 /**

@@ -8,8 +8,125 @@ import { useApp } from '../../context/AppContext.jsx';
 import { Icon } from '../../utils/icons.jsx';
 
 export const Header = () => {
-  const { theme, toggleTheme, activeEvent, selectEvent, isSyncing, syncCloud, liveSyncPulse, openModal, currentUser } = useApp();
+  const { 
+    theme, 
+    toggleTheme, 
+    activeEvent, 
+    selectEvent, 
+    currentView, 
+    navigateToView, 
+    isSyncing, 
+    syncCloud, 
+    liveSyncPulse, 
+    openModal, 
+    currentUser 
+  } = useApp();
   const isDark = theme === 'dark';
+
+  // Header para la Pantalla Completa del Directorio General
+  if (currentView === 'directory') {
+    return (
+      <header className="app-header glass-header dashboard-header">
+        <div className="header-left">
+          <button 
+            type="button" 
+            onClick={() => navigateToView(activeEvent ? 'dashboard' : 'events')} 
+            className="back-home-btn" 
+            aria-label="Volver"
+          >
+            <Icon name="arrow-left" size={16} />
+            <span>{activeEvent ? 'Volver al Evento' : 'Volver a Eventos'}</span>
+          </button>
+          
+          <div className="header-title-box">
+            <h1 className="header-main-title">Directorio General</h1>
+            <p className="header-subtitle">Jerarquía Familiar & Integrantes</p>
+          </div>
+        </div>
+
+        {/* Emblema Central Flotante */}
+        <div className="header-center-emblem-wrapper">
+          <button 
+            type="button"
+            onClick={() => navigateToView('events')}
+            className="center-floating-emblem" 
+            aria-label="Ir al Inicio - ChapApp" 
+            title="ChapApp - Inicio"
+          >
+            <img 
+              src="/assets/logo_tree.png" 
+              alt="ChapApp Logo" 
+              className="emblem-tree-img" 
+              onError={(e) => { e.target.src = './assets/logo_tree.png'; }} 
+            />
+          </button>
+        </div>
+
+        <div className="header-right">
+          <button 
+            id="btn-sync-cloud-dir" 
+            onClick={syncCloud} 
+            className={`btn-icon-glass sync-btn ${isSyncing ? 'syncing-spin' : ''}`} 
+            title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'} 
+            aria-label="Sincronizar"
+            style={{ position: 'relative' }}
+          >
+            <Icon name="refresh" size={16} />
+            {liveSyncPulse && (
+              <span 
+                className="realtime-pulse-dot" 
+                style={{
+                  position: 'absolute',
+                  top: '5px',
+                  right: '5px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#10B981',
+                  boxShadow: '0 0 8px #10B981',
+                }} 
+              />
+            )}
+          </button>
+
+          <button 
+            type="button" 
+            id="btn-open-analytics-dir" 
+            onClick={() => openModal('analytics')} 
+            className="btn-icon-glass" 
+            title="Analítica Histórica y Estadísticas Globales" 
+            aria-label="Analítica"
+          >
+            <Icon name="chart" size={16} />
+          </button>
+
+          <button 
+            id="btn-toggle-theme-dir" 
+            onClick={toggleTheme} 
+            className="btn-icon-glass theme-toggle-btn" 
+            aria-label="Cambiar tema"
+          >
+            <Icon name={isDark ? 'moon' : 'sun'} size={18} />
+          </button>
+
+          {currentUser && (
+            <button 
+              type="button" 
+              id="btn-open-settings-dir" 
+              onClick={() => openModal('settings')} 
+              className="btn-pill-glass user-header-badge" 
+              title={`Configuración (${currentUser.name})`} 
+              aria-label="Configuración"
+            >
+              <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={15} color="var(--color-primary)" />
+              <span className="btn-text-hide-mobile">{currentUser.role === 'admin' ? 'Admin' : 'Operador'}</span>
+              <Icon name="settings" size={13} style={{ opacity: 0.7 }} />
+            </button>
+          )}
+        </div>
+      </header>
+    );
+  }
 
   if (activeEvent) {
     return (
@@ -225,7 +342,7 @@ export const Header = () => {
 
         <button 
           id="btn-open-directory" 
-          onClick={() => openModal('directory')} 
+          onClick={() => navigateToView('directory')} 
           className="btn-pill-glass" 
           aria-label="Directorio Global"
         >

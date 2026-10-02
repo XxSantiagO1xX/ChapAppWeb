@@ -14,6 +14,7 @@ export const CapsuleSidebar = () => {
     setActiveDashboardTab, 
     isSidebarCollapsed, 
     setIsSidebarCollapsed,
+    navigateToView,
     openModal 
   } = useApp();
 
@@ -98,11 +99,11 @@ export const CapsuleSidebar = () => {
           type="button"
           id="btn-capsule-directory" 
           className="capsule-shortcut-btn btn-pill-glass" 
-          onClick={() => openModal('directory')}
-          title="Directorio Global"
+          onClick={() => navigateToView('directory')}
+          title="Directorio General"
         >
           <div className="capsule-icon-box">
-            <Icon name="user-plus" size={18} />
+            <Icon name="users" size={18} />
           </div>
           <span className="shortcut-label">Directorio</span>
         </button>
