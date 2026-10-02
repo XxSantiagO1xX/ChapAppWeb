@@ -438,16 +438,32 @@ export const createEvent = async ({ title, year, availableDays = [], participant
   const now = new Date().toISOString();
   const days = availableDays.length > 0 ? availableDays : ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
 
-  const initialParticipants = participants.map((p) => ({
-    id: p.id || generateUUID(),
-    name: p.name,
-    category: p.category || 'adulto',
-    weight: p.weight ?? (p.category === 'nino' ? 0.5 : 1.0),
-    subFamily: p.subFamily || p.subfamily || inferSubFamily(p.name),
-    activeDays: [...days],
-    isAttending: true,
-    isSettled: false,
-  }));
+  const initialParticipants = participants.map((p) => {
+    const nombre = (p.nombre || (p.name ? p.name.trim().split(/\s+/)[0] : '')).trim();
+    const apellido_paterno = (p.apellido_paterno || (p.name ? (p.name.trim().split(/\s+/)[1] || '') : '')).trim();
+    const apellido_materno = (p.apellido_materno || (p.name ? (p.name.trim().split(/\s+/).slice(2).join(' ') || '') : '')).trim();
+    const fullName = [nombre, apellido_paterno, apellido_materno].filter(Boolean).join(' ') || p.name || 'Integrante';
+    const cat = p.category || p.categoria || 'adulto';
+    const pond = typeof p.ponderacion === 'number' ? p.ponderacion : (typeof p.weight === 'number' ? p.weight : (cat === 'nino' ? 0.5 : 1.0));
+
+    return {
+      id: generateUUID(),
+      nombre,
+      apellido_paterno,
+      apellido_materno,
+      telefono: p.telefono || '',
+      name: fullName,
+      category: cat,
+      categoria: cat,
+      weight: pond,
+      ponderacion: pond,
+      grupo_familiar_id: p.grupo_familiar_id || null,
+      subFamily: p.subFamily || 'Familia General',
+      activeDays: Array.isArray(p.activeDays) && p.activeDays.length > 0 ? p.activeDays : [...days],
+      isAttending: p.isAttending !== false,
+      isSettled: Boolean(p.isSettled),
+    };
+  });
 
   const newEvent = {
     id: newId,
@@ -479,19 +495,57 @@ export const createEvent = async ({ title, year, availableDays = [], participant
 
       if (initialParticipants.length > 0) {
         const rows = initialParticipants.map((p) => ({
-          id: isUUID(p.id) ? p.id : generateUUID(),
+          id: p.id,
           event_id: newEvent.id,
           name: p.name,
-          category: p.category || 'adulto',
-          weight: typeof p.weight === 'number' ? p.weight : (p.category === 'nino' ? 0.5 : 1.0),
+          nombre: p.nombre,
+          apellido_paterno: p.apellido_paterno,
+          apellido_materno: p.apellido_materno,
+          telefono: p.telefono,
+          categoria: p.categoria,
+          category: p.category,
+          ponderacion: p.ponderacion,
+          weight: p.weight,
+          grupo_familiar_id: p.grupo_familiar_id,
           active_days: {
             days: p.activeDays || days,
             isAttending: p.isAttending !== false,
             isSettled: Boolean(p.isSettled),
-            subFamily: p.subFamily || inferSubFamily(p.name),
+            subFamily: p.subFamily || 'Familia General',
+            grupo_familiar_id: p.grupo_familiar_id,
+            nombre: p.nombre,
+            apellido_paterno: p.apellido_paterno,
+            apellido_materno: p.apellido_materno,
+            telefono: p.telefono,
+            categoria: p.categoria,
+            ponderacion: p.ponderacion,
           },
         }));
-        await supabase.from('participants').insert(rows);
+
+        const { error: partErr } = await supabase.from('participants').insert(rows);
+        if (partErr) {
+          const fallbackRows = initialParticipants.map((p) => ({
+            id: p.id,
+            event_id: newEvent.id,
+            name: p.name,
+            category: p.category,
+            weight: p.weight,
+            active_days: {
+              days: p.activeDays || days,
+              isAttending: p.isAttending !== false,
+              isSettled: Boolean(p.isSettled),
+              subFamily: p.subFamily || 'Familia General',
+              grupo_familiar_id: p.grupo_familiar_id,
+              nombre: p.nombre,
+              apellido_paterno: p.apellido_paterno,
+              apellido_materno: p.apellido_materno,
+              telefono: p.telefono,
+              categoria: p.categoria,
+              ponderacion: p.ponderacion,
+            },
+          }));
+          await supabase.from('participants').insert(fallbackRows);
+        }
       }
     } catch (err) {
       console.error('[Database] Error guardando evento en Supabase:', err);
@@ -545,7 +599,7 @@ export const deleteEvent = async (id) => {
  * Agregar Participante
  */
 /**
- * Agregar Participante
+ * Agregar Participante a un Evento
  */
 export const addParticipant = async (eventId, participantData) => {
   const localList = loadLocalEvents();
@@ -572,8 +626,9 @@ export const addParticipant = async (eventId, participantData) => {
   const telefono = participantData.telefono || participantData.phone || '';
   const grupo_familiar_id = participantData.grupo_familiar_id || null;
 
+  // IMPORTANTE: Cada asistente a un evento tiene su propio ID único en la tabla participants
   const p = {
-    id: isUUID(participantData.id) ? participantData.id : generateUUID(),
+    id: generateUUID(),
     nombre,
     apellido_paterno,
     apellido_materno,
@@ -584,7 +639,7 @@ export const addParticipant = async (eventId, participantData) => {
     ponderacion,
     weight: ponderacion,
     grupo_familiar_id,
-    subFamily: participantData.subFamily || participantData.subfamily || inferSubFamily(fullName),
+    subFamily: participantData.subFamily || participantData.subfamily || 'Familia General',
     activeDays: Array.isArray(participantData.activeDays) && participantData.activeDays.length > 0
       ? participantData.activeDays
       : [...defaultDays],
@@ -608,45 +663,50 @@ export const addParticipant = async (eventId, participantData) => {
         }
       }
 
-      const activeDaysMeta = {
-        days: p.activeDays,
-        isAttending: p.isAttending,
-        isSettled: p.isSettled,
-        subFamily: p.subFamily,
-        grupo_familiar_id: p.grupo_familiar_id,
-        nombre: p.nombre,
-        apellido_paterno: p.apellido_paterno,
-        apellido_materno: p.apellido_materno,
-        telefono: p.telefono,
-      };
+      if (!targetEventId) {
+        console.warn('[Database] No se pudo determinar targetEventId para el participante de evento');
+      } else {
+        const activeDaysMeta = {
+          days: p.activeDays,
+          isAttending: p.isAttending,
+          isSettled: p.isSettled,
+          subFamily: p.subFamily,
+          grupo_familiar_id: p.grupo_familiar_id,
+          nombre: p.nombre,
+          apellido_paterno: p.apellido_paterno,
+          apellido_materno: p.apellido_materno,
+          telefono: p.telefono,
+          categoria: p.categoria,
+          ponderacion: p.ponderacion,
+        };
 
-      // Intentar primero con las nuevas columnas
-      const { error } = await supabase.from('participants').insert({
-        id: p.id,
-        event_id: targetEventId,
-        name: p.name,
-        nombre: p.nombre,
-        apellido_paterno: p.apellido_paterno,
-        apellido_materno: p.apellido_materno,
-        telefono: p.telefono,
-        categoria: p.categoria,
-        category: p.category,
-        ponderacion: p.ponderacion,
-        weight: p.weight,
-        grupo_familiar_id: p.grupo_familiar_id,
-        active_days: activeDaysMeta,
-      });
-
-      if (error && error.message?.includes('does not exist')) {
-        // Fallback a columnas legadas si la migración de Supabase aún no se ha ejecutado
-        await supabase.from('participants').insert({
+        const { error } = await supabase.from('participants').insert({
           id: p.id,
           event_id: targetEventId,
           name: p.name,
+          nombre: p.nombre,
+          apellido_paterno: p.apellido_paterno,
+          apellido_materno: p.apellido_materno,
+          telefono: p.telefono,
+          categoria: p.categoria,
           category: p.category,
+          ponderacion: p.ponderacion,
           weight: p.weight,
+          grupo_familiar_id: p.grupo_familiar_id,
           active_days: activeDaysMeta,
         });
+
+        if (error) {
+          console.warn('[Database] Fallback para insertar asistente de evento en Supabase:', error.message);
+          await supabase.from('participants').insert({
+            id: p.id,
+            event_id: targetEventId,
+            name: p.name,
+            category: p.category,
+            weight: p.weight,
+            active_days: activeDaysMeta,
+          });
+        }
       }
     } catch (e) {
       console.warn('[Database] Excepción insertando participante en Supabase:', e);
@@ -804,7 +864,13 @@ export const deleteSubFamily = async (eventId, subFamilyName) => {
   if (supabase) {
     try {
       for (const p of targetParts) {
-        await supabase.from('participants').delete().eq('id', p.id);
+        let query = supabase.from('participants').delete().eq('id', p.id);
+        if (event?.id) {
+          query = query.eq('event_id', event.id);
+        } else {
+          query = query.not('event_id', 'is', null);
+        }
+        await query;
       }
     } catch (e) {
       console.error('[Database] Error eliminando subfamilia en Supabase:', e);
@@ -825,23 +891,33 @@ export const deleteSubFamily = async (eventId, subFamilyName) => {
  * Eliminar Participante
  */
 export const deleteParticipant = async (eventId, participantId) => {
+  const event = await getEventById(eventId);
+  const targetEventId = event?.id || (isUUID(eventId) ? eventId : null);
+
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      // 1. Intentar borrar por id
-      const { error: err1 } = await supabase.from('participants').delete().eq('id', participantId);
-      if (err1) {
-        console.warn('[Database] Error borrando participante por id en Supabase:', err1);
+      // 1. Intentar borrar por id Y event_id (MUY IMPORTANTE: asegurar que solo se borre del evento, jamás del directorio)
+      if (isUUID(participantId)) {
+        let query = supabase.from('participants').delete().eq('id', participantId);
+        if (targetEventId) {
+          query = query.eq('event_id', targetEventId);
+        } else {
+          query = query.not('event_id', 'is', null);
+        }
+        const { error: err1 } = await query;
+        if (err1) {
+          console.warn('[Database] Error borrando participante por id en Supabase:', err1);
+        }
       }
 
       // 2. Respaldo: si el ID es local o no coincidió, borrar por event_id y name
-      const event = await getEventById(eventId);
       const targetPart = event?.participants?.find((p) => p.id === participantId);
-      if (targetPart && targetPart.name) {
+      if (targetPart && targetPart.name && targetEventId) {
         await supabase
           .from('participants')
           .delete()
-          .eq('event_id', event.id)
+          .eq('event_id', targetEventId)
           .eq('name', targetPart.name);
       }
     } catch (e) {
@@ -850,9 +926,9 @@ export const deleteParticipant = async (eventId, participantId) => {
   }
 
   const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId || e.slug === eventId);
-  if (event) {
-    event.participants = (event.participants || []).filter((p) => p.id !== participantId);
+  const ev = list.find((e) => e.id === eventId || e.slug === eventId);
+  if (ev) {
+    ev.participants = (ev.participants || []).filter((p) => p.id !== participantId);
     saveLocalEvents(list);
   }
 };
@@ -1041,7 +1117,8 @@ export const fetchGlobalDirectoryFromSupabase = async () => {
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('participants').select('*');
+      // SOLO consultar registros maestros del directorio general donde event_id IS NULL
+      const { data, error } = await supabase.from('participants').select('*').is('event_id', null);
       if (!error && Array.isArray(data)) {
         const contactsMap = new Map();
         data.forEach((row) => {
@@ -1052,21 +1129,26 @@ export const fetchGlobalDirectoryFromSupabase = async () => {
           const p = parseParticipantRow(row);
           if (p && (p.name || p.nombre)) {
             const fullName = (p.name || `${p.nombre || ''} ${p.apellido_paterno || ''}`).replace(/\s+/g, ' ').trim();
-            const key = p.id || fullName.toLowerCase().trim();
-            contactsMap.set(key, {
-              id: p.id || generateUUID(),
+            const nameKey = fullName.toLowerCase().trim();
+            if (!nameKey) return;
+
+            const existing = contactsMap.get(nameKey);
+            const contactData = {
+              id: (isUUID(p.id) ? p.id : existing?.id) || generateUUID(),
               name: fullName,
-              nombre: p.nombre || fullName.split(' ')[0] || '',
-              apellido_paterno: p.apellido_paterno || '',
-              apellido_materno: p.apellido_materno || '',
-              telefono: p.telefono || '',
-              grupo_familiar_id: p.grupo_familiar_id || null,
-              category: p.category || 'adulto',
-              categoria: p.categoria || p.category || 'adulto',
-              weight: typeof p.weight === 'number' ? p.weight : (p.category === 'nino' ? 0.5 : 1.0),
-              ponderacion: typeof p.ponderacion === 'number' ? p.ponderacion : (typeof p.weight === 'number' ? p.weight : 1.0),
-              subFamily: p.subFamily || inferSubFamily(fullName),
-            });
+              nombre: p.nombre || existing?.nombre || fullName.split(' ')[0] || '',
+              apellido_paterno: p.apellido_paterno || existing?.apellido_paterno || '',
+              apellido_materno: p.apellido_materno || existing?.apellido_materno || '',
+              telefono: p.telefono || existing?.telefono || '',
+              grupo_familiar_id: p.grupo_familiar_id || existing?.grupo_familiar_id || null,
+              category: p.category || existing?.category || 'adulto',
+              categoria: p.categoria || p.category || existing?.categoria || 'adulto',
+              weight: typeof p.weight === 'number' ? p.weight : (existing?.weight ?? (p.category === 'nino' ? 0.5 : 1.0)),
+              ponderacion: typeof p.ponderacion === 'number' ? p.ponderacion : (existing?.ponderacion ?? (typeof p.weight === 'number' ? p.weight : 1.0)),
+              subFamily: p.subFamily || existing?.subFamily || inferSubFamily(fullName),
+            };
+
+            contactsMap.set(nameKey, contactData);
           }
         });
 
@@ -1092,10 +1174,10 @@ export const deleteDirectoryContact = async (contactId, contactName) => {
   if (supabase) {
     try {
       if (isUUID(contactId)) {
-        await supabase.from('participants').delete().eq('id', contactId);
+        await supabase.from('participants').delete().eq('id', contactId).is('event_id', null);
       }
       if (contactName) {
-        await supabase.from('participants').delete().eq('name', contactName.trim());
+        await supabase.from('participants').delete().eq('name', contactName.trim()).is('event_id', null);
       }
     } catch (e) {
       console.warn('[Database] Error borrando contacto de Supabase:', e);
@@ -1110,22 +1192,6 @@ export const deleteDirectoryContact = async (contactId, contactName) => {
     return d.id !== contactId && (!targetName || dName !== targetName);
   });
   saveGlobalDirectory(dir);
-
-  // 2. Limpiar también de los eventos en localList para que no se resucite
-  const localEvents = loadLocalEvents();
-  let modifiedEvents = false;
-  localEvents.forEach((ev) => {
-    const beforeCount = (ev.participants || []).length;
-    ev.participants = (ev.participants || []).filter((p) => {
-      const pName = (p.name || `${p.nombre || ''} ${p.apellido_paterno || ''}`).toLowerCase().trim();
-      const targetName = (contactName || '').toLowerCase().trim();
-      return p.id !== contactId && (!targetName || pName !== targetName);
-    });
-    if (ev.participants.length !== beforeCount) modifiedEvents = true;
-  });
-  if (modifiedEvents) {
-    saveLocalEvents(localEvents);
-  }
 
   return dir;
 };

@@ -73,8 +73,15 @@ export const NewEventModal = () => {
         .filter((d) => selectedDirectoryIds.has(d.id))
         .map((d) => ({
           name: d.name,
-          category: d.category || 'adulto',
-          weight: typeof d.weight === 'number' ? d.weight : d.category === 'nino' ? 0.5 : 1.0,
+          nombre: d.nombre || d.name?.split(' ')[0] || '',
+          apellido_paterno: d.apellido_paterno || '',
+          apellido_materno: d.apellido_materno || '',
+          telefono: d.telefono || '',
+          categoria: d.categoria || d.category || 'adulto',
+          category: d.category || d.categoria || 'adulto',
+          ponderacion: typeof d.ponderacion === 'number' ? d.ponderacion : (typeof d.weight === 'number' ? d.weight : (d.category === 'nino' ? 0.5 : 1.0)),
+          weight: typeof d.weight === 'number' ? d.weight : (typeof d.ponderacion === 'number' ? d.ponderacion : (d.category === 'nino' ? 0.5 : 1.0)),
+          grupo_familiar_id: d.grupo_familiar_id || null,
           subFamily: d.subFamily || 'Familia General',
           activeDays: [...availableDays],
           isAttending: true,
