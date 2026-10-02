@@ -726,20 +726,38 @@ export const addParticipant = async (eventId, participantData) => {
 /**
  * Actualizar Participante
  */
-export const updateParticipant = async (eventId, participant) => {
+export const updateParticipant = async (eventId, participantOrId, updates = {}) => {
+  const list = loadLocalEvents();
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
+
+  let participant;
+  if (typeof participantOrId === 'string') {
+    const existing = event?.participants?.find((p) => p.id === participantOrId);
+    participant = { ...(existing || {}), ...updates, id: participantOrId };
+  } else {
+    participant = { ...(participantOrId || {}), ...updates };
+  }
+
+  if (!participant?.id) {
+    console.warn('[Database] updateParticipant llamado sin id válido');
+    return null;
+  }
+
   const supabase = await initSupabaseClient();
   if (supabase) {
     try {
       const activeDaysMeta = {
         days: participant.activeDays,
-        isAttending: participant.isAttending,
-        isSettled: participant.isSettled,
-        subFamily: participant.subFamily,
-        grupo_familiar_id: participant.grupo_familiar_id,
+        isAttending: participant.isAttending !== false,
+        isSettled: Boolean(participant.isSettled),
+        subFamily: participant.subFamily || 'Familia General',
+        grupo_familiar_id: participant.grupo_familiar_id || null,
         nombre: participant.nombre,
         apellido_paterno: participant.apellido_paterno,
         apellido_materno: participant.apellido_materno,
         telefono: participant.telefono,
+        categoria: participant.categoria || participant.category || 'adulto',
+        ponderacion: participant.ponderacion || participant.weight || 1.0,
       };
 
       const { error } = await supabase.from('participants').update({
@@ -756,11 +774,12 @@ export const updateParticipant = async (eventId, participant) => {
         active_days: activeDaysMeta,
       }).eq('id', participant.id);
 
-      if (error && error.message?.includes('does not exist')) {
+      if (error) {
+        console.warn('[Database] Update nativo falló en participants, reintentando con base columns + JSONB:', error.message);
         await supabase.from('participants').update({
           name: participant.name,
-          category: participant.category,
-          weight: participant.weight,
+          category: participant.category || participant.categoria,
+          weight: participant.weight || participant.ponderacion,
           active_days: activeDaysMeta,
         }).eq('id', participant.id);
       }
@@ -769,15 +788,15 @@ export const updateParticipant = async (eventId, participant) => {
     }
   }
 
-  const list = loadLocalEvents();
-  const event = list.find((e) => e.id === eventId || e.slug === eventId);
-  if (event) {
+  if (event && Array.isArray(event.participants)) {
     const idx = event.participants.findIndex((p) => p.id === participant.id);
     if (idx >= 0) {
       event.participants[idx] = { ...event.participants[idx], ...participant };
       saveLocalEvents(list);
     }
   }
+
+  return participant;
 };
 
 /**

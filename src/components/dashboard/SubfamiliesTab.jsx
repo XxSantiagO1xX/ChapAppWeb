@@ -67,7 +67,9 @@ export const SubfamiliesTab = () => {
 
   const handleToggleDay = async (participant, day) => {
     if (!participant.isAttending) return;
-    const currentDays = Array.isArray(participant.activeDays) ? [...participant.activeDays] : [...availableDays];
+    const currentDays = Array.isArray(participant.activeDays) && participant.activeDays.length > 0
+      ? [...participant.activeDays]
+      : [...availableDays];
     let updatedDays;
     if (currentDays.includes(day)) {
       updatedDays = currentDays.filter((d) => d !== day);
@@ -80,7 +82,10 @@ export const SubfamiliesTab = () => {
     }
 
     try {
-      await updateParticipant(activeEvent.id, participant.id, { activeDays: updatedDays });
+      await updateParticipant(activeEvent.id, {
+        ...participant,
+        activeDays: updatedDays,
+      });
       await refreshActiveEvent();
     } catch (err) {
       console.error('Error actualizando días:', err);
@@ -108,13 +113,8 @@ export const SubfamiliesTab = () => {
   };
 
   const handleBatchAttendance = async (sfName, targetAttending) => {
-    const sfParts = groupedBySf[sfName] || [];
     try {
-      for (const p of sfParts) {
-        if (p.isAttending !== targetAttending) {
-          await toggleParticipantAttendance(activeEvent.id, p.id);
-        }
-      }
+      await toggleSubFamilyAttendance(activeEvent.id, sfName, targetAttending);
       await refreshActiveEvent();
       showToast(targetAttending ? `Todos en ${sfName} marcados presentes` : `Todos en ${sfName} marcados ausentes`, 'info');
     } catch (err) {
@@ -322,7 +322,10 @@ export const SubfamiliesTab = () => {
                           {/* Chips de Selección de Días */}
                           <div className="days-chips-row">
                             {availableDays.map((d) => {
-                              const isDayActive = Array.isArray(p.activeDays) && p.activeDays.includes(d);
+                              const activeDaysList = Array.isArray(p.activeDays) && p.activeDays.length > 0
+                                ? p.activeDays
+                                : (p.isAttending !== false ? availableDays : []);
+                              const isDayActive = activeDaysList.includes(d);
                               return (
                                 <button 
                                   key={d}

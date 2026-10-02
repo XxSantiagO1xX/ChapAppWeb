@@ -39,7 +39,7 @@ export const formatCurrency = (amount) => {
  * Calcula las unidades ponderadas de un participante.
  * Si no asiste (isAttending === false), retorna 0 unidades.
  */
-export const calculateParticipantWeightedUnits = (participant) => {
+export const calculateParticipantWeightedUnits = (participant, fallbackDays = 4) => {
   if (!participant || participant.isAttending === false) {
     return 0;
   }
@@ -48,7 +48,16 @@ export const calculateParticipantWeightedUnits = (participant) => {
     return 0;
   }
 
-  const activeDaysCount = Array.isArray(participant.activeDays) ? participant.activeDays.length : 0;
+  let activeDaysCount = 0;
+  if (Array.isArray(participant.activeDays) && participant.activeDays.length > 0) {
+    activeDaysCount = participant.activeDays.length;
+  } else if (typeof participant.activeDaysCount === 'number' && participant.activeDaysCount > 0) {
+    activeDaysCount = participant.activeDaysCount;
+  } else {
+    // Si asiste pero no tiene asignación explícita de días, asume los días activos completos del evento
+    activeDaysCount = fallbackDays;
+  }
+
   const weight =
     typeof participant.weight === 'number'
       ? participant.weight
@@ -262,13 +271,17 @@ export const calculateEventTotals = (event, guestsInput = null, familyGroups = [
   let totalParticipantsUnitsRaw = 0;
   let totalAttendingParticipantsCount = 0;
 
+  const defaultDaysCount = Array.isArray(event?.availableDays) && event.availableDays.length > 0
+    ? event.availableDays.length
+    : 4;
+
   for (const participant of participants) {
     const isAttending = participant.isAttending !== false;
     if (isAttending) {
       totalAttendingParticipantsCount++;
     }
 
-    const units = calculateParticipantWeightedUnits(participant);
+    const units = calculateParticipantWeightedUnits(participant, defaultDaysCount);
     unitsMap.set(participant.id, units);
     totalParticipantsUnitsRaw += units;
   }
@@ -318,7 +331,12 @@ export const calculateEventTotals = (event, guestsInput = null, familyGroups = [
       category: participant.category,
       weight: typeof participant.weight === 'number' ? participant.weight : 1.0,
       isAttending,
-      activeDaysCount: Array.isArray(participant.activeDays) ? participant.activeDays.length : 0,
+      activeDays: Array.isArray(participant.activeDays) && participant.activeDays.length > 0
+        ? participant.activeDays
+        : (isAttending ? (event?.availableDays || ['Día 1', 'Día 2', 'Día 3', 'Día 4']) : []),
+      activeDaysCount: Array.isArray(participant.activeDays) && participant.activeDays.length > 0
+        ? participant.activeDays.length
+        : (isAttending ? defaultDaysCount : 0),
       weightedUnits: units,
       proportionalShare,
       totalPaid,
