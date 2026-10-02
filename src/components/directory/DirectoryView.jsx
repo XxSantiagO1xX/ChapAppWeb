@@ -14,8 +14,7 @@ import {
   deleteFamilyGroup,
   addDirectoryContact,
   updateDirectoryContact,
-  deleteDirectoryContact,
-  SEED_DIRECTORY
+  deleteDirectoryContact
 } from '../../services/database.js';
 import { Icon } from '../../utils/icons.jsx';
 
@@ -113,13 +112,6 @@ export const DirectoryView = () => {
     setNewGroupName('');
     setNewGroupParentId('');
     setNewGroupIsIndependent(false);
-  };
-
-  // Sembrar datos demo iniciales si está vacío
-  const handleSeedDirectory = () => {
-    saveGlobalDirectory(SEED_DIRECTORY);
-    setDirectory(SEED_DIRECTORY);
-    showToast('Directorio sembrado con familias iniciales', 'success');
   };
 
   // Guardar Nuevo Contacto
@@ -576,13 +568,13 @@ export const DirectoryView = () => {
 
           <div className="form-row-2">
             <div className="form-group">
-              <label>Núcleo Familiar Asignado *</label>
+              <label>Núcleo Familiar Asignado</label>
               <select 
                 className="glass-select"
                 value={selectedGroupId}
                 onChange={(e) => setSelectedGroupId(e.target.value)}
-                required
               >
+                <option value="">(Sin núcleo asignado / Familia General)</option>
                 {rawGroups.map((g) => {
                   const isSub = Boolean(g.nodo_padre_id);
                   const label = isSub 
@@ -718,24 +710,24 @@ export const DirectoryView = () => {
       {/* LISTADO JERÁRQUICO COMPLETO */}
       <div className="directory-cards-container">
         {rawDirectory.length === 0 ? (
-          <div className="glass-panel" style={{ padding: '40px 24px', textAlign: 'center', borderRadius: '24px' }}>
+          <div className="glass-panel directory-header-card" style={{ padding: '40px 24px', textAlign: 'center', borderRadius: '24px' }}>
             <div className="confirm-icon-box" style={{ margin: '0 auto 16px auto', color: 'var(--color-primary)' }}>
               <Icon name="users" size={48} />
             </div>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-              El Directorio Maestro está listo para comenzar
+              Directorio General Vacío
             </h3>
             <p style={{ fontSize: '0.90rem', color: 'var(--text-secondary)', maxWidth: '520px', margin: '0 auto 20px auto', lineHeight: 1.5 }}>
-              Puedes sembrar las familias iniciales preconfiguradas o comenzar registrando integrantes y ramas familiares manualmente.
+              No hay integrantes registrados en la base de datos. Comienza registrando a los miembros de la familia o creando los núcleos familiares.
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <button type="button" onClick={handleSeedDirectory} className="btn-pill-cyan">
-                <Icon name="refresh" size={16} />
-                <span>Cargar Familias Iniciales</span>
-              </button>
               <button type="button" onClick={() => setActiveFormTab('contact')} className="btn-pill-primary">
                 <Icon name="user-plus" size={16} />
                 <span>+ Registrar Primer Integrante</span>
+              </button>
+              <button type="button" onClick={() => setActiveFormTab('group')} className="btn-pill-glass">
+                <Icon name="users" size={16} />
+                <span>+ Registrar Núcleo Familiar</span>
               </button>
             </div>
           </div>

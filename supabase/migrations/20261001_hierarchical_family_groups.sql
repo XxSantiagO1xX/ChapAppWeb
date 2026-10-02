@@ -73,14 +73,20 @@ BEGIN
     END IF;
 END $$;
 
--- 5. Semilla inicial de Grupos Familiares (si la tabla está vacía)
-INSERT INTO public.family_groups (id, nombre, nodo_padre_id, es_independiente, color)
-VALUES
-    ('a0000000-0000-0000-0000-000000000001', 'Familia Santiago Chapantongo', NULL, false, '#38BDF8'),
-    ('a0000000-0000-0000-0000-000000000002', 'Familia Santiago Velázquez', NULL, false, '#F59E0B'),
-    ('a0000000-0000-0000-0000-000000000003', 'Familia Santiago Morales', 'a0000000-0000-0000-0000-000000000001', false, '#10B981'),
-    ('a0000000-0000-0000-0000-000000000004', 'Familia Roberto Santiago (Independiente)', 'a0000000-0000-0000-0000-000000000002', true, '#EC4899')
-ON CONFLICT (id) DO NOTHING;
+-- 5. Limpieza de registros temporales o de prueba previos
+DELETE FROM public.participants 
+WHERE name LIKE '__FG__%' 
+   OR (active_days IS NOT NULL AND active_days->>'isFamilyGroup' = 'true');
 
--- Notificar recarga del esquema
+-- 6. Habilitar publicación Realtime para family_groups
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.family_groups;
+    END IF;
+EXCEPTION WHEN OTHERS THEN
+    NULL;
+END $$;
+
+-- 7. Notificar recarga del esquema a PostgREST
 NOTIFY pgrst, 'reload schema';

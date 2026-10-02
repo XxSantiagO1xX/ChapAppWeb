@@ -25,74 +25,13 @@ export const isUUID = (str) => {
 };
 
 /**
- * Semilla de Grupos y Ramas Familiares (Modelo Híbrido).
- * - nodo_padre_id: null indica Rama Principal.
- * - es_independiente: true indica que asume su propia cuenta/deuda en cortes, independizándose financieramente.
+ * Variables de inicialización (Vacías por defecto para garantizar que la base de datos comience limpia).
  */
-export const SEED_FAMILY_GROUPS = [
-  { id: 'fg_1', nombre: 'Familia Santiago Chapantongo', nodo_padre_id: null, es_independiente: false, color: '#38BDF8' },
-  { id: 'fg_2', nombre: 'Familia Santiago Velázquez', nodo_padre_id: null, es_independiente: false, color: '#F59E0B' },
-  { id: 'fg_3', nombre: 'Familia Santiago Morales', nodo_padre_id: 'fg_1', es_independiente: false, color: '#10B981' },
-  { id: 'fg_4', nombre: 'Familia Roberto Santiago', nodo_padre_id: 'fg_2', es_independiente: true, color: '#EC4899' },
-  { id: 'fg_5', nombre: 'Amigos y Primos', nodo_padre_id: null, es_independiente: true, color: '#8B5CF6' },
-];
+export const SEED_FAMILY_GROUPS = [];
+export const SEED_DIRECTORY = [];
+export const INITIAL_SEED_EVENTS = [];
 
-/**
- * Directorio Global de Participantes Frecuentes.
- */
-export const SEED_DIRECTORY = [
-  { id: 'dir_1', nombre: 'Carlos', apellido_paterno: 'Santiago', apellido_materno: '', name: 'Don Carlos Santiago', telefono: '5512345601', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo', grupo_familiar_id: 'fg_1' },
-  { id: 'dir_2', nombre: 'María', apellido_paterno: 'Bustamante', apellido_materno: '', name: 'Doña María Bustamante', telefono: '5512345602', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo', grupo_familiar_id: 'fg_1' },
-  { id: 'dir_3', nombre: 'Juanito', apellido_paterno: 'Santiago', apellido_materno: 'Bustamante', name: 'Juanito Santiago', telefono: '', categoria: 'nino', ponderacion: 0.5, category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Chapantongo', grupo_familiar_id: 'fg_1' },
-  { id: 'dir_4', nombre: 'Roberto', apellido_paterno: 'Santiago', apellido_materno: 'Velázquez', name: 'Roberto Santiago', telefono: '5512345604', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Roberto Santiago', grupo_familiar_id: 'fg_4' },
-  { id: 'dir_5', nombre: 'Patricia', apellido_paterno: 'Velázquez', apellido_materno: '', name: 'Patricia Velázquez', telefono: '5512345605', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Velázquez', grupo_familiar_id: 'fg_2' },
-  { id: 'dir_6', nombre: 'Mateo', apellido_paterno: 'Santiago', apellido_materno: 'Velázquez', name: 'Mateo Santiago', telefono: '', categoria: 'nino', ponderacion: 0.5, category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Velázquez', grupo_familiar_id: 'fg_2' },
-  { id: 'dir_7', nombre: 'Fernando', apellido_paterno: 'Santiago', apellido_materno: 'Morales', name: 'Fernando Santiago', telefono: '5512345607', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales', grupo_familiar_id: 'fg_3' },
-  { id: 'dir_8', nombre: 'Carmen', apellido_paterno: 'Morales', apellido_materno: '', name: 'Carmen Morales', telefono: '5512345608', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales', grupo_familiar_id: 'fg_3' },
-  { id: 'dir_9', nombre: 'Lucía', apellido_paterno: 'Santiago', apellido_materno: 'Morales', name: 'Lucía Santiago', telefono: '', categoria: 'nino', ponderacion: 0.5, category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Morales', grupo_familiar_id: 'fg_3' },
-  { id: 'dir_10', nombre: 'Alejandro', apellido_paterno: 'Ruiz', apellido_materno: '', name: 'Alejandro Ruiz', telefono: '5512345610', categoria: 'adulto', ponderacion: 1.0, category: 'adulto', weight: 1.0, subFamily: 'Amigos y Primos', grupo_familiar_id: 'fg_5' },
-];
-
-export const INITIAL_SEED_EVENTS = [
-  {
-    id: 'chapantongo-2026',
-    slug: 'vacaciones-chapantongo-2026',
-    title: 'Vacaciones Chapantongo 2026',
-    year: 2026,
-    availableDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'],
-    isArchived: false,
-    createdAt: new Date().toISOString(),
-    participants: [
-      { id: 'p1', name: 'Don Carlos Santiago', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
-      { id: 'p2', name: 'Doña María Bustamante', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Chapantongo', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
-      { id: 'p3', name: 'Juanito Santiago', category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Chapantongo', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
-      { id: 'p4', name: 'Roberto Santiago', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Velázquez', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
-      { id: 'p5', name: 'Patricia Velázquez', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Velázquez', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
-      { id: 'p6', name: 'Mateo Santiago', category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Velázquez', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
-      { id: 'p7', name: 'Fernando Santiago', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
-      { id: 'p8', name: 'Carmen Morales', category: 'adulto', weight: 1.0, subFamily: 'Familia Santiago Morales', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
-      { id: 'p9', name: 'Lucía Santiago', category: 'nino', weight: 0.5, subFamily: 'Familia Santiago Morales', activeDays: ['Día 1', 'Día 2', 'Día 3', 'Día 4'], isAttending: true, isSettled: false },
-      { id: 'p10', name: 'Alejandro Ruiz', category: 'adulto', weight: 1.0, subFamily: 'Amigos y Primos', activeDays: ['Día 1', 'Día 2', 'Día 3'], isAttending: true, isSettled: false }
-    ],
-    expenses: [
-      { id: 'e1', title: 'Supermercado Despensa Familiar', amount: 2850.00, category: 'Comida', paidBy: 'p1' },
-      { id: 'e2', title: 'Carbón, Carnicería y Asado', amount: 1680.50, category: 'Comida', paidBy: 'p4' },
-      { id: 'e3', title: 'Gasolina y Casetas Viaje', amount: 1250.00, category: 'Transporte', paidBy: 'p4' },
-      { id: 'e4', title: 'Hospedaje Cabañas del Bosque', amount: 6400.00, category: 'Hospedaje', paidBy: 'p1' },
-      { id: 'e5', title: 'Entradas Balneario y Parque', amount: 980.00, category: 'Varios', paidBy: 'p8' },
-      { id: 'e6', title: 'Bebidas, Refrescos y Hielo', amount: 750.00, category: 'Bebidas', paidBy: 'p1' }
-    ]
-  }
-];
-
-export const inferSubFamily = (name, fallback = 'Familia General') => {
-  const lower = (name || '').toLowerCase();
-  if (lower.includes('chapantongo')) return 'Familia Santiago Chapantongo';
-  if (lower.includes('velázquez') || lower.includes('velazquez')) return 'Familia Santiago Velázquez';
-  if (lower.includes('morales')) return 'Familia Santiago Morales';
-  if (lower.includes('amigo') || lower.includes('primo') || lower.includes('ruiz')) return 'Amigos y Primos';
-  const match = SEED_DIRECTORY.find((d) => d.name.toLowerCase() === lower);
-  if (match) return match.subFamily;
+export const inferSubFamily = (_name, fallback = 'Familia General') => {
   return fallback;
 };
 
@@ -120,75 +59,23 @@ export const saveLocalFamilyGroups = (groups) => {
 export const getAllFamilyGroups = async () => {
   const supabase = await initSupabaseClient();
   if (supabase) {
-    // 1. Intentar consultar tabla dedicada public.family_groups
     try {
       const { data, error } = await supabase
         .from('family_groups')
         .select('*')
         .order('created_at', { ascending: true });
 
-      if (!error && Array.isArray(data) && data.length > 0) {
+      if (!error && Array.isArray(data)) {
         saveLocalFamilyGroups(data);
         return data;
       }
-    } catch (e) {}
-
-    // 2. Fallback de Supabase: registros persistidos en participants con event_id: null y name prefijado con __FG__
-    try {
-      const { data: fgRows, error: fgErr } = await supabase
-        .from('participants')
-        .select('*')
-        .is('event_id', null)
-        .like('name', '__FG__%');
-
-      if (!fgErr && Array.isArray(fgRows) && fgRows.length > 0) {
-        const groups = fgRows.map((r) => {
-          const meta = r.active_days && typeof r.active_days === 'object' ? r.active_days : {};
-          return {
-            id: r.id,
-            nombre: meta.nombre || r.name.replace('__FG__', ''),
-            nodo_padre_id: meta.nodo_padre_id || null,
-            es_independiente: Boolean(meta.es_independiente),
-            color: meta.color || '#38BDF8',
-            created_at: r.created_at,
-          };
-        });
-        saveLocalFamilyGroups(groups);
-        return groups;
+      if (error) {
+        console.warn('[Database] Consulta a family_groups en Supabase:', error.message);
       }
-
-      // 3. Si no hay núcleos en Supabase aún, sembrar familias iniciales directamente en Supabase Cloud con UUIDs reales
-      const initialGroups = [
-        { id: 'a0000000-0000-0000-0000-000000000001', nombre: 'Familia Santiago Chapantongo', nodo_padre_id: null, es_independiente: false, color: '#38BDF8' },
-        { id: 'a0000000-0000-0000-0000-000000000002', nombre: 'Familia Santiago Velázquez', nodo_padre_id: null, es_independiente: false, color: '#F59E0B' },
-        { id: 'a0000000-0000-0000-0000-000000000003', nombre: 'Familia Santiago Morales', nodo_padre_id: 'a0000000-0000-0000-0000-000000000001', es_independiente: false, color: '#10B981' },
-        { id: 'a0000000-0000-0000-0000-000000000004', nombre: 'Familia Roberto Santiago (Independiente)', nodo_padre_id: 'a0000000-0000-0000-0000-000000000002', es_independiente: true, color: '#EC4899' },
-        { id: 'a0000000-0000-0000-0000-000000000005', nombre: 'Amigos y Primos', nodo_padre_id: null, es_independiente: true, color: '#8B5CF6' },
-      ];
-
-      for (const fg of initialGroups) {
-        await supabase.from('participants').upsert({
-          id: fg.id,
-          event_id: null,
-          name: `__FG__${fg.nombre}`,
-          category: 'adulto',
-          weight: 0,
-          active_days: {
-            isFamilyGroup: true,
-            id: fg.id,
-            nombre: fg.nombre,
-            nodo_padre_id: fg.nodo_padre_id,
-            es_independiente: fg.es_independiente,
-            color: fg.color
-          }
-        });
-      }
-
-      saveLocalFamilyGroups(initialGroups);
-      return initialGroups;
-    } catch (err) {
-      console.warn('[Database] Error consultando grupos familiares en Supabase:', err);
+    } catch (e) {
+      console.warn('[Database] Error consultando family_groups en Supabase:', e);
     }
+    return [];
   }
 
   return loadLocalFamilyGroups();
@@ -210,33 +97,15 @@ export const createFamilyGroup = async ({ nombre, nodo_padre_id = null, es_indep
 
   const supabase = await initSupabaseClient();
   if (supabase) {
-    let savedToTable = false;
     try {
       const { error } = await supabase.from('family_groups').insert(newGroup);
-      if (!error) savedToTable = true;
-    } catch (e) {}
-
-    if (!savedToTable) {
-      try {
-        await supabase.from('participants').upsert({
-          id: newGroup.id,
-          event_id: null,
-          name: `__FG__${newGroup.nombre}`,
-          category: 'adulto',
-          weight: 0,
-          active_days: {
-            isFamilyGroup: true,
-            id: newGroup.id,
-            nombre: newGroup.nombre,
-            nodo_padre_id: newGroup.nodo_padre_id,
-            es_independiente: newGroup.es_independiente,
-            color: newGroup.color
-          }
-        });
-        console.log('[Database] ✅ Grupo familiar persistido en Supabase:', newGroup.nombre);
-      } catch (err) {
-        console.error('[Database] Error guardando grupo familiar en Supabase:', err);
+      if (error) {
+        console.warn('[Database] Advertencia al insertar en family_groups de Supabase:', error.message);
+      } else {
+        console.log('[Database] ✅ Grupo familiar guardado en tabla family_groups de Supabase:', newGroup.nombre);
       }
+    } catch (err) {
+      console.error('[Database] Error guardando grupo familiar en Supabase:', err);
     }
   }
 
@@ -252,28 +121,18 @@ export const createFamilyGroup = async ({ nombre, nodo_padre_id = null, es_indep
 export const updateFamilyGroup = async (id, fields = {}) => {
   const supabase = await initSupabaseClient();
   if (supabase && isUUID(id)) {
-    let updatedInTable = false;
     try {
       const { error } = await supabase.from('family_groups').update({
         ...fields,
         updated_at: new Date().toISOString()
       }).eq('id', id);
-      if (!error) updatedInTable = true;
-    } catch (e) {}
-
-    if (!updatedInTable) {
-      try {
-        const { data: existing } = await supabase.from('participants').select('*').eq('id', id).single();
-        const currentMeta = existing?.active_days && typeof existing.active_days === 'object' ? existing.active_days : {};
-        const updatedMeta = { ...currentMeta, ...fields, id };
-        await supabase.from('participants').update({
-          name: fields.nombre ? `__FG__${fields.nombre}` : (existing?.name || '__FG__Familia'),
-          active_days: updatedMeta,
-        }).eq('id', id);
-        console.log('[Database] ✅ Grupo familiar actualizado en Supabase:', id, fields.nombre);
-      } catch (err) {
-        console.warn('[Database] Error actualizando grupo familiar en Supabase:', err);
+      if (error) {
+        console.warn('[Database] Advertencia al actualizar en family_groups de Supabase:', error.message);
+      } else {
+        console.log('[Database] ✅ Grupo familiar actualizado en family_groups de Supabase:', id);
       }
+    } catch (err) {
+      console.warn('[Database] Error actualizando grupo familiar en Supabase:', err);
     }
   }
 
@@ -311,17 +170,14 @@ export const deleteFamilyGroup = async (id) => {
       await supabase.from('family_groups').delete().eq('id', id);
       await supabase.from('family_groups').update({ nodo_padre_id: null, es_independiente: true }).eq('nodo_padre_id', id);
       await supabase.from('participants').update({ grupo_familiar_id: null }).eq('grupo_familiar_id', id);
-    } catch (e) {}
-
-    try {
+      // Eliminar cualquier registro residual si existía
       await supabase.from('participants').delete().eq('id', id);
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[Database] Error borrando grupo familiar de Supabase:', e);
+    }
   }
 
   let list = loadLocalFamilyGroups();
-  const targetGroup = list.find((g) => g.id === id);
-  const targetName = targetGroup ? targetGroup.nombre : null;
-
   list = list.map((g) => {
     if (g.nodo_padre_id === id) {
       return { ...g, nodo_padre_id: null, es_independiente: true };
