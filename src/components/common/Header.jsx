@@ -122,17 +122,17 @@ export const Header = () => {
       {/* ZONA DERECHA: Mini-Dock de Utilidades + Botón de Acción        */}
       {/* ============================================================== */}
       <div className="navbar-zone-right">
-        {/* Mini-dock translúcido de herramientas agrupadas con acento de rol */}
+        {/* Mini-dock translúcido de herramientas agrupadas con colores distintivos */}
         <div className="navbar-utility-dock">
           {/* Sincronización Cloud con Supabase */}
           <button
             type="button"
             onClick={syncCloud}
-            className={`navbar-dock-btn ${isSyncing ? 'syncing-spin' : ''}`}
+            className={`navbar-dock-btn sync-btn ${isSyncing ? 'syncing-spin' : ''}`}
             title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'}
             aria-label="Sincronizar"
           >
-            <Icon name="refresh" size={16} color="var(--color-primary)" />
+            <Icon name="refresh" size={16} />
             {liveSyncPulse && <span className="navbar-realtime-dot" />}
           </button>
 
@@ -140,22 +140,22 @@ export const Header = () => {
           <button
             type="button"
             onClick={() => openModal('analytics')}
-            className="navbar-dock-btn"
+            className="navbar-dock-btn analytics-btn"
             title="Analítica Histórica y Estadísticas Globales"
             aria-label="Analítica"
           >
-            <Icon name="chart" size={16} color="var(--color-primary)" />
+            <Icon name="chart" size={16} />
           </button>
 
-          {/* Alternador de Tema Claro / Oscuro */}
+          {/* Alternador de Tema Claro / Oscuro con active constante sutil */}
           <button
             type="button"
             onClick={toggleTheme}
-            className="navbar-dock-btn theme-toggle-btn"
+            className="navbar-dock-btn theme-toggle-btn active-subtle"
             title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
             aria-label="Cambiar tema"
           >
-            <Icon name={isDark ? 'moon' : 'sun'} size={17} color="var(--color-primary)" />
+            <Icon name={isDark ? 'sun' : 'moon'} size={17} />
           </button>
 
           {/* Acceso a Directorio (si estamos en Home) */}
@@ -163,24 +163,24 @@ export const Header = () => {
             <button
               type="button"
               onClick={() => navigateToView('directory')}
-              className="navbar-dock-btn"
+              className="navbar-dock-btn directory-btn"
               title="Directorio General & Jerarquía Familiar"
               aria-label="Directorio"
             >
-              <Icon name="users" size={16} color="var(--color-primary)" />
+              <Icon name="users" size={16} />
             </button>
           )}
 
-          {/* Perfil de Usuario / Ajustes */}
+          {/* Perfil de Usuario / Ajustes con color distintivo de Rol (Admin vs Operador) */}
           {currentUser && (
             <button
               type="button"
               onClick={() => openModal('settings')}
-              className="navbar-dock-btn user-btn"
-              title={`Configuración (${currentUser.name} - ${currentUser.role === 'admin' ? 'Admin' : 'Operador'})`}
+              className={`navbar-dock-btn user-btn ${currentUser.role === 'admin' ? 'role-admin' : 'role-operator'}`}
+              title={`Configuración (${currentUser.name} - ${currentUser.role === 'admin' ? 'Administrador' : 'Segundo al Mando'})`}
               aria-label="Configuración de usuario"
             >
-              <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={16} color="var(--color-primary)" />
+              <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={16} />
             </button>
           )}
         </div>
