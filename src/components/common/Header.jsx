@@ -84,7 +84,7 @@ export const Header = () => {
               title="Abrir menú lateral"
               aria-label="Menú"
             >
-              <Icon name="menu" size={17} />
+              <Icon name="menu" size={20} color="var(--color-primary)" />
             </button>
             <button
               type="button"
@@ -122,7 +122,7 @@ export const Header = () => {
       {/* ZONA DERECHA: Mini-Dock de Utilidades + Botón de Acción        */}
       {/* ============================================================== */}
       <div className="navbar-zone-right">
-        {/* Mini-dock translúcido de herramientas agrupadas (Lumina dock) */}
+        {/* Mini-dock translúcido de herramientas agrupadas con acento de rol */}
         <div className="navbar-utility-dock">
           {/* Sincronización Cloud con Supabase */}
           <button
@@ -132,7 +132,7 @@ export const Header = () => {
             title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'}
             aria-label="Sincronizar"
           >
-            <Icon name="refresh" size={14} />
+            <Icon name="refresh" size={16} color="var(--color-primary)" />
             {liveSyncPulse && <span className="navbar-realtime-dot" />}
           </button>
 
@@ -144,7 +144,7 @@ export const Header = () => {
             title="Analítica Histórica y Estadísticas Globales"
             aria-label="Analítica"
           >
-            <Icon name="chart" size={14} />
+            <Icon name="chart" size={16} color="var(--color-primary)" />
           </button>
 
           {/* Alternador de Tema Claro / Oscuro */}
@@ -155,7 +155,7 @@ export const Header = () => {
             title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
             aria-label="Cambiar tema"
           >
-            <Icon name={isDark ? 'moon' : 'sun'} size={15} />
+            <Icon name={isDark ? 'moon' : 'sun'} size={17} color="var(--color-primary)" />
           </button>
 
           {/* Acceso a Directorio (si estamos en Home) */}
@@ -167,7 +167,7 @@ export const Header = () => {
               title="Directorio General & Jerarquía Familiar"
               aria-label="Directorio"
             >
-              <Icon name="users" size={14} />
+              <Icon name="users" size={16} color="var(--color-primary)" />
             </button>
           )}
 
@@ -180,7 +180,7 @@ export const Header = () => {
               title={`Configuración (${currentUser.name} - ${currentUser.role === 'admin' ? 'Admin' : 'Operador'})`}
               aria-label="Configuración de usuario"
             >
-              <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={14} color="var(--color-primary)" />
+              <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={16} color="var(--color-primary)" />
             </button>
           )}
         </div>
@@ -194,7 +194,7 @@ export const Header = () => {
             title="Generar Corte de Caja"
             aria-label="Corte de caja"
           >
-            <Icon name="receipt" size={14} />
+            <Icon name="receipt" size={15} />
             <span>Corte</span>
           </button>
         ) : !activeEvent && currentView !== 'directory' ? (
@@ -205,7 +205,7 @@ export const Header = () => {
             title="Crear Nuevo Evento"
             aria-label="Nuevo Evento"
           >
-            <Icon name="plus" size={14} />
+            <Icon name="plus" size={15} />
             <span className="navbar-btn-text">Nuevo Evento</span>
           </button>
         ) : null}
