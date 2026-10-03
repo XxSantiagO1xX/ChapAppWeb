@@ -54,12 +54,14 @@ import {
   Shield,
   LogOut,
   Database,
+  Minus,
 } from 'lucide-react';
 
 const ICON_MAP = {
   menu: Menu,
   close: X,
   plus: Plus,
+  minus: Minus,
   search: Search,
   'arrow-left': ArrowLeft,
   'arrow-right': ArrowRight,

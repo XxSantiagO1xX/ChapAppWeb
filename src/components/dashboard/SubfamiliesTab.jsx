@@ -65,21 +65,18 @@ export const SubfamiliesTab = () => {
     }
   };
 
-  const handleToggleDay = async (participant, day) => {
+  const handleSetDaysCount = async (participant, delta) => {
     if (!participant.isAttending) return;
-    const currentDays = Array.isArray(participant.activeDays) && participant.activeDays.length > 0
-      ? [...participant.activeDays]
-      : [...availableDays];
-    let updatedDays;
-    if (currentDays.includes(day)) {
-      updatedDays = currentDays.filter((d) => d !== day);
-      if (updatedDays.length === 0) {
-        showToast('El integrante debe tener al menos un día activo o marcarlo ausente', 'info');
-        return;
-      }
-    } else {
-      updatedDays = [...currentDays, day];
-    }
+    const maxDays = availableDays.length || 4;
+    const activeDaysList = Array.isArray(participant.activeDays) && participant.activeDays.length > 0
+      ? participant.activeDays
+      : availableDays;
+    const currentCount = activeDaysList.length;
+    const newCount = Math.max(1, Math.min(maxDays, currentCount + delta));
+
+    if (newCount === currentCount) return;
+
+    const updatedDays = availableDays.slice(0, newCount);
 
     try {
       await updateParticipant(activeEvent.id, {
@@ -298,74 +295,87 @@ export const SubfamiliesTab = () => {
                 <div className="sf-members-list">
                   {parts.map((p) => {
                     const isChild = p.category === 'nino';
+                    const maxDays = availableDays.length || 4;
+                    const activeDaysList = Array.isArray(p.activeDays) && p.activeDays.length > 0
+                      ? p.activeDays
+                      : (p.isAttending !== false ? availableDays : []);
+                    const activeDaysCount = activeDaysList.length;
+
                     return (
                       <div 
                         key={p.id} 
-                        className={`participant-card-item glass-panel ${!p.isAttending ? 'item-absent' : ''}`}
+                        className={`participant-card-item glass-panel ${isChild ? 'card-child' : 'card-adult'} ${!p.isAttending ? 'item-absent' : ''}`}
                       >
-                        <div className="participant-info-col">
-                          <div className="participant-name-row">
-                            <span className="participant-name">
-                              <Icon name="user" size={14} /> {p.name}
-                            </span>
-                            
+                        {/* Cabecera: Rol interactivo + Nombre + Eliminar */}
+                        <div className="participant-card-header">
+                          <div className="participant-name-wrapper">
                             <button 
                               type="button"
-                              className={`btn-toggle-member-role ${isChild ? 'role-child' : 'role-adult'}`}
+                              className={`btn-role-badge ${isChild ? 'role-child' : 'role-adult'}`}
                               onClick={() => handleToggleRole(p)}
-                              title="Clic para cambiar tarifa entre Adulto (1.0) y Niño (0.5)"
+                              title={isChild ? 'Categoría Niño (0.5 ud). Clic para cambiar a Adulto (1.0 ud)' : 'Categoría Adulto (1.0 ud). Clic para cambiar a Niño (0.5 ud)'}
                             >
-                              {isChild ? 'Niño (0.5)' : 'Adulto (1.0)'}
+                              <Icon name="user" size={13} />
                             </button>
+                            <span className="participant-name" title={p.name}>
+                              {p.name}
+                            </span>
                           </div>
 
-                          {/* Chips de Selección de Días */}
-                          <div className="days-chips-row">
-                            {availableDays.map((d) => {
-                              const activeDaysList = Array.isArray(p.activeDays) && p.activeDays.length > 0
-                                ? p.activeDays
-                                : (p.isAttending !== false ? availableDays : []);
-                              const isDayActive = activeDaysList.includes(d);
-                              return (
-                                <button 
-                                  key={d}
-                                  type="button"
-                                  className={`day-chip-btn ${isDayActive ? 'active' : ''} ${!p.isAttending ? 'disabled' : ''}`}
-                                  onClick={() => handleToggleDay(p, d)}
-                                  disabled={!p.isAttending}
-                                  title={isDayActive ? `Desmarcar ${d}` : `Marcar ${d}`}
-                                >
-                                  {d}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <div className="participant-actions-col">
                           <button 
                             type="button"
-                            className={`btn-toggle-attendance ${p.isAttending ? 'attending' : 'absent'}`}
+                            className="btn-icon-danger-subtle btn-delete-participant"
+                            onClick={() => handleDeleteParticipant(p)}
+                            title="Eliminar de este evento"
+                          >
+                            <Icon name="trash" size={13} />
+                          </button>
+                        </div>
+
+                        {/* Stepper numérico para días */}
+                        <div className="days-stepper-row">
+                          <button
+                            type="button"
+                            className="stepper-btn"
+                            onClick={() => handleSetDaysCount(p, -1)}
+                            disabled={!p.isAttending || activeDaysCount <= 1}
+                            title="Disminuir días"
+                          >
+                            <Icon name="minus" size={12} />
+                          </button>
+
+                          <span className={`stepper-label ${!p.isAttending ? 'disabled' : ''}`}>
+                            <strong>{activeDaysCount}</strong> de {maxDays} {maxDays === 1 ? 'día' : 'días'}
+                          </span>
+
+                          <button
+                            type="button"
+                            className="stepper-btn"
+                            onClick={() => handleSetDaysCount(p, 1)}
+                            disabled={!p.isAttending || activeDaysCount >= maxDays}
+                            title="Aumentar días"
+                          >
+                            <Icon name="plus" size={12} />
+                          </button>
+                        </div>
+
+                        {/* Footer: Botón Asiste / Falta */}
+                        <div className="participant-card-footer">
+                          <button 
+                            type="button"
+                            className={`btn-toggle-attendance-compact ${p.isAttending ? 'attending' : 'absent'}`}
                             onClick={() => handleToggleAttendance(p.id)}
                             title={p.isAttending ? 'Marcar como ausente' : 'Marcar como asistente'}
                           >
                             {p.isAttending ? (
                               <>
-                                <Icon name="check" size={13} /> Asiste
+                                <Icon name="check" size={12} /> Asiste
                               </>
                             ) : (
                               <>
-                                <Icon name="close" size={13} /> Falta
+                                <Icon name="close" size={12} /> Falta
                               </>
                             )}
-                          </button>
-                          <button 
-                            type="button"
-                            className="btn-icon-danger btn-delete-participant"
-                            onClick={() => handleDeleteParticipant(p)}
-                            title="Eliminar participante"
-                          >
-                            <Icon name="trash" size={16} />
                           </button>
                         </div>
                       </div>

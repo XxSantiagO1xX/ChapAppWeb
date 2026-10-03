@@ -922,144 +922,241 @@ button:active {
 
 .sf-members-list {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px;
 }
 
 @media (min-width: 900px) {
   .sf-members-list {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
     gap: 14px;
   }
 }
 
 .participant-card-item {
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 120px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Adulto: Cian neón */
+.participant-card-item.card-adult {
+  background: rgba(6, 182, 212, 0.06);
+  border-color: rgba(6, 182, 212, 0.32);
+}
+
+.participant-card-item.card-adult:hover {
+  background: rgba(6, 182, 212, 0.10);
+  border-color: rgba(6, 182, 212, 0.48);
+  box-shadow: 0 4px 18px rgba(6, 182, 212, 0.16);
+}
+
+/* Niño: Violeta neón */
+.participant-card-item.card-child {
+  background: rgba(168, 85, 247, 0.06);
+  border-color: rgba(168, 85, 247, 0.32);
+}
+
+.participant-card-item.card-child:hover {
+  background: rgba(168, 85, 247, 0.10);
+  border-color: rgba(168, 85, 247, 0.48);
+  box-shadow: 0 4px 18px rgba(168, 85, 247, 0.16);
+}
+
+/* Ausente: Neutro apagado */
+.participant-card-item.item-absent {
+  background: rgba(24, 24, 27, 0.40) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  opacity: 0.55;
+  box-shadow: none !important;
+}
+
+.participant-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid var(--border-subtle);
-  transition: all var(--transition-fast);
+  gap: 8px;
 }
 
-.participant-card-item.item-absent {
-  opacity: 0.55;
-  filter: grayscale(0.4);
-}
-
-.participant-info-col {
+.participant-name-wrapper {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
   min-width: 0;
   flex: 1;
 }
 
-.participant-name-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .participant-name {
-  font-size: 0.95rem;
+  font-size: 0.90rem;
   font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Botón de Rol / Tarifa Adulto vs Niño */
-.btn-toggle-member-role {
-  padding: 3px 8px;
+.btn-role-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-pill);
-  font-size: 0.72rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.btn-role-badge.role-adult {
+  background: rgba(0, 240, 255, 0.16);
+  color: var(--color-primary);
+  border-color: rgba(0, 240, 255, 0.40);
+}
+
+.btn-role-badge.role-adult:hover {
+  background: rgba(0, 240, 255, 0.28);
+  box-shadow: 0 0 10px var(--color-primary-glow);
+  transform: scale(1.08);
+}
+
+.btn-role-badge.role-child {
+  background: rgba(168, 85, 247, 0.18);
+  color: var(--color-purple);
+  border-color: rgba(168, 85, 247, 0.45);
+}
+
+.btn-role-badge.role-child:hover {
+  background: rgba(168, 85, 247, 0.30);
+  box-shadow: 0 0 10px var(--color-purple-glow);
+  transform: scale(1.08);
+}
+
+.btn-icon-danger-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.btn-icon-danger-subtle:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+}
+
+/* Stepper de Días */
+.days-stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 8px;
+  background: rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-pill);
+}
+
+.stepper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.stepper-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.20);
+  color: #fff;
+  transform: scale(1.06);
+}
+
+.stepper-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.stepper-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  user-select: none;
+  text-align: center;
+  flex: 1;
+}
+
+.stepper-label strong {
+  color: var(--text-primary);
   font-weight: 800;
+}
+
+.stepper-label.disabled {
+  opacity: 0.4;
+}
+
+/* Footer de Tarjeta */
+.participant-card-footer {
+  display: flex;
+  align-items: center;
+}
+
+.btn-toggle-attendance-compact {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.74rem;
+  font-weight: 700;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all var(--transition-fast);
 }
 
-.btn-toggle-member-role.role-adult {
-  background: rgba(0, 240, 255, 0.14);
-  color: var(--color-primary);
-  border-color: rgba(0, 240, 255, 0.35);
+.btn-toggle-attendance-compact.attending {
+  background: rgba(16, 185, 129, 0.14);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
-.btn-toggle-member-role.role-adult:hover {
-  background: rgba(0, 240, 255, 0.25);
-  box-shadow: 0 0 10px var(--color-primary-glow);
+.btn-toggle-attendance-compact.attending:hover {
+  background: rgba(16, 185, 129, 0.24);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
 }
 
-.btn-toggle-member-role.role-child {
-  background: rgba(168, 85, 247, 0.16);
-  color: var(--color-purple);
-  border-color: rgba(168, 85, 247, 0.40);
+.btn-toggle-attendance-compact.absent {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.30);
 }
 
-.btn-toggle-member-role.role-child:hover {
-  background: rgba(168, 85, 247, 0.28);
-  box-shadow: 0 0 10px var(--color-purple-glow);
-}
-
-.days-chips-row {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.day-chip-btn {
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: var(--surface-subtle);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.day-chip-btn.active {
-  background: var(--color-primary-glow);
-  border-color: var(--border-neon-cyan);
-  color: var(--color-primary);
-  box-shadow: 0 0 10px var(--color-primary-glow);
-}
-
-.day-chip-btn.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.participant-actions-col {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.btn-toggle-attendance {
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
-  font-size: 0.80rem;
-  font-weight: 700;
-  transition: all var(--transition-fast);
-}
-
-.btn-toggle-attendance.attending {
-  background: rgba(16, 185, 129, 0.18);
-  border: 1px solid var(--border-neon-emerald);
-  color: var(--color-emerald);
-  box-shadow: 0 0 10px var(--color-emerald-glow);
-}
-
-.btn-toggle-attendance.absent {
-  background: rgba(244, 63, 94, 0.15);
-  border: 1px solid var(--border-neon-coral);
-  color: var(--color-coral);
+.btn-toggle-attendance-compact.absent:hover {
+  background: rgba(239, 68, 68, 0.22);
 }
 
 /* ==========================================================================
