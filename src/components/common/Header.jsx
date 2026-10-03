@@ -1,6 +1,7 @@
 /**
- * ChapApp - Header Flotante Liquid Glass con Emblema Protagónico (React)
- * Diseño delgado y adaptativo con soporte para Modo Claro y Modo Oscuro
+ * ChapApp - Header Flotante Liquid Glass Capsule (Navbar)
+ * Inspirado en diseño Lumina (Dark) y Cápsula Aurora (Light)
+ * Logo familiar protagónico al centro, dock de utilidades y cero saturación
  */
 
 import React from 'react';
@@ -23,342 +24,191 @@ export const Header = () => {
   } = useApp();
   const isDark = theme === 'dark';
 
-  // Header para la Pantalla Completa del Directorio General
-  if (currentView === 'directory') {
-    return (
-      <header className="app-header glass-header dashboard-header">
-        <div className="header-left">
-          <button 
-            type="button" 
-            onClick={() => navigateToView(activeEvent ? 'dashboard' : 'events')} 
-            className="back-home-btn" 
-            aria-label="Volver"
-          >
-            <Icon name="arrow-left" size={16} />
-            <span>{activeEvent ? 'Volver al Evento' : 'Volver a Eventos'}</span>
-          </button>
-          
-          <div className="header-title-box">
-            <h1 className="header-main-title">Directorio General</h1>
-            <p className="header-subtitle">Jerarquía Familiar & Integrantes</p>
-          </div>
-        </div>
+  const handleCenterClick = () => {
+    if (currentView === 'directory' && activeEvent) {
+      navigateToView('dashboard');
+    } else {
+      selectEvent(null);
+      navigateToView('events');
+    }
+  };
 
-        {/* Emblema Central Flotante */}
-        <div className="header-center-emblem-wrapper">
-          <button 
-            type="button"
-            onClick={() => navigateToView('events')}
-            className="center-floating-emblem" 
-            aria-label="Ir al Inicio - ChapApp" 
-            title="ChapApp - Inicio"
-          >
-            <img 
-              src="/assets/logo_tree.png" 
-              alt="ChapApp Logo" 
-              className="emblem-tree-img" 
-              onError={(e) => { e.target.src = './assets/logo_tree.png'; }} 
-            />
-          </button>
-        </div>
-
-        <div className="header-right">
-          <button 
-            id="btn-sync-cloud-dir" 
-            onClick={syncCloud} 
-            className={`btn-icon-glass sync-btn ${isSyncing ? 'syncing-spin' : ''}`} 
-            title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'} 
-            aria-label="Sincronizar"
-            style={{ position: 'relative' }}
-          >
-            <Icon name="refresh" size={16} />
-            {liveSyncPulse && (
-              <span 
-                className="realtime-pulse-dot" 
-                style={{
-                  position: 'absolute',
-                  top: '5px',
-                  right: '5px',
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#10B981',
-                  boxShadow: '0 0 8px #10B981',
-                }} 
-              />
-            )}
-          </button>
-
-          <button 
-            type="button" 
-            id="btn-open-analytics-dir" 
-            onClick={() => openModal('analytics')} 
-            className="btn-icon-glass" 
-            title="Analítica Histórica y Estadísticas Globales" 
-            aria-label="Analítica"
-          >
-            <Icon name="chart" size={16} />
-          </button>
-
-          <button 
-            id="btn-toggle-theme-dir" 
-            onClick={toggleTheme} 
-            className="btn-icon-glass theme-toggle-btn" 
-            aria-label="Cambiar tema"
-          >
-            <Icon name={isDark ? 'moon' : 'sun'} size={18} />
-          </button>
-
-          {currentUser && (
-            <button 
-              type="button" 
-              id="btn-open-settings-dir" 
-              onClick={() => openModal('settings')} 
-              className="btn-pill-glass user-header-badge" 
-              title={`Configuración (${currentUser.name})`} 
-              aria-label="Configuración"
-            >
-              <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={15} color="var(--color-primary)" />
-              <span className="btn-text-hide-mobile">{currentUser.role === 'admin' ? 'Admin' : 'Operador'}</span>
-              <Icon name="settings" size={13} style={{ opacity: 0.7 }} />
-            </button>
-          )}
-        </div>
-      </header>
-    );
-  }
-
-  if (activeEvent) {
-    return (
-      <header className="app-header glass-header dashboard-header">
-        <div className="header-left">
-          <button 
-            type="button" 
-            onClick={() => selectEvent(null)} 
-            className="back-home-btn" 
-            aria-label="Volver al inicio"
-          >
-            <Icon name="arrow-left" size={16} />
-            <span>Inicio</span>
-          </button>
-          
-          <div className="header-title-box">
-            <div className="title-with-badge">
-              <h1 className="header-main-title">{activeEvent.title}</h1>
-              <span className={`badge-status ${activeEvent.isArchived ? 'status-archived' : 'status-active'}`}>
-                {activeEvent.isArchived ? 'Archivado' : 'Activo'}
-              </span>
-            </div>
-            <p className="header-subtitle">
-              Año {activeEvent.year} • {activeEvent.participants?.length || 0} Integrantes
-            </p>
-          </div>
-        </div>
-
-        {/* Emblema Central Flotante y Sobrepuesto 100% Simétrico */}
-        <div className="header-center-emblem-wrapper">
-          <button 
-            type="button"
-            onClick={() => selectEvent(null)}
-            className="center-floating-emblem" 
-            aria-label="Ir al Inicio - ChapApp" 
-            title="ChapApp - Inicio"
-          >
-            <img 
-              src="/assets/logo_tree.png" 
-              alt="ChapApp Logo" 
-              className="emblem-tree-img" 
-              onError={(e) => { e.target.src = './assets/logo_tree.png'; }} 
-            />
-          </button>
-        </div>
-
-        <div className="header-right">
-          <button 
-            id="btn-sync-cloud" 
-            onClick={syncCloud} 
-            className={`btn-icon-glass sync-btn ${isSyncing ? 'syncing-spin' : ''}`} 
-            title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'} 
-            aria-label="Sincronizar"
-            style={{ position: 'relative' }}
-          >
-            <Icon name="refresh" size={16} />
-            {liveSyncPulse && (
-              <span 
-                className="realtime-pulse-dot" 
-                style={{
-                  position: 'absolute',
-                  top: '5px',
-                  right: '5px',
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#10B981',
-                  boxShadow: '0 0 8px #10B981',
-                }} 
-              />
-            )}
-          </button>
-
-          <button 
-            type="button" 
-            id="btn-open-analytics-dash" 
-            onClick={() => openModal('analytics')} 
-            className="btn-icon-glass" 
-            title="Analítica Histórica y Estadísticas Globales" 
-            aria-label="Analítica"
-          >
-            <Icon name="chart" size={16} />
-          </button>
-
-          <button 
-            id="btn-toggle-theme" 
-            onClick={toggleTheme} 
-            className="btn-icon-glass theme-toggle-btn" 
-            aria-label="Cambiar tema"
-          >
-            <Icon name={isDark ? 'moon' : 'sun'} size={18} />
-          </button>
-
-          {currentUser && (
-            <button 
-              type="button" 
-              id="btn-open-settings-dash" 
-              onClick={() => openModal('settings')} 
-              className="btn-pill-glass user-header-badge" 
-              title={`Configuración (${currentUser.name})`} 
-              aria-label="Configuración"
-            >
-              <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={15} color="var(--color-primary)" />
-              <span className="btn-text-hide-mobile">{currentUser.role === 'admin' ? 'Admin' : 'Operador'}</span>
-              <Icon name="settings" size={13} style={{ opacity: 0.7 }} />
-            </button>
-          )}
-
-          <button 
-            id="btn-open-cut-modal" 
-            onClick={() => openModal('cut')} 
-            className="btn-pill-primary cut-btn" 
-            aria-label="Corte de caja"
-          >
-            <Icon name="receipt" size={16} />
-            <span>Corte</span>
-          </button>
-        </div>
-      </header>
-    );
-  }
-
-  // Header para la Pantalla Principal (Home / Eventos)
   return (
-    <header className="app-header glass-header home-header">
-      <div className="header-left">
-        <button 
-          id="btn-open-drawer" 
-          onClick={() => openModal('drawer')} 
-          className="btn-icon-glass hamburger-btn" 
-          aria-label="Abrir menú lateral"
-        >
-          <Icon name="menu" size={20} />
-        </button>
-        
-        {/* Emblema Flotante de ChapApp */}
-        <div className="logo-floating-badge">
-          <img 
-            src="/assets/logo_tree.png" 
-            alt="ChapApp Logo" 
-            className="emblem-tree-img" 
-            onError={(e) => { e.target.src = './assets/logo_tree.png'; }} 
-          />
-        </div>
-
-        <div className="header-title-box">
-          <h1 className="header-main-title">ChapApp</h1>
-          <p className="header-subtitle">Finanzas Familiares & Prorrateo</p>
-        </div>
+    <header className="app-header floating-navbar-capsule">
+      {/* ============================================================== */}
+      {/* ZONA IZQUIERDA: Contexto o Menú de Navegación                 */}
+      {/* ============================================================== */}
+      <div className="navbar-zone-left">
+        {currentView === 'directory' ? (
+          <div className="navbar-context-group">
+            <button
+              type="button"
+              onClick={() => navigateToView(activeEvent ? 'dashboard' : 'events')}
+              className="navbar-back-btn"
+              title={activeEvent ? 'Volver al evento' : 'Volver a eventos'}
+              aria-label="Volver"
+            >
+              <Icon name="arrow-left" size={15} />
+              <span className="navbar-btn-text">Volver</span>
+            </button>
+            <span className="navbar-context-title">Directorio General</span>
+          </div>
+        ) : activeEvent ? (
+          <div className="navbar-context-group">
+            <button
+              type="button"
+              onClick={() => selectEvent(null)}
+              className="navbar-back-btn"
+              title="Volver a lista de eventos"
+              aria-label="Inicio"
+            >
+              <Icon name="arrow-left" size={15} />
+              <span className="navbar-btn-text">Eventos</span>
+            </button>
+            <div className="navbar-event-info">
+              <span className="navbar-event-title" title={activeEvent.title}>
+                {activeEvent.title}
+              </span>
+              <span 
+                className={`navbar-status-dot ${activeEvent.isArchived ? 'status-archived' : 'status-active'}`} 
+                title={activeEvent.isArchived ? 'Archivado' : 'Activo'} 
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="navbar-brand-group">
+            <button
+              type="button"
+              onClick={() => openModal('drawer')}
+              className="navbar-menu-btn"
+              title="Abrir menú lateral"
+              aria-label="Menú"
+            >
+              <Icon name="menu" size={17} />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigateToView('events')}
+              className="navbar-brand-title-btn"
+              title="ChapApp - Inicio"
+            >
+              <span className="navbar-brand-name">ChapApp</span>
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="header-right">
-        <button 
-          id="btn-sync-cloud-home" 
-          onClick={syncCloud} 
-          className={`btn-icon-glass sync-btn ${isSyncing ? 'syncing-spin' : ''}`} 
-          title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'} 
-          aria-label="Sincronizar"
-          style={{ position: 'relative' }}
+      {/* ============================================================== */}
+      {/* ZONA CENTRAL: Logo Familiar Protagónico en el Medio            */}
+      {/* ============================================================== */}
+      <div className="navbar-zone-center">
+        <button
+          type="button"
+          onClick={handleCenterClick}
+          className="navbar-center-emblem"
+          title="ChapApp - Inicio / Actualizar"
+          aria-label="Ir al inicio"
         >
-          <Icon name="refresh" size={16} />
-          {liveSyncPulse && (
-            <span 
-              className="realtime-pulse-dot" 
-              style={{
-                position: 'absolute',
-                top: '5px',
-                right: '5px',
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                backgroundColor: '#10B981',
-                boxShadow: '0 0 8px #10B981',
-              }} 
-            />
-          )}
+          <img
+            src="/assets/logo_tree.png"
+            alt="ChapApp Logo"
+            className="navbar-emblem-img"
+            onError={(e) => { e.target.src = './assets/logo_tree.png'; }}
+          />
         </button>
+      </div>
 
-        <button 
-          type="button" 
-          id="btn-open-analytics-home" 
-          onClick={() => openModal('analytics')} 
-          className="btn-icon-glass" 
-          title="Analítica Histórica y Estadísticas Globales" 
-          aria-label="Analítica"
-        >
-          <Icon name="chart" size={16} />
-        </button>
-
-        <button 
-          id="btn-toggle-theme" 
-          onClick={toggleTheme} 
-          className="btn-icon-glass theme-toggle-btn" 
-          aria-label="Cambiar tema"
-        >
-          <Icon name={isDark ? 'moon' : 'sun'} size={18} />
-        </button>
-
-        {currentUser && (
-          <button 
-            type="button" 
-            id="btn-open-settings-home" 
-            onClick={() => openModal('settings')} 
-            className="btn-pill-glass user-header-badge" 
-            title={`Configuración (${currentUser.name})`} 
-            aria-label="Configuración"
+      {/* ============================================================== */}
+      {/* ZONA DERECHA: Mini-Dock de Utilidades + Botón de Acción        */}
+      {/* ============================================================== */}
+      <div className="navbar-zone-right">
+        {/* Mini-dock translúcido de herramientas agrupadas (Lumina dock) */}
+        <div className="navbar-utility-dock">
+          {/* Sincronización Cloud con Supabase */}
+          <button
+            type="button"
+            onClick={syncCloud}
+            className={`navbar-dock-btn ${isSyncing ? 'syncing-spin' : ''}`}
+            title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'}
+            aria-label="Sincronizar"
           >
-            <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={15} color="var(--color-primary)" />
-            <span className="btn-text-hide-mobile">{currentUser.role === 'admin' ? 'Admin' : 'Operador'}</span>
-            <Icon name="settings" size={13} style={{ opacity: 0.7 }} />
+            <Icon name="refresh" size={14} />
+            {liveSyncPulse && <span className="navbar-realtime-dot" />}
           </button>
-        )}
 
-        <button 
-          id="btn-open-directory" 
-          onClick={() => navigateToView('directory')} 
-          className="btn-pill-glass" 
-          aria-label="Directorio Global"
-        >
-          <Icon name="users" size={16} />
-          <span className="btn-text-hide-mobile">Directorio</span>
-        </button>
+          {/* Estadísticas y Analítica */}
+          <button
+            type="button"
+            onClick={() => openModal('analytics')}
+            className="navbar-dock-btn"
+            title="Analítica Histórica y Estadísticas Globales"
+            aria-label="Analítica"
+          >
+            <Icon name="chart" size={14} />
+          </button>
 
-        <button 
-          id="btn-open-new-event" 
-          onClick={() => openModal('newEvent')} 
-          className="btn-pill-primary" 
-          aria-label="Nuevo Evento"
-        >
-          <Icon name="plus" size={16} />
-          <span>Nuevo Evento</span>
-        </button>
+          {/* Alternador de Tema Claro / Oscuro */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="navbar-dock-btn theme-toggle-btn"
+            title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+            aria-label="Cambiar tema"
+          >
+            <Icon name={isDark ? 'moon' : 'sun'} size={15} />
+          </button>
+
+          {/* Acceso a Directorio (si estamos en Home) */}
+          {!activeEvent && currentView !== 'directory' && (
+            <button
+              type="button"
+              onClick={() => navigateToView('directory')}
+              className="navbar-dock-btn"
+              title="Directorio General & Jerarquía Familiar"
+              aria-label="Directorio"
+            >
+              <Icon name="users" size={14} />
+            </button>
+          )}
+
+          {/* Perfil de Usuario / Ajustes */}
+          {currentUser && (
+            <button
+              type="button"
+              onClick={() => openModal('settings')}
+              className="navbar-dock-btn user-btn"
+              title={`Configuración (${currentUser.name} - ${currentUser.role === 'admin' ? 'Admin' : 'Operador'})`}
+              aria-label="Configuración de usuario"
+            >
+              <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={14} color="var(--color-primary)" />
+            </button>
+          )}
+        </div>
+
+        {/* Botón de Acción Principal */}
+        {activeEvent && currentView !== 'directory' ? (
+          <button
+            type="button"
+            onClick={() => openModal('cut')}
+            className="navbar-cta-btn cut-cta"
+            title="Generar Corte de Caja"
+            aria-label="Corte de caja"
+          >
+            <Icon name="receipt" size={14} />
+            <span>Corte</span>
+          </button>
+        ) : !activeEvent && currentView !== 'directory' ? (
+          <button
+            type="button"
+            onClick={() => openModal('newEvent')}
+            className="navbar-cta-btn new-event-cta"
+            title="Crear Nuevo Evento"
+            aria-label="Nuevo Evento"
+          >
+            <Icon name="plus" size={14} />
+            <span className="navbar-btn-text">Nuevo Evento</span>
+          </button>
+        ) : null}
       </div>
     </header>
   );
