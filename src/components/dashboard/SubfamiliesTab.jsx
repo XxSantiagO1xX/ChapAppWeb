@@ -149,13 +149,16 @@ export const SubfamiliesTab = () => {
     });
   };
 
-  // Filtrado
-  const sortedSfNames = Object.keys(groupedBySf).sort();
+  // Filtrado y ordenación alfabética automática
+  const sortedSfNames = Object.keys(groupedBySf).sort((a, b) =>
+    a.localeCompare(b, 'es', { sensitivity: 'base' })
+  );
+
   const filteredSfNames = sortedSfNames.filter((sfName) => {
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     const matchSf = sfName.toLowerCase().includes(q);
-    const matchMember = groupedBySf[sfName].some((p) => p.name.toLowerCase().includes(q));
+    const matchMember = (groupedBySf[sfName] || []).some((p) => (p.name || '').toLowerCase().includes(q));
     return matchSf || matchMember;
   });
 
@@ -163,6 +166,7 @@ export const SubfamiliesTab = () => {
     <div className="tab-subfamilies-content animate-fade-in">
       <div className="tab-actions-header">
         <div className="section-title-box">
+          <span className="tab-section-badge">CONTROL DE ASISTENCIA</span>
           <h3 className="section-heading">Subfamilias y Control de Asistencia</h3>
           <p className="section-subheading">
             Gestiona integrantes, tarifas (adulto/niño), días activos y presencia para el prorrateo automático.
@@ -219,7 +223,12 @@ export const SubfamiliesTab = () => {
           <p className="empty-text">No hay integrantes registrados que coincidan con la búsqueda.</p>
         ) : (
           filteredSfNames.map((sfName) => {
-            const parts = groupedBySf[sfName];
+            const rawParts = groupedBySf[sfName] || [];
+            const parts = [...rawParts].sort((a, b) => {
+              const nameA = (a.name || `${a.nombre || ''} ${a.apellido_paterno || ''}`).trim();
+              const nameB = (b.name || `${b.nombre || ''} ${b.apellido_paterno || ''}`).trim();
+              return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
+            });
             const sfCalc = totals.bySubFamily[sfName];
             const attendingCount = parts.filter((p) => p.isAttending).length;
             const allAttending = attendingCount === parts.length;

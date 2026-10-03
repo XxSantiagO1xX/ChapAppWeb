@@ -820,20 +820,54 @@ button:active {
 .section-title-box {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin: 8px 0 12px;
+  gap: 6px;
+  margin: 4px 0 12px;
+}
+
+.tab-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  background: rgba(0, 240, 255, 0.12);
+  border: 1px solid rgba(0, 240, 255, 0.32);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
 }
 
 .section-heading {
-  font-size: 1.25rem;
+  font-size: 1.40rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--text-primary);
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+  margin: 0;
+  line-height: 1.25;
+}
+
+[data-theme="light"] .section-heading {
+  color: #0F172A !important;
+  text-shadow: none;
 }
 
 .section-subheading {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #D4D4D8 !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.60);
+  margin: 0;
+  line-height: 1.45;
+}
+
+[data-theme="light"] .section-subheading {
+  color: #475569 !important;
+  text-shadow: none;
 }
 
 .tab-actions-header {
