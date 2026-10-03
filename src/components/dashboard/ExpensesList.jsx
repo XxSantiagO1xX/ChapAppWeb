@@ -8,6 +8,39 @@ import { formatCurrency, calculateEventTotals } from '../../utils/calculations.j
 import { deleteExpense } from '../../services/database.js';
 import { Icon } from '../../utils/icons.jsx';
 
+const CATEGORY_THEME_COLORS = {
+  Comida: {
+    hex: '#F59E0B',
+    bg: 'rgba(245, 158, 11, 0.08)',
+    border: 'rgba(245, 158, 11, 0.35)',
+    glow: 'rgba(245, 158, 11, 0.16)',
+  },
+  Bebidas: {
+    hex: '#00F0FF',
+    bg: 'rgba(0, 240, 255, 0.08)',
+    border: 'rgba(0, 240, 255, 0.35)',
+    glow: 'rgba(0, 240, 255, 0.16)',
+  },
+  Transporte: {
+    hex: '#38BDF8',
+    bg: 'rgba(56, 189, 248, 0.08)',
+    border: 'rgba(56, 189, 248, 0.35)',
+    glow: 'rgba(56, 189, 248, 0.16)',
+  },
+  Hospedaje: {
+    hex: '#FF7A00',
+    bg: 'rgba(255, 122, 0, 0.08)',
+    border: 'rgba(255, 122, 0, 0.35)',
+    glow: 'rgba(255, 122, 0, 0.16)',
+  },
+  Varios: {
+    hex: '#A855F7',
+    bg: 'rgba(168, 85, 247, 0.08)',
+    border: 'rgba(168, 85, 247, 0.35)',
+    glow: 'rgba(168, 85, 247, 0.16)',
+  },
+};
+
 export const ExpensesList = () => {
   const { activeEvent, refreshActiveEvent, openModal, showToast } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,9 +82,10 @@ export const ExpensesList = () => {
     <div className="tab-expenses-content animate-fade-in">
       <div className="tab-actions-header">
         <div className="section-title-box">
+          <span className="tab-section-badge">REGISTRO DE GASTOS</span>
           <h3 className="section-heading">Gastos Registrados</h3>
           <p className="section-subheading">
-            Total gastado: {formatCurrency(totals.totalExpenses)} en {expenses.length} compras.
+            Total gastado: {formatCurrency(totals.totalExpenses)} en {expenses.length} {expenses.length === 1 ? 'compra' : 'compras'}.
           </p>
         </div>
         <div className="tab-buttons-group">
@@ -99,35 +133,46 @@ export const ExpensesList = () => {
           filteredExpenses.map((exp) => {
             const payer = participants.find((p) => p.id === exp.paidBy);
             const payerName = payer ? payer.name : 'Caja General';
+            const categoryKey = exp.category || 'Varios';
+            const theme = CATEGORY_THEME_COLORS[categoryKey] || CATEGORY_THEME_COLORS.Varios;
 
             return (
               <div 
                 key={exp.id} 
                 className="expense-card-item glass-panel animate-fade-in"
+                style={{
+                  '--cat-color': theme.hex,
+                  '--cat-bg': theme.bg,
+                  '--cat-border': theme.border,
+                  '--cat-glow': theme.glow,
+                }}
               >
-                <div className="expense-icon-box">
-                  <Icon name="receipt" size={20} />
-                </div>
-                <div className="expense-details-col">
-                  <h4 className="expense-title">{exp.title}</h4>
-                  <div className="expense-meta-row">
-                    <span className="badge-pill badge-category">{exp.category || 'Comida'}</span>
-                    <span className="expense-payer">
-                      Pagado por: <strong>{payerName}</strong>
-                    </span>
-                  </div>
-                </div>
-                <div className="expense-amount-col">
-                  <span className="expense-amount-val">{formatCurrency(exp.amount)}</span>
+                <div className="expense-card-header">
+                  <h4 className="expense-title" title={exp.title}>
+                    {exp.title}
+                  </h4>
                   <button 
                     type="button"
-                    className="btn-icon-danger btn-delete-expense"
+                    className="btn-icon-danger-subtle btn-delete-expense"
                     onClick={() => handleDeleteExpense(exp)}
                     title="Eliminar gasto"
                     aria-label="Eliminar gasto"
                   >
-                    <Icon name="trash" size={16} />
+                    <Icon name="trash" size={13} />
                   </button>
+                </div>
+
+                <div className="expense-payer-row">
+                  <span className="expense-payer-label">Pagado por</span>
+                  <span className="expense-payer-name" title={payerName}>
+                    {payerName}
+                  </span>
+                </div>
+
+                <div className="expense-card-footer">
+                  <span className="expense-amount-val" style={{ color: theme.hex }}>
+                    {formatCurrency(exp.amount)}
+                  </span>
                 </div>
               </div>
             );
