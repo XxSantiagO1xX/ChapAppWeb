@@ -352,35 +352,40 @@ export const DirectoryView = () => {
     const cards = topGroups.map((group) => {
       const gName = (group.nombre || group.name || '').toLowerCase();
 
-      // Contactos directos
-      const directContacts = filteredContacts.filter((c) => {
-        if (!c) return false;
-        const matchesId = c.grupo_familiar_id && c.grupo_familiar_id === group.id;
-        const cSfName = (c.subFamily || '').toLowerCase();
-        const matchesName = !c.grupo_familiar_id && gName && cSfName === gName;
-        if (matchesId || matchesName) {
-          assignedIds.add(c.id);
-          return true;
-        }
-        return false;
-      });
+      // Contactos directos ordenados alfabéticamente
+      const directContacts = filteredContacts
+        .filter((c) => {
+          if (!c) return false;
+          const matchesId = c.grupo_familiar_id && c.grupo_familiar_id === group.id;
+          const cSfName = (c.subFamily || '').toLowerCase();
+          const matchesName = !c.grupo_familiar_id && gName && cSfName === gName;
+          if (matchesId || matchesName) {
+            assignedIds.add(c.id);
+            return true;
+          }
+          return false;
+        })
+        .sort((a, b) => (a.nombre || a.name || '').localeCompare(b.nombre || b.name || '', 'es', { sensitivity: 'base' }));
 
       // Sub-núcleos dependientes
       const dependentChildren = rawGroups
         .filter((child) => child.nodo_padre_id === group.id && !child.es_independiente)
+        .sort((a, b) => (child.nombre || child.name || '').localeCompare(b.nombre || b.name || '', 'es', { sensitivity: 'base' }))
         .map((child) => {
           const chName = (child.nombre || child.name || '').toLowerCase();
-          const childContacts = filteredContacts.filter((c) => {
-            if (!c) return false;
-            const matchesId = c.grupo_familiar_id && c.grupo_familiar_id === child.id;
-            const cSfName = (c.subFamily || '').toLowerCase();
-            const matchesName = !c.grupo_familiar_id && chName && cSfName === chName;
-            if (matchesId || matchesName) {
-              assignedIds.add(c.id);
-              return true;
-            }
-            return false;
-          });
+          const childContacts = filteredContacts
+            .filter((c) => {
+              if (!c) return false;
+              const matchesId = c.grupo_familiar_id && c.grupo_familiar_id === child.id;
+              const cSfName = (c.subFamily || '').toLowerCase();
+              const matchesName = !c.grupo_familiar_id && chName && cSfName === chName;
+              if (matchesId || matchesName) {
+                assignedIds.add(c.id);
+                return true;
+              }
+              return false;
+            })
+            .sort((a, b) => (a.nombre || a.name || '').localeCompare(b.nombre || b.name || '', 'es', { sensitivity: 'base' }));
 
           return {
             ...child,
@@ -400,9 +405,11 @@ export const DirectoryView = () => {
         isRoot: !group.nodo_padre_id,
         isIndependentChild: Boolean(group.nodo_padre_id && group.es_independiente),
       };
-    });
+    }).sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
 
-    const unassigned = filteredContacts.filter((c) => c && !assignedIds.has(c.id));
+    const unassigned = filteredContacts
+      .filter((c) => c && !assignedIds.has(c.id))
+      .sort((a, b) => (a.nombre || a.name || '').localeCompare(b.nombre || b.name || '', 'es', { sensitivity: 'base' }));
 
     return { 
       topLevelCards: cards, 
@@ -741,7 +748,7 @@ export const DirectoryView = () => {
             </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div className="directory-families-grid">
             {topLevelCards.map((group) => {
               const parentGroup = group.nodo_padre_id ? rawGroups.find((p) => p.id === group.nodo_padre_id) : null;
 
@@ -751,7 +758,7 @@ export const DirectoryView = () => {
                   <div className="family-branch-header">
                     <div className="family-branch-title-group">
                       <span className="family-branch-name">
-                        <Icon name="users" size={18} /> {group.nombre}
+                        <Icon name="users" size={17} /> {group.nombre}
                       </span>
                       
                       {group.isRoot ? (
@@ -767,7 +774,7 @@ export const DirectoryView = () => {
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       {/* Control de Independencia si es sub-núcleo autónomo */}
                       {group.isIndependentChild && (
                         <button
@@ -776,37 +783,35 @@ export const DirectoryView = () => {
                           onClick={() => updateFamilyGroupIndependence(group.id, false)}
                           title="Hacer dependiente para acumular (roll-up) en el ticket de su rama principal"
                         >
-                          <Icon name="link" size={13} />
-                          <span>Hacer Dependiente de {parentGroup ? (parentGroup.nombre || parentGroup.name) : 'Padre'}</span>
+                          <Icon name="link" size={12} />
+                          <span>Hacer Dependiente</span>
                         </button>
                       )}
 
                       {/* BOTÓN DE EDITAR GRUPO FAMILIAR */}
                       <button
                         type="button"
-                        className="btn-icon-glass"
-                        style={{ width: '32px', height: '32px', borderRadius: 'var(--radius-pill)' }}
+                        className="btn-icon-glass btn-dir-action"
                         onClick={() => handleOpenEditGroup(group)}
                         title={`Editar grupo familiar "${group.nombre}"`}
                       >
-                        <Icon name="edit" size={14} />
+                        <Icon name="edit" size={13} />
                       </button>
 
                       {/* BOTÓN DE ELIMINAR GRUPO FAMILIAR */}
                       <button
                         type="button"
-                        className="btn-icon-danger"
-                        style={{ width: '32px', height: '32px', borderRadius: 'var(--radius-pill)' }}
+                        className="btn-icon-danger btn-dir-action"
                         onClick={() => setFamilyToDelete({ id: group.id, name: group.nombre })}
                         title={`Eliminar familia "${group.nombre}"`}
                       >
-                        <Icon name="trash" size={14} />
+                        <Icon name="trash" size={13} />
                       </button>
                     </div>
                   </div>
 
                   {/* INTEGRANTES DIRECTOS DE LA RAMA */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="family-members-list">
                     {group.directContacts.length === 0 && group.dependentChildren.length === 0 ? (
                       <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: '4px 0' }}>
                         Sin integrantes asignados directamente a esta rama.
@@ -818,23 +823,23 @@ export const DirectoryView = () => {
 
                   {/* SUB-NÚCLEOS DEPENDIENTES (ANIDADOS) */}
                   {group.dependentChildren.length > 0 && (
-                    <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {group.dependentChildren.map((child) => (
                         <div key={child.id} className="family-subnucleus-nested">
                           <div className="subnucleus-header">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                               <span className="subnucleus-title">
-                                <Icon name="chevron-right" size={14} /> {child.nombre}
+                                <Icon name="chevron-right" size={13} /> {child.nombre}
                               </span>
                               <span className="badge-branch-dependent">
-                                Dependiente (Roll-Up al Ticket Padre)
+                                Dependiente
                               </span>
                               <span className="badge-pill badge-neutral">
-                                {child.contacts.length} integrante{child.contacts.length === 1 ? '' : 's'}
+                                {child.contacts.length}
                               </span>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               {/* Botón para independizar financieramente este sub-núcleo */}
                               <button
                                 type="button"
@@ -843,14 +848,13 @@ export const DirectoryView = () => {
                                 title="Independizar este núcleo para que genere su propio ticket de cobro y aparezca como tarjeta de primer nivel"
                               >
                                 <Icon name="check" size={12} />
-                                <span>Hacer Autónomo (Ticket Propio)</span>
+                                <span>Autónomo</span>
                               </button>
 
                               {/* BOTÓN DE EDITAR SUB-NÚCLEO */}
                               <button
                                 type="button"
-                                className="btn-icon-glass"
-                                style={{ width: '28px', height: '28px', borderRadius: 'var(--radius-pill)' }}
+                                className="btn-icon-glass btn-dir-action"
                                 onClick={() => handleOpenEditGroup(child)}
                                 title={`Editar sub-núcleo "${child.nombre}"`}
                               >
@@ -860,8 +864,7 @@ export const DirectoryView = () => {
                               {/* BOTÓN DE ELIMINAR SUB-NÚCLEO */}
                               <button
                                 type="button"
-                                className="btn-icon-danger"
-                                style={{ width: '28px', height: '28px', borderRadius: 'var(--radius-pill)' }}
+                                className="btn-icon-danger btn-dir-action"
                                 onClick={() => setFamilyToDelete({ id: child.id, name: child.nombre })}
                                 title={`Eliminar sub-núcleo "${child.nombre}"`}
                               >
@@ -870,13 +873,13 @@ export const DirectoryView = () => {
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+                          <div className="family-members-list" style={{ marginTop: '8px' }}>
                             {child.contacts.length === 0 ? (
                               <p style={{ fontSize: '0.80rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: '2px 0' }}>
                                 Sin integrantes registrados en este sub-núcleo.
                               </p>
                             ) : (
-                              child.contacts.map((d) => renderMemberCard(d, child.nombre))
+                              child.contacts.map((d) => renderMemberCard(d))
                             )}
                           </div>
                         </div>
@@ -889,11 +892,11 @@ export const DirectoryView = () => {
 
             {/* INTEGRANTES SIN RAMA ASIGNADA */}
             {unassignedContacts.length > 0 && (
-              <div className="family-branch-card" style={{ borderColor: 'var(--border-subtle)' }}>
+              <div className="family-branch-card directory-unassigned-card" style={{ borderColor: 'var(--border-subtle)' }}>
                 <div className="family-branch-header">
                   <div className="family-branch-title-group">
                     <span className="family-branch-name">
-                      <Icon name="users" size={18} /> Otros Integrantes / Sin Rama Asignada
+                      <Icon name="users" size={17} /> Otros Integrantes / Sin Rama Asignada
                     </span>
                     <span className="badge-pill badge-neutral">
                       {unassignedContacts.length} integrante{unassignedContacts.length === 1 ? '' : 's'}
@@ -901,7 +904,7 @@ export const DirectoryView = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="family-members-list">
                   {unassignedContacts.map((d) => renderMemberCard(d))}
                 </div>
               </div>
@@ -1264,50 +1267,32 @@ export const DirectoryView = () => {
     </div>
   );
 
-  // Renderizador de Tarjeta de Integrante con Botones Claros de Edición y Eliminación
-  function renderMemberCard(d, subGroupName = null) {
+  // Renderizador de Tarjeta de Integrante con Solo Nombre y Botones de Acción
+  function renderMemberCard(d) {
     if (!d) return null;
     const isChild = d.category === 'nino' || d.categoria === 'nino';
     const fullName = `${d.nombre || ''} ${d.apellido_paterno || ''} ${d.apellido_materno || ''}`.replace(/\s+/g, ' ').trim() || d.name || 'Integrante';
-    const weightVal = d.ponderacion ?? d.weight ?? (isChild ? 0.5 : 1.0);
 
     return (
-      <div key={d.id} className="directory-contact-card glass-panel" style={{ padding: '10px 14px' }}>
+      <div 
+        key={d.id} 
+        className={`directory-contact-card glass-panel ${isChild ? 'contact-card-child' : 'contact-card-adult'}`}
+      >
         <div className="dir-contact-left">
           <div className={`contact-avatar-circle ${isChild ? 'avatar-child' : 'avatar-adult'}`}>
-            <Icon name={isChild ? 'smile' : 'user'} size={16} />
+            <Icon name={isChild ? 'smile' : 'user'} size={15} />
           </div>
-          <div className="contact-info-col">
-            <span className="contact-name" style={{ fontWeight: 800 }}>{fullName}</span>
-            <div className="contact-meta-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              {subGroupName && (
-                <span className="badge-pill badge-neutral" style={{ fontSize: '0.70rem', padding: '1px 6px' }}>
-                  {subGroupName}
-                </span>
-              )}
-              {d.telefono && (
-                <span className="contact-phone-tag">
-                  <Icon name="phone" size={11} /> {d.telefono}
-                </span>
-              )}
-              <span className={`badge-pill ${isChild ? 'badge-warning' : 'badge-neutral'}`} style={{ fontSize: '0.72rem' }}>
-                {isChild ? 'Niño' : 'Adulto'}
-              </span>
-              <span className="badge-pill badge-neutral" style={{ fontSize: '0.72rem' }} title="Ponderación de cobro">
-                {weightVal} ud
-              </span>
-            </div>
-          </div>
+          <span className="contact-name">{fullName}</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+        <div className="dir-contact-actions">
           {/* BOTÓN EDITAR INTEGRANTE */}
           <button 
             type="button"
-            className="btn-icon-glass"
-            style={{ width: '30px', height: '30px', borderRadius: 'var(--radius-pill)' }}
+            className="btn-icon-glass btn-dir-action"
             onClick={() => handleOpenEditContact(d)}
             title={`Editar datos de ${fullName}`}
+            aria-label={`Editar a ${fullName}`}
           >
             <Icon name="edit" size={13} />
           </button>
@@ -1315,10 +1300,10 @@ export const DirectoryView = () => {
           {/* BOTÓN ELIMINAR INTEGRANTE */}
           <button 
             type="button"
-            className="btn-icon-danger"
-            style={{ width: '30px', height: '30px', borderRadius: 'var(--radius-pill)' }}
+            className="btn-icon-danger btn-dir-action"
             onClick={() => setContactToDelete({ id: d.id, name: fullName })}
             title={`Eliminar ${fullName} del directorio maestro`}
+            aria-label={`Eliminar a ${fullName}`}
           >
             <Icon name="trash" size={13} />
           </button>

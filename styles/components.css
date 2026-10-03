@@ -2127,50 +2127,75 @@ button:active {
 
 /* Tarjetas del Directorio Maestro y Subfamilias */
 .directory-contact-card {
-  padding: 12px 16px;
-  min-height: 64px;
-  border-radius: var(--radius-lg);
+  padding: 7px 12px;
+  min-height: 44px;
+  border-radius: var(--radius-md);
   background: var(--bg-glass-contact);
   border: 1px solid var(--border-glass-contact);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 10px;
   transition: all var(--transition-fast);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.40);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="light"] .directory-contact-card {
   background: var(--bg-glass-contact);
   border-color: var(--border-glass-contact);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.05);
 }
 
-.directory-contact-card:hover {
-  background: var(--surface-card-hover);
+.directory-contact-card.contact-card-adult {
+  border-color: rgba(0, 240, 255, 0.22);
+}
+
+.directory-contact-card.contact-card-adult:hover {
+  background: rgba(0, 240, 255, 0.07);
   border-color: var(--border-neon-cyan);
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.50);
+  box-shadow: 0 4px 14px rgba(0, 240, 255, 0.16);
+}
+
+.directory-contact-card.contact-card-child {
+  border-color: rgba(168, 85, 247, 0.28);
+}
+
+.directory-contact-card.contact-card-child:hover {
+  background: rgba(168, 85, 247, 0.09);
+  border-color: #A855F7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.22);
 }
 
 .dir-contact-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   flex: 1;
   min-width: 0;
 }
 
-.dir-contact-right {
+.dir-contact-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   flex-shrink: 0;
 }
 
+.btn-dir-action {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: var(--radius-pill) !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 .contact-avatar-circle {
-  width: 42px;
-  height: 42px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -2180,33 +2205,23 @@ button:active {
 
 .avatar-adult {
   background: rgba(0, 240, 255, 0.14);
-  border: 1.5px solid var(--border-neon-cyan);
+  border: 1px solid var(--border-neon-cyan);
   color: var(--color-primary);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.20);
 }
 
 .avatar-child {
   background: rgba(168, 85, 247, 0.16);
-  border: 1.5px solid rgba(168, 85, 247, 0.50);
+  border: 1px solid rgba(168, 85, 247, 0.60);
   color: #D8B4FE;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.20);
-}
-
-.contact-info-col {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.25);
 }
 
 .contact-name {
-  font-size: 1.05rem;
-  font-weight: 800;
+  font-size: 0.88rem;
+  font-weight: 700;
   color: #FFFFFF !important;
   letter-spacing: -0.01em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2967,27 +2982,47 @@ button:active {
 /* ==========================================================================
    MODELO HÍBRIDO DE JERARQUÍA FAMILIAR (DIRECTORIO Y POS)
    ========================================================================== */
+/* Cuadrícula de Familias en Directorio (2 Columnas en Desktop) */
+.directory-families-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 850px) {
+  .directory-families-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+}
+
+.directory-unassigned-card {
+  grid-column: 1 / -1;
+}
+
 .family-branch-card {
-  padding: 22px 24px;
-  margin-bottom: 20px;
+  padding: 16px 18px;
   border-radius: var(--radius-xl);
   border: 1px solid var(--border-glass-card);
   transition: all var(--transition-normal);
   background: var(--bg-glass-card);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
 }
 
 [data-theme="light"] .family-branch-card {
   background: var(--bg-glass-card);
   border-color: var(--border-glass-card);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
 .family-branch-card:hover {
   border-color: var(--border-neon-cyan);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(0, 240, 255, 0.15);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.70), 0 0 20px rgba(0, 240, 255, 0.14);
 }
 
 .family-branch-header {
@@ -2995,31 +3030,37 @@ button:active {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .family-branch-title-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .family-branch-name {
-  font-size: 1.18rem;
+  font-size: 1.08rem;
   font-weight: 800;
   color: #FFFFFF !important;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   letter-spacing: -0.01em;
 }
 
 [data-theme="light"] .family-branch-name {
   color: #0F172A !important;
+}
+
+.family-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .badge-branch-root {
