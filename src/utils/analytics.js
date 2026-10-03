@@ -17,7 +17,7 @@ export const calculateHistoricalAnalytics = (events = []) => {
       totalCollectedHistorical: 0,
       averageSpentPerEvent: 0,
       totalParticipantsHistorical: 0,
-      categoryDistribution: { Comida: 0, Bebidas: 0, Transporte: 0, Hospedaje: 0, Varios: 0 },
+      categoryDistribution: { Comida: 0, Bebidas: 0, Mantenimiento: 0, Salarios: 0, Varios: 0 },
       yearlyTrends: [],
       subFamilyHistoricalStats: {},
     };
@@ -30,8 +30,8 @@ export const calculateHistoricalAnalytics = (events = []) => {
   const categoryDistribution = {
     Comida: 0,
     Bebidas: 0,
-    Transporte: 0,
-    Hospedaje: 0,
+    Mantenimiento: 0,
+    Salarios: 0,
     Varios: 0,
   };
 
@@ -55,7 +55,9 @@ export const calculateHistoricalAnalytics = (events = []) => {
 
     // Distribución por categoría
     (evt.expenses || []).forEach((exp) => {
-      const cat = exp.category || 'Varios';
+      let cat = exp.category || 'Varios';
+      if (cat === 'Transporte') cat = 'Mantenimiento';
+      if (cat === 'Hospedaje') cat = 'Salarios';
       const amt = typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount) || 0;
       if (categoryDistribution[cat] !== undefined) {
         categoryDistribution[cat] += amt;

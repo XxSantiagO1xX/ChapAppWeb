@@ -21,6 +21,18 @@ const CATEGORY_THEME_COLORS = {
     border: 'rgba(0, 240, 255, 0.35)',
     glow: 'rgba(0, 240, 255, 0.16)',
   },
+  Mantenimiento: {
+    hex: '#38BDF8',
+    bg: 'rgba(56, 189, 248, 0.08)',
+    border: 'rgba(56, 189, 248, 0.35)',
+    glow: 'rgba(56, 189, 248, 0.16)',
+  },
+  Salarios: {
+    hex: '#FF7A00',
+    bg: 'rgba(255, 122, 0, 0.08)',
+    border: 'rgba(255, 122, 0, 0.35)',
+    glow: 'rgba(255, 122, 0, 0.16)',
+  },
   Transporte: {
     hex: '#38BDF8',
     bg: 'rgba(56, 189, 248, 0.08)',

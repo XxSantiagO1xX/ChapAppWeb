@@ -83,7 +83,11 @@ export const parseExpensesCsv = (csvContent, participants = []) => {
     };
   }
 
-  const validCategories = ['Comida', 'Bebidas', 'Transporte', 'Hospedaje', 'Varios'];
+  const validCategories = ['Comida', 'Bebidas', 'Mantenimiento', 'Salarios', 'Varios'];
+  const categoryAliases = {
+    transporte: 'Mantenimiento',
+    hospedaje: 'Salarios',
+  };
   const expenses = [];
   const errors = [];
   let totalAmount = 0;
@@ -104,10 +108,15 @@ export const parseExpensesCsv = (csvContent, participants = []) => {
     let category = 'Comida';
     if (categoryIdx !== -1 && rawCols[categoryIdx]) {
       const parsedCat = rawCols[categoryIdx].trim();
-      const match = validCategories.find(
-        (vc) => normalizeText(vc) === normalizeText(parsedCat)
-      );
-      if (match) category = match;
+      const normCat = normalizeText(parsedCat);
+      if (categoryAliases[normCat]) {
+        category = categoryAliases[normCat];
+      } else {
+        const match = validCategories.find(
+          (vc) => normalizeText(vc) === normCat
+        );
+        if (match) category = match;
+      }
     }
 
     let paidById = participants[0]?.id || 'caja_general';

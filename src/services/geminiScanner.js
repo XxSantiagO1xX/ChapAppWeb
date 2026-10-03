@@ -9,18 +9,18 @@ const SYSTEM_PROMPT = `Eres un auditor contable experto. Tu tarea es analizar la
 Extrae exactamente:
 1. "title": Nombre del establecimiento o concepto principal de compra (máximo 40 caracteres, conciso, ej. 'Supermercado OXXO', 'Gasolina Pemex', 'Restaurante', 'Compra de Frutas'). Si no hay nombre de comercio, describe brevemente qué se compró.
 2. "amount": Monto total final pagado como número positivo con decimales si los tiene (ej. 154.50). Si es una nota o lista sin total, calcula la suma de todos los conceptos e impuestos/propinas.
-3. "category": Clasifica en exactamente una de estas 5 categorías: "Comida", "Bebidas", "Transporte", "Hospedaje", "Varios".
+3. "category": Clasifica en exactamente una de estas 5 categorías: "Comida", "Bebidas", "Mantenimiento", "Salarios", "Varios".
 4. "confidence": Número entre 0.0 y 1.0 según la claridad de la imagen.
 
 Debes responder ÚNICAMENTE con un objeto JSON válido con la siguiente estructura:
 {
   "title": "string",
   "amount": number,
-  "category": "Comida" | "Bebidas" | "Transporte" | "Hospedaje" | "Varios",
+  "category": "Comida" | "Bebidas" | "Mantenimiento" | "Salarios" | "Varios",
   "confidence": number
 }`;
 
-const VALID_CATEGORIES = ['Comida', 'Bebidas', 'Transporte', 'Hospedaje', 'Varios'];
+const VALID_CATEGORIES = ['Comida', 'Bebidas', 'Mantenimiento', 'Salarios', 'Varios'];
 
 const FALLBACK_MODELS = [
   'gemini-2.5-flash',
@@ -115,8 +115,11 @@ export const parseJsonResponse = (responseText) => {
   if (!title) title = 'Gasto General';
 
   let category = 'Comida';
-  const rawCategory = parsed.category || parsed.categoria;
+  let rawCategory = parsed.category || parsed.categoria;
   if (rawCategory) {
+    const rawLower = String(rawCategory).toLowerCase();
+    if (rawLower.includes('transporte')) rawCategory = 'Mantenimiento';
+    if (rawLower.includes('hospedaje')) rawCategory = 'Salarios';
     const matched = VALID_CATEGORIES.find((c) => c.toLowerCase() === String(rawCategory).toLowerCase());
     if (matched) category = matched;
   }

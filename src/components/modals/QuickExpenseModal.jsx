@@ -17,8 +17,8 @@ import { Icon } from '../../utils/icons.jsx';
 const CATEGORIES = [
   { name: 'Comida', color: '#F59E0B', glow: 'rgba(245, 158, 11, 0.65)', class: 'cat-comida' },
   { name: 'Bebidas', color: '#00F0FF', glow: 'rgba(0, 240, 255, 0.65)', class: 'cat-bebidas' },
-  { name: 'Transporte', color: '#38BDF8', glow: 'rgba(56, 189, 248, 0.65)', class: 'cat-transporte' },
-  { name: 'Hospedaje', color: '#FF7A00', glow: 'rgba(255, 122, 0, 0.65)', class: 'cat-hospedaje' },
+  { name: 'Mantenimiento', color: '#38BDF8', glow: 'rgba(56, 189, 248, 0.65)', class: 'cat-mantenimiento' },
+  { name: 'Salarios', color: '#FF7A00', glow: 'rgba(255, 122, 0, 0.65)', class: 'cat-salarios' },
   { name: 'Varios', color: '#A855F7', glow: 'rgba(168, 85, 247, 0.65)', class: 'cat-varios' },
 ];
 
@@ -35,7 +35,6 @@ export const QuickExpenseModal = () => {
   const [payerType, setPayerType] = useState('common'); // 'common' | 'member'
   const [selectedPayer, setSelectedPayer] = useState(null);
   const [payerSearch, setPayerSearch] = useState('');
-  const [selectedSubFamilyFilter, setSelectedSubFamilyFilter] = useState('all');
 
   // Estado Modo Lotes (Batch)
   const [batchItems, setBatchItems] = useState([]);
@@ -58,7 +57,6 @@ export const QuickExpenseModal = () => {
       setPayerType('common');
       setSelectedPayer(null);
       setPayerSearch('');
-      setSelectedSubFamilyFilter('all');
       setBatchItems([]);
       setBatchProgress({ active: false, current: 0, total: 0 });
       setIsAiScanning(false);
@@ -70,20 +68,16 @@ export const QuickExpenseModal = () => {
   if (activeModal !== 'quickExpense' || !activeEvent) return null;
 
   const participants = activeEvent.participants || [];
-  const uniqueSubFamilies = Array.from(new Set(participants.map((p) => p.subFamily || 'General')));
 
-  // Filtrado de participantes para buscador individual
-  const filteredParticipants = participants.filter((p) => {
-    if (selectedSubFamilyFilter !== 'all' && (p.subFamily || 'General') !== selectedSubFamilyFilter) {
-      return false;
-    }
-    if (payerSearch.trim()) {
-      const q = payerSearch.toLowerCase();
-      const matchName = p.name.toLowerCase().includes(q);
-      const matchSf = (p.subFamily || '').toLowerCase().includes(q);
-      return matchName || matchSf;
-    }
-    return true;
+  // Filtrar exclusivamente adultos y ordenar alfabéticamente
+  const adultParticipants = participants
+    .filter((p) => p.category !== 'nino' && p.categoria !== 'nino')
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' }));
+
+  // Filtrado reactivo para el buscador de adultos
+  const filteredAdults = adultParticipants.filter((p) => {
+    if (!payerSearch.trim()) return true;
+    return (p.name || '').toLowerCase().includes(payerSearch.trim().toLowerCase());
   });
 
   // Configurar clave de Gemini
@@ -466,86 +460,74 @@ export const QuickExpenseModal = () => {
 
                       {payerType === 'member' && (
                         <div className="payer-member-picker-box animate-fade-in">
-                          {selectedPayer ? (
-                            <div className="payer-selected-card glass-panel">
-                              <div className="selected-member-left">
-                                <div className="selected-avatar-circle">
-                                  <Icon name="user" size={16} />
-                                </div>
-                                <div className="selected-member-info">
-                                  <strong>{selectedPayer.name}</strong>
-                                  <span>{selectedPayer.subFamily || 'Familia General'}</span>
-                                </div>
-                              </div>
-                              <button 
-                                type="button" 
-                                onClick={() => setSelectedPayer(null)} 
-                                className="btn-pill-glass btn-sm-pill"
-                              >
-                                Cambiar
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="payer-search-section">
-                              <div className="payer-search-input-box">
-                                <span className="payer-search-icon">
-                                  <Icon name="search" size={14} />
-                                </span>
-                                <input 
-                                  type="text" 
-                                  className="glass-input payer-search-input" 
-                                  placeholder="Escribe nombre o familia..." 
-                                  value={payerSearch}
-                                  onChange={(e) => setPayerSearch(e.target.value)}
-                                  autocomplete="off"
-                                />
-                              </div>
-
-                              {uniqueSubFamilies.length > 1 && (
-                                <div className="payer-subfamily-chips-scroll">
-                                  <button 
-                                    type="button"
-                                    className={`subfamily-filter-chip ${selectedSubFamilyFilter === 'all' ? 'active' : ''}`}
-                                    onClick={() => setSelectedSubFamilyFilter('all')}
-                                  >
-                                    Todos
-                                  </button>
-                                  {uniqueSubFamilies.map((sf) => (
-                                    <button 
-                                      key={sf}
-                                      type="button"
-                                      className={`subfamily-filter-chip ${selectedSubFamilyFilter === 'all' ? '' : selectedSubFamilyFilter === sf ? 'active' : ''}`}
-                                      onClick={() => setSelectedSubFamilyFilter(sf)}
-                                    >
-                                      {sf}
-                                    </button>
-                                  ))}
-                                </div>
+                          {/* Mini buscador si hay más de 6 adultos para filtrar rápidamente */}
+                          {adultParticipants.length > 6 && (
+                            <div className="payer-search-input-box">
+                              <span className="payer-search-icon">
+                                <Icon name="search" size={13} />
+                              </span>
+                              <input 
+                                type="text" 
+                                className="glass-input payer-search-input" 
+                                placeholder="Buscar integrante adulto..." 
+                                value={payerSearch}
+                                onChange={(e) => setPayerSearch(e.target.value)}
+                                autoComplete="off"
+                              />
+                              {payerSearch && (
+                                <button
+                                  type="button"
+                                  className="payer-search-clear-btn"
+                                  onClick={() => setPayerSearch('')}
+                                  title="Limpiar búsqueda"
+                                >
+                                  <Icon name="close" size={11} />
+                                </button>
                               )}
+                            </div>
+                          )}
 
-                              <div className="payer-results-list-scroll">
-                                {filteredParticipants.length === 0 ? (
-                                  <p className="empty-hint-text">No se encontraron integrantes.</p>
-                                ) : (
-                                  filteredParticipants.map((p) => (
-                                    <div 
-                                      key={p.id}
-                                      className="payer-result-row"
-                                      onClick={() => setSelectedPayer(p)}
-                                      role="button"
-                                      tabIndex={0}
-                                    >
-                                      <div className="payer-row-avatar">
-                                        <Icon name="user" size={13} />
-                                      </div>
-                                      <div className="payer-row-text">
-                                        <span className="payer-row-name">{p.name}</span>
-                                        <span className="payer-row-sub">{p.subFamily || 'General'}</span>
-                                      </div>
+                          {/* Mosaico directo en 2 columnas de adultos */}
+                          <div className="payer-adults-grid">
+                            {filteredAdults.length === 0 ? (
+                              <p className="empty-hint-text" style={{ gridColumn: '1 / -1', padding: '12px', textAlign: 'center', margin: 0 }}>
+                                No se encontraron integrantes adultos.
+                              </p>
+                            ) : (
+                              filteredAdults.map((p) => {
+                                const isSelected = selectedPayer?.id === p.id;
+                                return (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    className={`payer-adult-btn ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => setSelectedPayer(isSelected ? null : p)}
+                                    title={p.name}
+                                  >
+                                    <div className="payer-adult-icon-wrap">
+                                      <Icon name={isSelected ? 'check' : 'user'} size={12} />
                                     </div>
-                                  ))
-                                )}
-                              </div>
+                                    <span className="payer-adult-name">{p.name}</span>
+                                  </button>
+                                );
+                              })
+                            )}
+                          </div>
+
+                          {/* Pastilla de confirmación del pagador seleccionado */}
+                          {selectedPayer && (
+                            <div className="payer-selected-pill animate-fade-in">
+                              <span className="payer-selected-pill-text">
+                                Pagado por: <strong>{selectedPayer.name}</strong>
+                              </span>
+                              <button
+                                type="button"
+                                className="payer-selected-clear-btn"
+                                onClick={() => setSelectedPayer(null)}
+                                title="Desmarcar"
+                              >
+                                <Icon name="close" size={12} />
+                              </button>
                             </div>
                           )}
                         </div>
@@ -714,7 +696,7 @@ export const QuickExpenseModal = () => {
                                 style={{ padding: '4px 6px', fontSize: '0.80rem' }}
                               >
                                 <option value="caja_comun">Fondo Común</option>
-                                {participants.map((p) => (
+                                {adultParticipants.map((p) => (
                                   <option key={p.id} value={p.id}>{p.name}</option>
                                 ))}
                               </select>

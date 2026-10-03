@@ -10,22 +10,26 @@ import { Icon } from '../../utils/icons.jsx';
 const LUMINOUS_3D_CATEGORY_COLORS = {
   Comida: { hex: '#F59E0B', glow: 'rgba(245, 158, 11, 0.60)', label: 'Comida' },
   Bebidas: { hex: '#00F0FF', glow: 'rgba(0, 240, 255, 0.65)', label: 'Bebidas' },
-  Transporte: { hex: '#38BDF8', glow: 'rgba(56, 189, 248, 0.60)', label: 'Transporte' },
-  Hospedaje: { hex: '#FF7A00', glow: 'rgba(255, 122, 0, 0.60)', label: 'Hospedaje' },
+  Mantenimiento: { hex: '#38BDF8', glow: 'rgba(56, 189, 248, 0.60)', label: 'Mantenimiento' },
+  Salarios: { hex: '#FF7A00', glow: 'rgba(255, 122, 0, 0.60)', label: 'Salarios' },
+  Transporte: { hex: '#38BDF8', glow: 'rgba(56, 189, 248, 0.60)', label: 'Mantenimiento' },
+  Hospedaje: { hex: '#FF7A00', glow: 'rgba(255, 122, 0, 0.60)', label: 'Salarios' },
   Varios: { hex: '#A855F7', glow: 'rgba(168, 85, 247, 0.60)', label: 'Varios' },
 };
 
 export const Category3DBars = ({ expenses = [], totalExpenses = 0 }) => {
   const catTotals = {
-    Varios: 0,
-    Bebidas: 0,
-    Transporte: 0,
-    Hospedaje: 0,
     Comida: 0,
+    Bebidas: 0,
+    Mantenimiento: 0,
+    Salarios: 0,
+    Varios: 0,
   };
 
   expenses.forEach((exp) => {
-    const cat = exp.category || 'Varios';
+    let cat = exp.category || 'Varios';
+    if (cat === 'Transporte') cat = 'Mantenimiento';
+    if (cat === 'Hospedaje') cat = 'Salarios';
     const val = typeof exp.amount === 'number' ? exp.amount : parseFloat(exp.amount) || 0;
     if (catTotals[cat] !== undefined) {
       catTotals[cat] += val;
