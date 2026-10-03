@@ -46,18 +46,19 @@ export const App = () => {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-layout">
       {/* Escena de Fondo 8K UHD y Microtextura Esmerilada */}
       <BackgroundScene />
 
-      {/* Header Fijo Liquid Glass con Emblema Central */}
+      {/* Header Fijo de Extremo a Extremo (No Flotante) */}
       <Header />
 
-      {/* Menú Deslizante (Drawer) */}
-      <Drawer filterTab={filterTab} setFilterTab={setFilterTab} />
+      <div className="app-container">
+        {/* Menú Deslizante (Drawer) */}
+        <Drawer filterTab={filterTab} setFilterTab={setFilterTab} />
 
-      {/* Contenido Dinámico: Pantalla Completa de Directorio, Dashboard del Evento o Lista de Eventos */}
-      <main className="main-content-flow">
+        {/* Contenido Dinámico: Pantalla Completa de Directorio, Dashboard del Evento o Lista de Eventos */}
+        <main className="main-content-flow">
         {currentView === 'directory' ? (
           <DirectoryView />
         ) : activeEvent ? (
@@ -81,6 +82,7 @@ export const App = () => {
       {/* Notificaciones Flotantes Toast */}
       <ToastContainer />
     </div>
+  </div>
   );
 };
 

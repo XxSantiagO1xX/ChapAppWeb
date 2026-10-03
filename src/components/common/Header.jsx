@@ -34,11 +34,12 @@ export const Header = () => {
   };
 
   return (
-    <header className="app-header floating-navbar-capsule">
-      {/* ============================================================== */}
-      {/* ZONA IZQUIERDA: Contexto o Menú de Navegación                 */}
-      {/* ============================================================== */}
-      <div className="navbar-zone-left">
+    <header className="app-header fixed-top-navbar">
+      <div className="header-inner-content">
+        {/* ============================================================== */}
+        {/* ZONA IZQUIERDA: Contexto o Menú de Navegación                 */}
+        {/* ============================================================== */}
+        <div className="navbar-zone-left">
         {currentView === 'directory' ? (
           <div className="navbar-context-group">
             <button
@@ -210,7 +211,8 @@ export const Header = () => {
           </button>
         ) : null}
       </div>
-    </header>
+    </div>
+  </header>
   );
 };
 
