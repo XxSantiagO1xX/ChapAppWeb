@@ -42,64 +42,27 @@ export const LoginScreen = () => {
     <div className="login-viewport-container">
       <div className="login-split-layout">
         {/* ============================================================== */}
-        {/* LADO IZQUIERDO: ESCENA 3D DEL EMBLEMA PROTAGÓNICO EN PEDESTAL */}
+        {/* LADO IZQUIERDO: EMBLEMA FAMILIAR PROTAGÓNICO EN CRISTAL       */}
         {/* ============================================================== */}
         <div className="login-visual-stage">
-          <div className="stage-top-brand">
-            <div className="brand-pill-badge">
-              <span className="brand-dot-pulse" />
-              <span>ChapApp • Sistema Financiero Familiar</span>
-            </div>
-          </div>
-
-          <div className="stage-scene-3d">
-            {/* Anillos de luz orbitales neón */}
-            <div className="scene-orbital-ring scene-orbital-ring-1" />
-            <div className="scene-orbital-ring scene-orbital-ring-2" />
-            <div className="scene-orbital-ring scene-orbital-ring-3" />
-
-            {/* Destellos geométricos flotantes secundarios */}
-            <div className="floating-gem floating-gem-1">
-              <Icon name="sparkles" size={18} color="rgba(0, 240, 255, 0.85)" />
-            </div>
-            <div className="floating-gem floating-gem-2">
-              <Icon name="sparkles" size={14} color="rgba(168, 85, 247, 0.85)" />
-            </div>
-            <div className="floating-gem floating-gem-3">
-              <Icon name="sparkles" size={16} color="rgba(99, 102, 241, 0.85)" />
-            </div>
-
-            {/* Cristal Prisma Central Protagónico que alberga el árbol de ChapApp */}
-            <div className="crystal-core-prism animate-levitate">
-              <div className="prism-glass-facet facet-front">
+          <div className="login-emblem-showcase">
+            <div className="login-emblem-aura" />
+            <div className="login-emblem-capsule">
+              <div className="login-emblem-glass-facet">
                 <img 
                   src="/assets/logo_tree.png" 
-                  alt="ChapApp Emblema Protagónico" 
-                  className="prism-emblem-tree" 
+                  alt="ChapApp Emblema Familiar" 
+                  className="login-emblem-tree-img" 
                   onError={(e) => { e.target.src = './assets/logo_tree.png'; }} 
                 />
               </div>
-              <div className="prism-inner-light" />
+              <div className="login-emblem-specular-ring" />
             </div>
-
-            {/* Pedestal cilíndrico metálico con resplandor en la base */}
-            <div className="scene-pedestal-platform">
-              <div className="pedestal-top-disc" />
-              <div className="pedestal-cylinder-body" />
-              <div className="pedestal-glow-ground" />
-            </div>
-
-            {/* Niebla / niebla luminosa ambiental */}
-            <div className="scene-mist-layer" />
-          </div>
-
-          <div className="stage-bottom-info">
-            <h2 className="stage-title">ChapApp</h2>
-            <p className="stage-tagline">
-              Gestión contable, cálculo de cuotas ponderadas y auditoría de gastos en tiempo real.
-            </p>
           </div>
         </div>
+
+        {/* Divisor estético elegante entre logo y formulario */}
+        <div className="login-stage-divider" aria-hidden="true" />
 
         {/* ============================================================== */}
         {/* LADO DERECHO: PANEL DE VIDRIO LÍQUIDO TRANSLÚCIDO (LOGIN CARD) */}

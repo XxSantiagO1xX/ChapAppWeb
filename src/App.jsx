@@ -34,11 +34,10 @@ export const App = () => {
   const { currentView, activeEvent, currentUser } = useApp();
   const [filterTab, setFilterTab] = useState('active');
 
-  // Si no hay usuario autenticado, renderizar la pantalla de Login Liquid Glass 3D
+  // Si no hay usuario autenticado, renderizar la pantalla de Login con su background propio y dedicado
   if (!currentUser) {
     return (
-      <div className="app-container login-mode">
-        <BackgroundScene />
+      <div className="login-viewport-wrapper">
         <LoginScreen />
         <ToastContainer />
       </div>
