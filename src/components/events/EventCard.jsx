@@ -9,9 +9,9 @@ import { Icon } from '../../utils/icons.jsx';
 import { archiveEvent, deleteEvent } from '../../services/database.js';
 
 export const EventCard = ({ event }) => {
-  const { selectEvent, setEvents, showToast, openModal } = useApp();
+  const { selectEvent, setEvents, showToast, openModal, familyGroups } = useApp();
 
-  const totals = calculateEventTotals(event);
+  const totals = calculateEventTotals(event, null, familyGroups);
   const collectionPercent =
     totals.totalToCollect > 0
       ? Math.min(100, Math.round((totals.totalCollected / totals.totalToCollect) * 100))

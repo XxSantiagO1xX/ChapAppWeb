@@ -2979,6 +2979,122 @@ button:active {
   border-radius: var(--radius-pill);
 }
 
+/* Widget de Abonos Parciales en Ticket POS */
+.partial-payment-widget {
+  width: 100%;
+  max-width: 440px;
+  margin-top: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-xl);
+  background: rgba(0, 0, 0, 0.30);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-theme="light"] .partial-payment-widget {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(15, 23, 42, 0.10);
+}
+
+.partial-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.partial-progress-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.partial-progress-labels strong {
+  color: var(--text-primary);
+}
+
+.partial-payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.partial-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.partial-currency-sign {
+  position: absolute;
+  left: 13px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  pointer-events: none;
+}
+
+.partial-amount-input {
+  flex: 1;
+  height: 38px !important;
+  padding-left: 28px !important;
+  font-size: 0.86rem !important;
+  font-weight: 700 !important;
+  border-radius: var(--radius-pill) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.partial-submit-btn {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.partial-quick-chips {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.partial-chip-btn {
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-variant-numeric: tabular-nums;
+}
+
+.partial-chip-btn:hover {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: var(--border-neon-cyan);
+  transform: translateY(-1px);
+}
+
+.partial-chip-btn.reset-chip {
+  background: rgba(244, 63, 94, 0.10);
+  border-color: rgba(244, 63, 94, 0.32);
+  color: var(--color-coral);
+}
+
+.partial-chip-btn.reset-chip:hover {
+  background: rgba(244, 63, 94, 0.20);
+  border-color: var(--border-neon-coral);
+}
+
 /* ==========================================================================
    MODELO HÍBRIDO DE JERARQUÍA FAMILIAR (DIRECTORIO Y POS)
    ========================================================================== */

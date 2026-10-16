@@ -48,7 +48,11 @@ export const generateEventReportPlainText = (event, totals = null) => {
     } else {
       sfStatus = `EN TABLAS ($0.00)`;
     }
-    const settleMark = sf.isFullySettled ? '✅ [LIQUIDADA]' : '⏳ [PENDIENTE]';
+    const settleMark = sf.isFullySettled
+      ? '✅ [LIQUIDADA]'
+      : sf.hasPartialPayment
+      ? `⏳ [ABONO PARCIAL ${sf.paymentProgressPercent}% • RESTA ${formatCurrency(Math.abs(sf.remainingBalance))}]`
+      : '⏳ [PENDIENTE]';
 
     const guestsDetail = sf.guestsTotalCost > 0 ? ` (Integrantes: ${formatCurrency(sf.membersProportionalShare)} + Invitados: ${formatCurrency(sf.guestsTotalCost)})` : '';
 
@@ -56,6 +60,9 @@ export const generateEventReportPlainText = (event, totals = null) => {
     text += `   • 1. Cuota Proporcional: ${formatCurrency(sf.proportionalShare)}${guestsDetail}\n`;
     text += `   • 2. Aporte de su Bolsillo: ${formatCurrency(sf.totalPaid)}\n`;
     text += `   • 3. Saldo Neto: ${sfStatus}\n`;
+    if (sf.hasPartialPayment) {
+      text += `   • 3b. Abono en Caja: ${formatCurrency(sf.partialPayment)} | Resta: ${formatCurrency(Math.abs(sf.remainingBalance))}\n`;
+    }
     text += `   • 4. Estatus: ${settleMark}\n\n`;
   }
 
@@ -97,7 +104,11 @@ export const generateSubfamilyWhatsAppText = (subFamilyName, event, totals = nul
   text += `• Aporte de su Cartera: ${formatCurrency(sf.totalPaid)}\n`;
   text += `------------------------------------\n`;
   text += `${balanceHeader}\n`;
-  text += `• Estatus: ${sf.isFullySettled ? '✅ LIQUIDADO' : '⏳ PENDIENTE'}\n\n`;
+  if (sf.hasPartialPayment) {
+    text += `• Abonado en Caja: ${formatCurrency(sf.partialPayment)} (${sf.paymentProgressPercent}%)\n`;
+    text += `• RESTA POR LIQUIDAR: ${formatCurrency(Math.abs(sf.remainingBalance))}\n`;
+  }
+  text += `• Estatus: ${sf.isFullySettled ? '✅ LIQUIDADO' : sf.hasPartialPayment ? `⏳ ABONO PARCIAL (${sf.paymentProgressPercent}%)` : '⏳ PENDIENTE'}\n\n`;
 
   text += `👥 DETALLE POR INTEGRANTE:\n`;
   text += `------------------------------------\n`;
@@ -239,6 +250,8 @@ export const downloadEventCsv = (event, totals = null) => {
     escapeCsv('Cuota Familiar Bruta'),
     escapeCsv('Compras Pagadas'),
     escapeCsv('Saldo Neto'),
+    escapeCsv('Abonado en Caja'),
+    escapeCsv('Saldo Restante'),
     escapeCsv('Estado')
   ].join(','));
 
@@ -252,7 +265,9 @@ export const downloadEventCsv = (event, totals = null) => {
       escapeCsv(sf.proportionalShare),
       escapeCsv(sf.totalPaid),
       escapeCsv(sf.finalBalance),
-      escapeCsv(sf.isFullySettled ? 'Liquidada' : 'Pendiente')
+      escapeCsv(sf.partialPayment || 0),
+      escapeCsv(sf.remainingBalance ?? sf.finalBalance),
+      escapeCsv(sf.isFullySettled ? 'Liquidada' : sf.hasPartialPayment ? `Abono (${sf.paymentProgressPercent}%)` : 'Pendiente')
     ].join(','));
   }
 

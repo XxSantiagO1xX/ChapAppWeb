@@ -342,6 +342,10 @@ export const calculateEventTotals = (event, guestsInput = null, familyGroups = [
       totalPaid,
       finalBalance,
       isSettled,
+      subFamilyPartialPayment:
+        typeof participant.subFamilyPartialPayment === 'number'
+          ? participant.subFamilyPartialPayment
+          : parseFloat(participant.subFamilyPartialPayment) || 0,
     };
 
     participantCalculations.push(calculation);
@@ -388,6 +392,7 @@ export const calculateEventTotals = (event, guestsInput = null, familyGroups = [
       guestsTotalCost: 0,
       proportionalShare: 0,
       finalBalance: 0,
+      partialPayment: 0,
       isFullySettled: true,
       participantIds: [],
       guests: [],
@@ -402,6 +407,9 @@ export const calculateEventTotals = (event, guestsInput = null, familyGroups = [
     existing.totalPaid += calc.totalPaid;
     existing.membersProportionalShare += calc.proportionalShare;
     existing.participantIds.push(calc.participantId);
+    if (calc.subFamilyPartialPayment > 0) {
+      existing.partialPayment = Math.max(existing.partialPayment || 0, calc.subFamilyPartialPayment);
+    }
 
     if (!calc.isSettled) {
       existing.isFullySettled = false;
@@ -429,6 +437,7 @@ export const calculateEventTotals = (event, guestsInput = null, familyGroups = [
       guestsTotalCost: 0,
       proportionalShare: 0,
       finalBalance: 0,
+      partialPayment: 0,
       isFullySettled: true,
       participantIds: [],
       guests: [],
@@ -449,6 +458,25 @@ export const calculateEventTotals = (event, guestsInput = null, familyGroups = [
   subFamilyMap.forEach((val, key) => {
     const grossTotalQuota = roundToTwoDecimals(val.membersProportionalShare + val.guestsTotalCost);
     const finalBalance = roundToTwoDecimals(grossTotalQuota - val.totalPaid);
+    const absBalance = Math.abs(finalBalance);
+    const rawPartial = roundToTwoDecimals(val.partialPayment || 0);
+    const autoSettledByPartial = absBalance > 0 && rawPartial >= absBalance - 0.01;
+    const isFullySettled = val.isFullySettled || autoSettledByPartial;
+    const partialPayment = isFullySettled
+      ? absBalance
+      : Math.min(absBalance, Math.max(0, rawPartial));
+    const remainingBalance = isFullySettled
+      ? 0
+      : finalBalance > 0
+      ? roundToTwoDecimals(finalBalance - partialPayment)
+      : finalBalance < 0
+      ? -roundToTwoDecimals(absBalance - partialPayment)
+      : 0;
+    const hasPartialPayment = !isFullySettled && partialPayment > 0;
+    const paymentProgressPercent =
+      isFullySettled || absBalance === 0
+        ? 100
+        : Math.min(99, Math.round((partialPayment / absBalance) * 100));
 
     const subFamilyCalc = {
       subFamilyId: val.subFamilyId,
@@ -466,7 +494,11 @@ export const calculateEventTotals = (event, guestsInput = null, familyGroups = [
       guestsTotalCost: roundToTwoDecimals(val.guestsTotalCost),
       proportionalShare: grossTotalQuota,
       finalBalance,
-      isFullySettled: val.isFullySettled,
+      partialPayment,
+      remainingBalance,
+      hasPartialPayment,
+      paymentProgressPercent,
+      isFullySettled,
       participantIds: val.participantIds,
       guests: val.guests,
     };
@@ -499,6 +531,17 @@ export const calculateEventTotals = (event, guestsInput = null, familyGroups = [
       } else if (sf.finalBalance < 0) {
         totalRefundedRaw += Math.abs(sf.finalBalance);
         cashOutflowRaw += Math.abs(sf.finalBalance);
+      }
+    } else if (sf.partialPayment > 0) {
+      if (sf.finalBalance > 0) {
+        cashInflowRaw += sf.partialPayment;
+        totalCollectedRaw += Math.min(sf.proportionalShare, sf.totalPaid + sf.partialPayment);
+      } else if (sf.finalBalance < 0) {
+        totalRefundedRaw += sf.partialPayment;
+        cashOutflowRaw += sf.partialPayment;
+        totalCollectedRaw += Math.min(sf.proportionalShare, sf.totalPaid);
+      } else {
+        totalCollectedRaw += Math.min(sf.proportionalShare, sf.totalPaid);
       }
     } else {
       let sfCovered = sf.totalPaid;

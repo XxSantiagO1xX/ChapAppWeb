@@ -161,15 +161,16 @@ export const downloadExecutiveExcel = (event, totals = null) => {
  <!-- ========================================================== -->
  <!-- HOJA 2: CONSOLIDADO POR SUBFAMILIA                        -->
  <!-- ========================================================== -->
- <Worksheet ss:Name="Subfamilias y Saldos">
+  <Worksheet ss:Name="Subfamilias y Saldos">
   <Table ss:DefaultColumnWidth="130" ss:DefaultRowHeight="20">
    <Column ss:Width="200"/>
-   <Column ss:Width="110"/>
-   <Column ss:Width="110"/>
+   <Column ss:Width="105"/>
+   <Column ss:Width="105"/>
+   <Column ss:Width="120"/>
+   <Column ss:Width="120"/>
    <Column ss:Width="120"/>
    <Column ss:Width="120"/>
    <Column ss:Width="130"/>
-   <Column ss:Width="120"/>
    
    <Row ss:Height="24">
     <Cell ss:StyleID="sTitle"><Data ss:Type="String">CONSOLIDADO FINANCIERO POR SUBFAMILIA</Data></Cell>
@@ -182,7 +183,8 @@ export const downloadExecutiveExcel = (event, totals = null) => {
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">Unidades</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">Cuota Asignada</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">Aporte en Compras</Data></Cell>
-    <Cell ss:StyleID="sHeader"><Data ss:Type="String">Saldo Neto</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">Abonado en Caja</Data></Cell>
+    <Cell ss:StyleID="sHeader"><Data ss:Type="String">Saldo / Resta</Data></Cell>
     <Cell ss:StyleID="sHeader"><Data ss:Type="String">Estado de Liquidación</Data></Cell>
    </Row>
 
@@ -193,8 +195,9 @@ export const downloadExecutiveExcel = (event, totals = null) => {
     <Cell ss:StyleID="sDataCenter"><Data ss:Type="Number">${sf.totalWeightedUnits}</Data></Cell>
     <Cell ss:StyleID="sCurrency"><Data ss:Type="Number">${sf.proportionalShare}</Data></Cell>
     <Cell ss:StyleID="sCurrency"><Data ss:Type="Number">${sf.totalPaid}</Data></Cell>
-    <Cell ss:StyleID="${sf.finalBalance < 0 ? 'sRefund' : sf.finalBalance > 0 ? 'sOwed' : 'sCurrency'}"><Data ss:Type="Number">${Math.abs(sf.finalBalance)}</Data></Cell>
-    <Cell ss:StyleID="sDataCenter"><Data ss:Type="String">${sf.isFullySettled ? 'LIQUIDADA' : sf.finalBalance < 0 ? 'POR REEMBOLSAR' : 'POR COBRAR'}</Data></Cell>
+    <Cell ss:StyleID="sCurrency"><Data ss:Type="Number">${sf.partialPayment || 0}</Data></Cell>
+    <Cell ss:StyleID="${sf.isFullySettled ? 'sCurrency' : sf.finalBalance < 0 ? 'sRefund' : sf.finalBalance > 0 ? 'sOwed' : 'sCurrency'}"><Data ss:Type="Number">${sf.isFullySettled ? 0 : Math.abs(sf.hasPartialPayment ? sf.remainingBalance : sf.finalBalance)}</Data></Cell>
+    <Cell ss:StyleID="sDataCenter"><Data ss:Type="String">${sf.isFullySettled ? 'LIQUIDADA' : sf.hasPartialPayment ? `ABONO PARCIAL (${sf.paymentProgressPercent}%)` : sf.finalBalance < 0 ? 'POR REEMBOLSAR' : 'POR COBRAR'}</Data></Cell>
    </Row>
    `).join('')}
 
@@ -204,7 +207,8 @@ export const downloadExecutiveExcel = (event, totals = null) => {
     <Cell ss:StyleID="sDataCenter"><Data ss:Type="Number">${t.totalWeightedUnits}</Data></Cell>
     <Cell ss:StyleID="sTotalRow"><Data ss:Type="Number">${t.totalExpenses}</Data></Cell>
     <Cell ss:StyleID="sTotalRow"><Data ss:Type="Number">${t.totalExpenses}</Data></Cell>
-    <Cell ss:StyleID="sTotalRow"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="sTotalRow"><Data ss:Type="Number">${t.totalCollected}</Data></Cell>
+    <Cell ss:StyleID="sTotalRow"><Data ss:Type="Number">${t.totalPendingToCollect}</Data></Cell>
     <Cell ss:StyleID="sDataCenter"><Data ss:Type="String">BALANCEADO</Data></Cell>
    </Row>
   </Table>

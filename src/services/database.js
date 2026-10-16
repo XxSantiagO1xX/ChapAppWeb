@@ -5,6 +5,7 @@
 
 import { initSupabaseClient, getSupabase } from './supabase.js';
 import { CONFIG } from '../config/config.js';
+import { resolveBillingFamily } from '../utils/calculations.js';
 
 export const generateUUID = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -272,6 +273,11 @@ export const parseParticipantRow = (p) => {
     : parseFloat(rawPonderacion) || (categoria === 'nino' ? 0.5 : 1.0);
   let telefono = p.telefono || p.phone || '';
 
+  let subFamilyPartialPayment =
+    typeof p.subFamilyPartialPayment === 'number'
+      ? p.subFamilyPartialPayment
+      : parseFloat(p.subFamilyPartialPayment) || 0;
+
   // Extraer campos detallados si fueron almacenados en JSONB active_days
   if (p.active_days && typeof p.active_days === 'object' && !Array.isArray(p.active_days)) {
     if (p.active_days.nombre && !p.nombre) nombre = p.active_days.nombre;
@@ -281,6 +287,12 @@ export const parseParticipantRow = (p) => {
     if (p.active_days.categoria && !p.categoria) categoria = p.active_days.categoria;
     if (p.active_days.ponderacion !== undefined && p.ponderacion === undefined) {
       ponderacion = typeof p.active_days.ponderacion === 'number' ? p.active_days.ponderacion : parseFloat(p.active_days.ponderacion) || ponderacion;
+    }
+    if (p.active_days.subFamilyPartialPayment !== undefined && p.subFamilyPartialPayment === undefined) {
+      subFamilyPartialPayment =
+        typeof p.active_days.subFamilyPartialPayment === 'number'
+          ? p.active_days.subFamilyPartialPayment
+          : parseFloat(p.active_days.subFamilyPartialPayment) || 0;
     }
   }
 
@@ -307,6 +319,7 @@ export const parseParticipantRow = (p) => {
     activeDays: days,
     isAttending: typeof p.isAttending === 'boolean' ? p.isAttending : (typeof p.is_attending === 'boolean' ? p.is_attending : isAttending),
     isSettled: typeof p.isSettled === 'boolean' ? p.isSettled : (typeof p.is_settled === 'boolean' ? p.is_settled : isSettled),
+    subFamilyPartialPayment,
   };
 };
 
@@ -758,6 +771,7 @@ export const updateParticipant = async (eventId, participantOrId, updates = {}) 
         telefono: participant.telefono,
         categoria: participant.categoria || participant.category || 'adulto',
         ponderacion: participant.ponderacion || participant.weight || 1.0,
+        subFamilyPartialPayment: participant.subFamilyPartialPayment || 0,
       };
 
       const { error } = await supabase.from('participants').update({
@@ -818,6 +832,14 @@ export const updateParticipantRole = async (eventId, participantId, category, we
           isAttending: part?.isAttending ?? true,
           isSettled: part?.isSettled ?? false,
           subFamily: part?.subFamily || '',
+          grupo_familiar_id: part?.grupo_familiar_id || null,
+          nombre: part?.nombre,
+          apellido_paterno: part?.apellido_paterno,
+          apellido_materno: part?.apellido_materno,
+          telefono: part?.telefono,
+          categoria: category,
+          ponderacion: weight,
+          subFamilyPartialPayment: part?.subFamilyPartialPayment || 0,
         }
       }).eq('id', participantId);
     } catch (e) {
@@ -833,14 +855,16 @@ export const updateParticipantRole = async (eventId, participantId, category, we
 };
 
 /**
- * Alternar asistencia de toda una subfamilia
+ * Alternar asistencia de toda una subfamilia (incluyendo sub-grupos absorbidos por roll-up)
  */
-export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttending) => {
+export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttending, familyGroups = []) => {
   const event = await getEventById(eventId);
   if (!event) return;
 
   const targetParts = (event.participants || []).filter(
-    (p) => (p.subFamily || 'Familia General') === subFamilyName
+    (p) =>
+      (p.subFamily || 'Familia General') === subFamilyName ||
+      resolveBillingFamily(p, familyGroups).nombre === subFamilyName
   );
 
   const supabase = await initSupabaseClient();
@@ -854,6 +878,14 @@ export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttend
             isAttending,
             isSettled: p.isSettled,
             subFamily: p.subFamily,
+            grupo_familiar_id: p.grupo_familiar_id || null,
+            nombre: p.nombre,
+            apellido_paterno: p.apellido_paterno,
+            apellido_materno: p.apellido_materno,
+            telefono: p.telefono,
+            categoria: p.categoria || p.category,
+            ponderacion: p.ponderacion || p.weight,
+            subFamilyPartialPayment: p.subFamilyPartialPayment || 0,
           },
         }).eq('id', p.id);
       } catch (e) {
@@ -873,11 +905,14 @@ export const toggleSubFamilyAttendance = async (eventId, subFamilyName, isAttend
 /**
  * Eliminar una Subfamilia completa
  */
-export const deleteSubFamily = async (eventId, subFamilyName) => {
+export const deleteSubFamily = async (eventId, subFamilyName, familyGroups = []) => {
   const event = await getEventById(eventId);
   const targetParts = (event?.participants || []).filter(
-    (p) => (p.subFamily || 'Familia General') === subFamilyName
+    (p) =>
+      (p.subFamily || 'Familia General') === subFamilyName ||
+      resolveBillingFamily(p, familyGroups).nombre === subFamilyName
   );
+  const targetIds = new Set(targetParts.map((p) => p.id));
 
   const supabase = await initSupabaseClient();
   if (supabase) {
@@ -900,7 +935,7 @@ export const deleteSubFamily = async (eventId, subFamilyName) => {
   const ev = list.find((e) => e.id === eventId || e.slug === eventId);
   if (ev) {
     ev.participants = (ev.participants || []).filter(
-      (p) => (p.subFamily || 'Familia General') !== subFamilyName
+      (p) => !targetIds.has(p.id) && (p.subFamily || 'Familia General') !== subFamilyName
     );
     saveLocalEvents(list);
   }
@@ -953,19 +988,24 @@ export const deleteParticipant = async (eventId, participantId) => {
 };
 
 /**
- * Liquidar / Desmarcar Subfamilia completa
+ * Liquidar / Desmarcar Subfamilia completa (incluyendo sub-grupos absorbidos por roll-up)
  */
-export const settleSubFamily = async (eventId, subFamilyName, isSettled) => {
+export const settleSubFamily = async (eventId, subFamilyName, isSettled, familyGroups = []) => {
   const event = await getEventById(eventId);
   if (!event) return;
 
   const targetParts = (event.participants || []).filter(
-    (p) => (p.subFamily || 'Familia General') === subFamilyName
+    (p) =>
+      (p.subFamily || 'Familia General') === subFamilyName ||
+      resolveBillingFamily(p, familyGroups).nombre === subFamilyName
   );
 
   const supabase = await initSupabaseClient();
   for (const p of targetParts) {
     p.isSettled = isSettled;
+    if (!isSettled) {
+      p.subFamilyPartialPayment = 0;
+    }
     if (supabase) {
       try {
         await supabase.from('participants').update({
@@ -974,10 +1014,76 @@ export const settleSubFamily = async (eventId, subFamilyName, isSettled) => {
             isAttending: p.isAttending,
             isSettled,
             subFamily: p.subFamily,
+            grupo_familiar_id: p.grupo_familiar_id || null,
+            nombre: p.nombre,
+            apellido_paterno: p.apellido_paterno,
+            apellido_materno: p.apellido_materno,
+            telefono: p.telefono,
+            categoria: p.categoria || p.category,
+            ponderacion: p.ponderacion || p.weight,
+            subFamilyPartialPayment: isSettled ? (p.subFamilyPartialPayment || 0) : 0,
           },
         }).eq('id', p.id);
       } catch (e) {
         console.error('[Database] Error actualizando liquidación en Supabase:', e);
+      }
+    }
+  }
+
+  const list = loadLocalEvents();
+  const ev = list.find((e) => e.id === eventId || e.slug === eventId);
+  if (ev) {
+    ev.participants = event.participants;
+    saveLocalEvents(list);
+  }
+};
+
+/**
+ * Registrar o actualizar un Abono Parcial (o reembolso parcial) para una Subfamilia de cobro
+ */
+export const updateSubFamilyPartialPayment = async (
+  eventId,
+  subFamilyName,
+  partialAmount,
+  isFullySettled = false,
+  familyGroups = []
+) => {
+  const event = await getEventById(eventId);
+  if (!event) return;
+
+  const cleanAmount = Math.max(0, Math.round((Number(partialAmount) || 0) * 100) / 100);
+  const settledFlag = Boolean(isFullySettled);
+
+  const targetParts = (event.participants || []).filter(
+    (p) =>
+      (p.subFamily || 'Familia General') === subFamilyName ||
+      resolveBillingFamily(p, familyGroups).nombre === subFamilyName
+  );
+
+  const supabase = await initSupabaseClient();
+  for (const p of targetParts) {
+    p.subFamilyPartialPayment = cleanAmount;
+    p.isSettled = settledFlag;
+    if (supabase) {
+      try {
+        await supabase.from('participants').update({
+          active_days: {
+            days: p.activeDays,
+            isAttending: p.isAttending,
+            isSettled: settledFlag,
+            subFamily: p.subFamily,
+            grupo_familiar_id: p.grupo_familiar_id || null,
+            nombre: p.nombre,
+            apellido_paterno: p.apellido_paterno,
+            apellido_materno: p.apellido_materno,
+            telefono: p.telefono,
+            categoria: p.categoria || p.category,
+            ponderacion: p.ponderacion || p.weight,
+            subFamilyPartialPayment: cleanAmount,
+          },
+        }).eq('id', p.id);
+      } catch (e) {
+        console.error('[Database] Error actualizando abono parcial en Supabase:', e);
       }
     }
   }

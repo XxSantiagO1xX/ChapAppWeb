@@ -54,12 +54,12 @@ const CATEGORY_THEME_COLORS = {
 };
 
 export const ExpensesList = () => {
-  const { activeEvent, refreshActiveEvent, openModal, showToast } = useApp();
+  const { activeEvent, refreshActiveEvent, openModal, showToast, familyGroups } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
 
   if (!activeEvent) return null;
 
-  const totals = calculateEventTotals(activeEvent);
+  const totals = calculateEventTotals(activeEvent, null, familyGroups);
   const expenses = activeEvent.expenses || [];
   const participants = activeEvent.participants || [];
 

@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
-import { formatCurrency, calculateEventTotals } from '../../utils/calculations.js';
+import { formatCurrency, calculateEventTotals, resolveBillingFamily } from '../../utils/calculations.js';
 import { 
   updateParticipant, 
   updateParticipantRole,
@@ -16,19 +16,20 @@ import {
 import { Icon } from '../../utils/icons.jsx';
 
 export const SubfamiliesTab = () => {
-  const { activeEvent, refreshActiveEvent, openModal, showToast } = useApp();
+  const { activeEvent, refreshActiveEvent, openModal, showToast, familyGroups } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
 
   if (!activeEvent) return null;
 
-  const totals = calculateEventTotals(activeEvent);
+  const totals = calculateEventTotals(activeEvent, null, familyGroups);
   const participants = activeEvent.participants || [];
   const availableDays = activeEvent.availableDays || ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
 
-  // Agrupar participantes por subfamilia
+  // Agrupar participantes por su entidad de cobro (respetando Roll-up de jerarquía familiar)
   const groupedBySf = {};
   participants.forEach((p) => {
-    const sf = p.subFamily || 'Familia General';
+    const billingGroup = resolveBillingFamily(p, familyGroups);
+    const sf = billingGroup.nombre || p.subFamily || 'Familia General';
     if (!groupedBySf[sf]) groupedBySf[sf] = [];
     groupedBySf[sf].push(p);
   });
@@ -111,7 +112,7 @@ export const SubfamiliesTab = () => {
 
   const handleBatchAttendance = async (sfName, targetAttending) => {
     try {
-      await toggleSubFamilyAttendance(activeEvent.id, sfName, targetAttending);
+      await toggleSubFamilyAttendance(activeEvent.id, sfName, targetAttending, familyGroups);
       await refreshActiveEvent();
       showToast(targetAttending ? `Todos en ${sfName} marcados presentes` : `Todos en ${sfName} marcados ausentes`, 'info');
     } catch (err) {
@@ -122,7 +123,7 @@ export const SubfamiliesTab = () => {
 
   const handleBatchSettlement = async (sfName, currentSettled) => {
     try {
-      await settleSubFamily(activeEvent.id, sfName, !currentSettled);
+      await settleSubFamily(activeEvent.id, sfName, !currentSettled, familyGroups);
       await refreshActiveEvent();
       showToast(!currentSettled ? `Subfamilia ${sfName} liquidada` : `Cuenta de ${sfName} reabierta`, 'success');
     } catch (err) {
@@ -138,7 +139,7 @@ export const SubfamiliesTab = () => {
       variant: 'danger',
       onConfirm: async () => {
         try {
-          await deleteSubFamily(activeEvent.id, sfName);
+          await deleteSubFamily(activeEvent.id, sfName, familyGroups);
           await refreshActiveEvent();
           showToast(`Subfamilia "${sfName}" eliminada`, 'success');
         } catch (err) {
@@ -158,7 +159,9 @@ export const SubfamiliesTab = () => {
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     const matchSf = sfName.toLowerCase().includes(q);
-    const matchMember = (groupedBySf[sfName] || []).some((p) => (p.name || '').toLowerCase().includes(q));
+    const matchMember = (groupedBySf[sfName] || []).some(
+      (p) => (p.name || '').toLowerCase().includes(q) || (p.subFamily || '').toLowerCase().includes(q)
+    );
     return matchSf || matchMember;
   });
 
@@ -241,12 +244,23 @@ export const SubfamiliesTab = () => {
               >
                 <div className="sf-group-header">
                   <div className="sf-title-info-group">
-                    <h4 className="sf-group-title">
+                    <h4 className="sf-group-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <Icon name="users" size={16} /> {sfName}
+                      {sfCalc?.hasMultipleNuclei && (
+                        <span className="badge-branch-dependent" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
+                          🔗 Roll-up ({sfCalc.subGroups.length} núcleos)
+                        </span>
+                      )}
+                      {sfCalc?.hasPartialPayment && (
+                        <span className="badge-pill badge-cyan" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
+                          ⏳ Abono {sfCalc.paymentProgressPercent}% ({formatCurrency(sfCalc.partialPayment)})
+                        </span>
+                      )}
                     </h4>
                     <span className="sf-group-stats">
                       {attendingCount} de {parts.length} asisten
-                      {sfCalc?.guests?.length > 0 ? ` (+${sfCalc.guests.length} inv)` : ''} • Saldo:{' '}
+                      {sfCalc?.guests?.length > 0 ? ` (+${sfCalc.guests.length} inv)` : ''} •{' '}
+                      {sfCalc?.hasPartialPayment ? 'Resta por pagar: ' : 'Saldo: '}
                       <strong 
                         className={
                           sfCalc && sfCalc.finalBalance > 0 
@@ -258,10 +272,15 @@ export const SubfamiliesTab = () => {
                       >
                         {sfCalc 
                           ? sfCalc.finalBalance < 0 
-                            ? `Reembolso ${formatCurrency(Math.abs(sfCalc.finalBalance))}` 
-                            : formatCurrency(sfCalc.finalBalance) 
+                            ? `Reembolso ${formatCurrency(Math.abs(sfCalc.hasPartialPayment ? sfCalc.remainingBalance : sfCalc.finalBalance))}` 
+                            : formatCurrency(sfCalc.hasPartialPayment ? sfCalc.remainingBalance : sfCalc.finalBalance) 
                           : '$0.00'}
                       </strong>
+                      {sfCalc?.hasPartialPayment && (
+                        <span style={{ opacity: 0.75, marginLeft: '6px' }}>
+                          (de {formatCurrency(Math.abs(sfCalc.finalBalance))})
+                        </span>
+                      )}
                     </span>
                   </div>
 

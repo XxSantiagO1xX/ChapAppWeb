@@ -17,18 +17,18 @@ const CAT_COLORS = {
 };
 
 export const AnalyticsModal = () => {
-  const { activeModal, closeModal, events = [] } = useApp();
+  const { activeModal, closeModal, events = [], familyGroups } = useApp();
 
   const [compareIdA, setCompareIdA] = useState(() => (events.length > 1 ? events[1]?.id : events[0]?.id || ''));
   const [compareIdB, setCompareIdB] = useState(() => (events.length > 0 ? events[0]?.id : ''));
 
   if (activeModal !== 'analytics') return null;
 
-  const analytics = calculateHistoricalAnalytics(events);
+  const analytics = calculateHistoricalAnalytics(events, familyGroups);
 
   const eventA = events.find((e) => e.id === compareIdA);
   const eventB = events.find((e) => e.id === compareIdB);
-  const comparison = compareTwoEvents(eventA, eventB);
+  const comparison = compareTwoEvents(eventA, eventB, familyGroups);
 
   const totalCatAmount = Object.values(analytics.categoryDistribution).reduce((a, b) => a + b, 0);
 

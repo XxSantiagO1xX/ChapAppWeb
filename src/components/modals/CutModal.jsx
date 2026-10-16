@@ -12,11 +12,11 @@ import { openExecutivePrintReport } from '../../utils/pdfReport.js';
 import { Icon } from '../../utils/icons.jsx';
 
 export const CutModal = () => {
-  const { activeModal, closeModal, activeEvent, showToast } = useApp();
+  const { activeModal, closeModal, activeEvent, showToast, familyGroups } = useApp();
 
   if (activeModal !== 'cut' || !activeEvent) return null;
 
-  const totals = calculateEventTotals(activeEvent);
+  const totals = calculateEventTotals(activeEvent, null, familyGroups);
 
   const handleDownloadExcel = () => {
     try {
@@ -96,7 +96,8 @@ export const CutModal = () => {
                     <th>Asistentes</th>
                     <th className="col-num">Cuota</th>
                     <th className="col-num">Compras</th>
-                    <th className="col-num">Saldo Neto</th>
+                    <th className="col-num">Abonado</th>
+                    <th className="col-num">Saldo / Resta</th>
                     <th style={{ textAlign: 'center' }}>Estado</th>
                   </tr>
                 </thead>
@@ -107,15 +108,25 @@ export const CutModal = () => {
                         <strong>
                           <Icon name="users" size={14} /> {sf.subFamilyName}
                         </strong>
+                        {sf.hasMultipleNuclei && (
+                          <div style={{ fontSize: '0.7rem', color: 'var(--color-primary)', marginTop: '2px' }}>
+                            🔗 Roll-up ({sf.subGroups.length} núcleos)
+                          </div>
+                        )}
                       </td>
                       <td>
                         {sf.attendingCount} de {sf.membersCount}
                       </td>
                       <td className="col-num">{formatCurrency(sf.proportionalShare)}</td>
                       <td className="col-num">{formatCurrency(sf.totalPaid)}</td>
+                      <td className="col-num text-cyan">
+                        {sf.partialPayment > 0 ? formatCurrency(sf.partialPayment) : '$0.00'}
+                      </td>
                       <td 
                         className={`col-num ${
-                          sf.finalBalance < 0 
+                          sf.isFullySettled
+                            ? 'text-even'
+                            : sf.finalBalance < 0 
                             ? 'text-refund' 
                             : sf.finalBalance > 0 
                             ? 'text-owed' 
@@ -123,14 +134,20 @@ export const CutModal = () => {
                         }`}
                       >
                         <strong>
-                          {sf.finalBalance < 0 
-                            ? `Reembolso ${formatCurrency(Math.abs(sf.finalBalance))}` 
-                            : formatCurrency(sf.finalBalance)}
+                          {sf.isFullySettled
+                            ? '$0.00'
+                            : sf.finalBalance < 0 
+                            ? `Reembolso ${formatCurrency(Math.abs(sf.hasPartialPayment ? sf.remainingBalance : sf.finalBalance))}` 
+                            : formatCurrency(sf.hasPartialPayment ? sf.remainingBalance : sf.finalBalance)}
                         </strong>
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <span className={`badge-status ${sf.isFullySettled ? 'status-active' : 'status-archived'}`}>
-                          {sf.isFullySettled ? 'Liquidada' : 'Pendiente'}
+                          {sf.isFullySettled
+                            ? 'Liquidada'
+                            : sf.hasPartialPayment
+                            ? `Abono ${sf.paymentProgressPercent}%`
+                            : 'Pendiente'}
                         </span>
                       </td>
                     </tr>

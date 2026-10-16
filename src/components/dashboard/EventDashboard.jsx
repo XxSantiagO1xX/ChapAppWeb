@@ -14,7 +14,7 @@ import SubfamiliesTab from './SubfamiliesTab.jsx';
 import ExpensesList from './ExpensesList.jsx';
 
 export const EventDashboard = () => {
-  const { activeEvent, activeDashboardTab, isSidebarCollapsed, openModal, selectEvent } = useApp();
+  const { activeEvent, activeDashboardTab, isSidebarCollapsed, openModal, selectEvent, familyGroups } = useApp();
 
   if (!activeEvent) {
     return (
@@ -31,7 +31,7 @@ export const EventDashboard = () => {
     );
   }
 
-  const totals = calculateEventTotals(activeEvent);
+  const totals = calculateEventTotals(activeEvent, null, familyGroups);
   const collectionPercent =
     totals.totalToCollect > 0
       ? Math.min(100, Math.round((totals.totalCollected / totals.totalToCollect) * 100))

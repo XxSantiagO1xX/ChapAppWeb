@@ -9,6 +9,7 @@ import { generateSubfamilyWhatsAppText } from '../../utils/reports.js';
 import { 
   updateParticipant, 
   settleSubFamily, 
+  updateSubFamilyPartialPayment,
   generateUUID 
 } from '../../services/database.js';
 import { Icon } from '../../utils/icons.jsx';
@@ -42,6 +43,7 @@ export const PosTicketView = () => {
   const [guestName, setGuestName] = useState('');
   const [guestCategory, setGuestCategory] = useState('adulto');
   const [guestDays, setGuestDays] = useState(activeEvent?.availableDays?.length || 4);
+  const [partialAmountInput, setPartialAmountInput] = useState('');
 
   if (!activeEvent) return null;
 
@@ -83,6 +85,10 @@ export const PosTicketView = () => {
   const baseTotalPaid = activeSf.totalPaid || 0;
   const grossTotalQuota = activeSf.proportionalShare || 0;
   const finalBalance = activeSf.finalBalance || 0;
+  const partialPayment = activeSf.partialPayment || 0;
+  const remainingBalance = activeSf.remainingBalance ?? finalBalance;
+  const hasPartialPayment = Boolean(activeSf.hasPartialPayment);
+  const paymentProgressPercent = activeSf.paymentProgressPercent ?? 0;
 
   const isRefund = finalBalance < 0;
   const isOwed = finalBalance > 0;
@@ -114,7 +120,8 @@ export const PosTicketView = () => {
   // Toggle liquidación de subfamilia
   const handleToggleSettlement = async () => {
     try {
-      await settleSubFamily(activeEvent.id, activeSf.subFamilyName, !activeSf.isFullySettled);
+      await settleSubFamily(activeEvent.id, activeSf.subFamilyName, !activeSf.isFullySettled, familyGroups);
+      setPartialAmountInput('');
       await refreshActiveEvent();
       showToast(
         !activeSf.isFullySettled 
@@ -125,6 +132,63 @@ export const PosTicketView = () => {
     } catch (err) {
       console.error('Error toggling settlement:', err);
       showToast('Error al liquidar cuenta', 'error');
+    }
+  };
+
+  // Registrar o sumar un abono parcial a la cuenta familiar
+  const handleRegisterPartialPayment = async (e, customAddAmount = null) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const rawVal = customAddAmount !== null ? customAddAmount : parseFloat(partialAmountInput);
+    if (!rawVal || isNaN(rawVal) || rawVal <= 0) {
+      showToast('Ingresa un monto de abono válido mayor a $0', 'info');
+      return;
+    }
+
+    const absTarget = Math.abs(finalBalance);
+    if (absTarget <= 0) {
+      showToast('Esta cuenta ya se encuentra en tablas ($0.00)', 'info');
+      return;
+    }
+
+    const newTotalPartial = Math.min(absTarget, Math.round((partialPayment + rawVal) * 100) / 100);
+    const willBeFullySettled = newTotalPartial >= absTarget - 0.01;
+
+    try {
+      await updateSubFamilyPartialPayment(
+        activeEvent.id,
+        activeSf.subFamilyName,
+        willBeFullySettled ? absTarget : newTotalPartial,
+        willBeFullySettled,
+        familyGroups
+      );
+      setPartialAmountInput('');
+      await refreshActiveEvent();
+
+      if (willBeFullySettled) {
+        showToast(`¡Cuenta de ${activeSf.subFamilyName} 100% liquidada con este abono!`, 'success');
+      } else {
+        const rest = Math.max(0, absTarget - newTotalPartial);
+        showToast(
+          `Abono registrado (${formatCurrency(newTotalPartial)}). Resta por cubrir: ${formatCurrency(rest)}`,
+          'success'
+        );
+      }
+    } catch (err) {
+      console.error('Error registrando abono parcial:', err);
+      showToast('Error al registrar el abono parcial', 'error');
+    }
+  };
+
+  // Reiniciar abonos parciales a $0
+  const handleResetPartialPayment = async () => {
+    try {
+      await updateSubFamilyPartialPayment(activeEvent.id, activeSf.subFamilyName, 0, false, familyGroups);
+      setPartialAmountInput('');
+      await refreshActiveEvent();
+      showToast(`Abonos de ${activeSf.subFamilyName} reiniciados a $0.00`, 'info');
+    } catch (err) {
+      console.error('Error reiniciando abonos:', err);
+      showToast('Error al reiniciar abonos', 'error');
     }
   };
 
@@ -237,16 +301,33 @@ export const PosTicketView = () => {
           {filteredSubFamilies.map((sf) => {
             const isSelected = sf.subFamilyName === activeSubFamilyName;
             const sfFinalBal = sf.finalBalance;
+            const sfEffectiveBal = sf.hasPartialPayment ? sf.remainingBalance : sfFinalBal;
             const sfIsRefund = sfFinalBal < 0;
             const sfIsOwed = sfFinalBal > 0;
-            const badgeText = sfIsRefund
-              ? `-${formatCurrency(Math.abs(sfFinalBal))}`
+            const badgeText = sf.isFullySettled
+              ? '$0.00'
+              : sfIsRefund
+              ? `-${formatCurrency(Math.abs(sfEffectiveBal))}`
               : sfIsOwed
-              ? `+${formatCurrency(sfFinalBal)}`
+              ? `+${formatCurrency(Math.abs(sfEffectiveBal))}`
               : '$0.00';
 
-            const badgeClass = sfIsRefund ? 'badge-refund' : sfIsOwed ? 'badge-owed' : 'badge-even';
-            const statusLabel = sfIsRefund ? 'Reembolso' : sfIsOwed ? 'Por pagar' : 'Al día';
+            const badgeClass = sf.isFullySettled
+              ? 'badge-even'
+              : sfIsRefund
+              ? 'badge-refund'
+              : sfIsOwed
+              ? 'badge-owed'
+              : 'badge-even';
+            const statusLabel = sf.isFullySettled
+              ? 'Liquidada'
+              : sf.hasPartialPayment
+              ? `Resta (${sf.paymentProgressPercent}% abonado)`
+              : sfIsRefund
+              ? 'Reembolso'
+              : sfIsOwed
+              ? 'Por pagar'
+              : 'Al día';
 
             const memberNames = (sf.participantIds || [])
               .map((pId) => totals.byParticipantId[pId]?.participantName || '')
@@ -256,7 +337,10 @@ export const PosTicketView = () => {
               <div 
                 key={sf.subFamilyName}
                 className={`pos-master-item sf-pill-item ${isSelected ? 'selected' : ''}`}
-                onClick={() => setSelectedSubFamily(sf.subFamilyName)}
+                onClick={() => {
+                  setSelectedSubFamily(sf.subFamilyName);
+                  setPartialAmountInput('');
+                }}
                 role="button"
                 tabIndex={0}
               >
@@ -272,6 +356,11 @@ export const PosTicketView = () => {
                     {sf.isFullySettled && (
                       <span className="sf-item-check-pill" title="100% Liquidada">
                         <Icon name="check" size={12} /> Liquidada
+                      </span>
+                    )}
+                    {sf.hasPartialPayment && (
+                      <span className="badge-pill badge-cyan" style={{ fontSize: '0.66rem', padding: '1px 7px' }} title={`Abonado: ${formatCurrency(sf.partialPayment)}`}>
+                        Abono {formatCurrency(sf.partialPayment)}
                       </span>
                     )}
                   </div>
@@ -342,6 +431,10 @@ export const PosTicketView = () => {
                 {activeSf.isFullySettled ? (
                   <>
                     <Icon name="check" size={14} /> Familia 100% Liquidada
+                  </>
+                ) : hasPartialPayment ? (
+                  <>
+                    <Icon name="clock" size={14} /> Abono Parcial ({paymentProgressPercent}% • {formatCurrency(partialPayment)})
                   </>
                 ) : (
                   <>
@@ -617,16 +710,38 @@ export const PosTicketView = () => {
                       <span className="breakdown-label">- Aportes en Compras (Bolsillo)</span>
                       <strong className="breakdown-val">-{formatCurrency(baseTotalPaid)}</strong>
                     </div>
+                    {partialPayment > 0 && !activeSf.isFullySettled && (
+                      <>
+                        <div className="breakdown-item-row text-cyan">
+                          <span className="breakdown-label">
+                            - {isRefund ? 'Reembolsos Parciales Entregados' : 'Abonos Entregados en Caja'} ({paymentProgressPercent}%)
+                          </span>
+                          <strong className="breakdown-val">-{formatCurrency(partialPayment)}</strong>
+                        </div>
+                        <div className="breakdown-item-row total-gross-row">
+                          <span className="breakdown-label">
+                            {isRefund ? 'Resta por Reembolsar' : 'Resta por Entregar en Caja'}
+                          </span>
+                          <strong className={`breakdown-val ${balanceColorClass}`}>
+                            {formatCurrency(Math.abs(remainingBalance))}
+                          </strong>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Sección 4: Gran Caja de Liquidación al Fondo */}
+              {/* Sección 4: Gran Caja de Liquidación y Abonos Parciales al Fondo */}
               <div className={`settlement-bottom-card ${activeSf.isFullySettled ? 'settled-card' : 'pending-card'} glass-panel`}>
                 <div className="settlement-card-header">
                   <span className="settlement-badge-label">
                     {activeSf.isFullySettled 
                       ? 'CUENTA SALDADA Y REGISTRADA' 
+                      : hasPartialPayment
+                      ? isRefund
+                        ? `REEMBOLSO RESTANTE (${paymentProgressPercent}% CUBIERTO)`
+                        : `SALDO RESTANTE A PAGAR (${paymentProgressPercent}% ABONADO)`
                       : isRefund 
                       ? 'REEMBOLSO A FAVOR DE LA FAMILIA' 
                       : 'SALDO A ENTREGAR EN CAJA'}
@@ -634,16 +749,101 @@ export const PosTicketView = () => {
                 </div>
                 
                 <div className={`settlement-card-amount ${activeSf.isFullySettled ? 'text-emerald' : balanceColorClass}`}>
-                  {formatCurrency(Math.abs(finalBalance))}
+                  {formatCurrency(Math.abs(hasPartialPayment ? remainingBalance : finalBalance))}
                 </div>
                 
                 <p className="settlement-card-subtext">
                   {activeSf.isFullySettled 
-                    ? `El saldo de ${formatCurrency(Math.abs(finalBalance))} ya fue recibido/entregado y liquidado en caja.` 
+                    ? `El saldo total de ${formatCurrency(Math.abs(finalBalance))} ya fue recibido/entregado y liquidado en caja.` 
+                    : hasPartialPayment
+                    ? `Ya se registraron ${formatCurrency(partialPayment)} de ${formatCurrency(Math.abs(finalBalance))}. Resta por ${isRefund ? 'reembolsar' : 'cobrar'} ${formatCurrency(Math.abs(remainingBalance))}.`
                     : isRefund 
                     ? `Fondo común debe devolver ${formatCurrency(Math.abs(finalBalance))} a los integrantes de esta familia.` 
                     : `Pendiente de recibir ${formatCurrency(Math.abs(finalBalance))} para ingresar a la caja general.`}
                 </p>
+
+                {/* Barra de Progreso y Control de Abonos Parciales (cuando existe saldo y aún no está 100% liquidada) */}
+                {!activeSf.isFullySettled && Math.abs(finalBalance) > 0 && (
+                  <div className="partial-payment-widget">
+                    {hasPartialPayment && (
+                      <div className="partial-progress-wrap">
+                        <div className="partial-progress-labels">
+                          <span>Abonado: <strong>{formatCurrency(partialPayment)}</strong></span>
+                          <span>Total neto: <strong>{formatCurrency(Math.abs(finalBalance))}</strong></span>
+                        </div>
+                        <div className="progress-track-glass" style={{ height: '8px' }}>
+                          <div 
+                            className="progress-fill-emerald" 
+                            style={{ width: `${paymentProgressPercent}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+
+                    <form onSubmit={handleRegisterPartialPayment} className="partial-payment-form">
+                      <div className="partial-input-group">
+                        <span className="partial-currency-sign">$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="1"
+                          max={Math.abs(remainingBalance)}
+                          className="glass-input partial-amount-input"
+                          placeholder={
+                            hasPartialPayment
+                              ? `Sumar abono (máx ${Math.abs(remainingBalance).toFixed(2)})`
+                              : `Registrar abono parcial (ej. ${Math.round(Math.abs(finalBalance) / 2)})`
+                          }
+                          value={partialAmountInput}
+                          onChange={(e) => setPartialAmountInput(e.target.value)}
+                        />
+                        <button type="submit" className="btn-pill-cyan btn-sm partial-submit-btn">
+                          <Icon name="plus" size={14} />
+                          <span>{hasPartialPayment ? 'Sumar Abono' : 'Abonar'}</span>
+                        </button>
+                      </div>
+
+                      <div className="partial-quick-chips">
+                        {[500, 1000].map((preset) =>
+                          Math.abs(remainingBalance) > preset ? (
+                            <button
+                              key={preset}
+                              type="button"
+                              className="partial-chip-btn"
+                              onClick={() => handleRegisterPartialPayment(null, preset)}
+                            >
+                              +${preset.toLocaleString('es-MX')}
+                            </button>
+                          ) : null
+                        )}
+                        {Math.abs(remainingBalance) > 20 && (
+                          <button
+                            type="button"
+                            className="partial-chip-btn"
+                            onClick={() =>
+                              handleRegisterPartialPayment(
+                                null,
+                                Math.round((Math.abs(remainingBalance) / 2) * 100) / 100
+                              )
+                            }
+                          >
+                            50% ({formatCurrency(Math.abs(remainingBalance) / 2)})
+                          </button>
+                        )}
+                        {hasPartialPayment && (
+                          <button
+                            type="button"
+                            className="partial-chip-btn reset-chip"
+                            onClick={handleResetPartialPayment}
+                            title="Reiniciar abonos a $0.00"
+                          >
+                            Reiniciar ($0)
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  </div>
+                )}
 
                 <div className="settlement-card-action-box">
                   <button 
@@ -654,6 +854,10 @@ export const PosTicketView = () => {
                     {activeSf.isFullySettled ? (
                       <>
                         <Icon name="refresh" size={16} /> <span>Reabrir Cuenta</span>
+                      </>
+                    ) : hasPartialPayment ? (
+                      <>
+                        <Icon name="check" size={18} /> <span>Liquidar Restante ({formatCurrency(Math.abs(remainingBalance))})</span>
                       </>
                     ) : (
                       <>

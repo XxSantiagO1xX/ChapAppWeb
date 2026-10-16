@@ -9,7 +9,7 @@ import { calculateEventTotals } from './calculations.js';
  * @param {Array} events - Lista de todos los eventos
  * @returns {Object} Métricas consolidadas
  */
-export const calculateHistoricalAnalytics = (events = []) => {
+export const calculateHistoricalAnalytics = (events = [], familyGroups = []) => {
   if (!events || events.length === 0) {
     return {
       totalEvents: 0,
@@ -39,7 +39,7 @@ export const calculateHistoricalAnalytics = (events = []) => {
   const subFamilyMap = {};
 
   events.forEach((evt) => {
-    const totals = calculateEventTotals(evt);
+    const totals = calculateEventTotals(evt, null, familyGroups);
     totalSpentHistorical += totals.totalExpenses;
     totalCollectedHistorical += totals.totalCollected;
     totalParticipantsCount += totals.totalParticipantsCount;
@@ -106,13 +106,14 @@ export const calculateHistoricalAnalytics = (events = []) => {
  * Compara dos eventos específicos
  * @param {Object} eventA 
  * @param {Object} eventB 
+ * @param {Array} familyGroups
  * @returns {Object} Diferencias y porcentajes
  */
-export const compareTwoEvents = (eventA, eventB) => {
+export const compareTwoEvents = (eventA, eventB, familyGroups = []) => {
   if (!eventA || !eventB) return null;
 
-  const totalsA = calculateEventTotals(eventA);
-  const totalsB = calculateEventTotals(eventB);
+  const totalsA = calculateEventTotals(eventA, null, familyGroups);
+  const totalsB = calculateEventTotals(eventB, null, familyGroups);
 
   const diffSpent = totalsB.totalExpenses - totalsA.totalExpenses;
   const percentChangeSpent = totalsA.totalExpenses > 0 ? (diffSpent / totalsA.totalExpenses) * 100 : 0;

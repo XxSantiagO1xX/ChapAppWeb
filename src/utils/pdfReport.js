@@ -171,7 +171,8 @@ export const openExecutivePrintReport = (event, totals = null) => {
         <th>Asistentes</th>
         <th class="col-num">Cuota Asignada</th>
         <th class="col-num">Aportes en Compras</th>
-        <th class="col-num">Saldo Neto</th>
+        <th class="col-num">Abonado en Caja</th>
+        <th class="col-num">Saldo / Resta</th>
         <th style="text-align:center;">Estado</th>
       </tr>
     </thead>
@@ -182,12 +183,17 @@ export const openExecutivePrintReport = (event, totals = null) => {
           <td>${sf.attendingCount} de ${sf.membersCount}</td>
           <td class="col-num">${formatCurrency(sf.proportionalShare)}</td>
           <td class="col-num">${formatCurrency(sf.totalPaid)}</td>
-          <td class="col-num ${sf.finalBalance < 0 ? 'text-emerald' : sf.finalBalance > 0 ? 'text-amber' : ''}">
-            ${sf.finalBalance < 0 ? `Reembolso ${formatCurrency(Math.abs(sf.finalBalance))}` : formatCurrency(sf.finalBalance)}
+          <td class="col-num">${formatCurrency(sf.partialPayment || 0)}</td>
+          <td class="col-num ${sf.isFullySettled ? '' : sf.finalBalance < 0 ? 'text-emerald' : sf.finalBalance > 0 ? 'text-amber' : ''}">
+            ${sf.isFullySettled
+              ? '$0.00'
+              : sf.finalBalance < 0
+              ? `Reembolso ${formatCurrency(Math.abs(sf.hasPartialPayment ? sf.remainingBalance : sf.finalBalance))}`
+              : formatCurrency(sf.hasPartialPayment ? sf.remainingBalance : sf.finalBalance)}
           </td>
           <td style="text-align:center;">
             <span class="badge ${sf.isFullySettled ? 'badge-paid' : 'badge-pending'}">
-              ${sf.isFullySettled ? 'Liquidada' : 'Pendiente'}
+              ${sf.isFullySettled ? 'Liquidada' : sf.hasPartialPayment ? `Abono ${sf.paymentProgressPercent}%` : 'Pendiente'}
             </span>
           </td>
         </tr>
