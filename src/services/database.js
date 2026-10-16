@@ -1200,6 +1200,59 @@ export const batchAddExpenses = async (eventId, expensesList) => {
 };
 
 /**
+ * Actualizar un Gasto existente (monto, concepto, categoría o pagador)
+ */
+export const updateExpense = async (eventId, expenseId, expenseData) => {
+  if (!expenseId) return null;
+
+  const updatedFields = {
+    title: (expenseData.title || '').trim(),
+    amount: typeof expenseData.amount === 'number' ? expenseData.amount : parseFloat(expenseData.amount) || 0,
+    category: expenseData.category || 'Comida',
+    paidBy: expenseData.paidBy && isUUID(expenseData.paidBy) ? expenseData.paidBy : null,
+    splitBetween: Array.isArray(expenseData.splitBetween) ? expenseData.splitBetween : [],
+  };
+
+  const supabase = await initSupabaseClient();
+  if (supabase && isUUID(expenseId)) {
+    try {
+      const { error } = await supabase
+        .from('expenses')
+        .update({
+          title: updatedFields.title,
+          amount: updatedFields.amount,
+          expense_category: updatedFields.category,
+          paid_by: updatedFields.paidBy,
+          split_between: updatedFields.splitBetween,
+        })
+        .eq('id', expenseId);
+
+      if (error) {
+        console.error('[Database] Error actualizando gasto en Supabase:', error);
+      } else {
+        console.log('[Database] ✅ Gasto actualizado en Supabase:', updatedFields.title, expenseId);
+      }
+    } catch (e) {
+      console.error('[Database] Excepción actualizando gasto en Supabase:', e);
+    }
+  }
+
+  const list = loadLocalEvents();
+  const event = list.find((e) => e.id === eventId || e.slug === eventId);
+  let updatedExp = { id: expenseId, ...updatedFields };
+  if (event && Array.isArray(event.expenses)) {
+    const idx = event.expenses.findIndex((x) => x.id === expenseId);
+    if (idx >= 0) {
+      updatedExp = { ...event.expenses[idx], ...updatedFields, id: expenseId };
+      event.expenses[idx] = updatedExp;
+      saveLocalEvents(list);
+    }
+  }
+
+  return updatedExp;
+};
+
+/**
  * Eliminar Gasto
  */
 export const deleteExpense = async (eventId, expenseId) => {

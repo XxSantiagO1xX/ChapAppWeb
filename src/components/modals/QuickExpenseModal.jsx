@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
-import { addExpense, batchAddExpenses } from '../../services/database.js';
+import { addExpense, updateExpense, batchAddExpenses } from '../../services/database.js';
 import { 
   extractDataFromReceipt, 
   batchExtractDataFromReceipts, 
@@ -23,7 +23,10 @@ const CATEGORIES = [
 ];
 
 export const QuickExpenseModal = () => {
-  const { activeModal, closeModal, activeEvent, refreshActiveEvent, showToast } = useApp();
+  const { activeModal, modalPayload, closeModal, activeEvent, refreshActiveEvent, showToast } = useApp();
+
+  const editingExpense = modalPayload?.expense || null;
+  const isEditMode = Boolean(editingExpense);
 
   // Modo: 'single' (Individual) | 'batch' (Lote Masivo con IA)
   const [mode, setMode] = useState('single');
@@ -51,19 +54,38 @@ export const QuickExpenseModal = () => {
   useEffect(() => {
     if (activeModal === 'quickExpense') {
       setMode('single');
-      setAmount('');
-      setTitle('');
-      setCategory('Comida');
-      setPayerType('common');
-      setSelectedPayer(null);
       setPayerSearch('');
       setBatchItems([]);
       setBatchProgress({ active: false, current: 0, total: 0 });
       setIsAiScanning(false);
       setSubmitting(false);
       setHighlightInputs(false);
+
+      if (editingExpense) {
+        setAmount(String(editingExpense.amount ?? ''));
+        setTitle(editingExpense.title || '');
+        let normCat = editingExpense.category || 'Comida';
+        if (normCat === 'Transporte') normCat = 'Mantenimiento';
+        if (normCat === 'Hospedaje') normCat = 'Salarios';
+        setCategory(CATEGORIES.some((c) => c.name === normCat) ? normCat : 'Varios');
+
+        if (editingExpense.paidBy && editingExpense.paidBy !== 'caja_comun') {
+          const foundPayer = (activeEvent?.participants || []).find((p) => p.id === editingExpense.paidBy);
+          setPayerType('member');
+          setSelectedPayer(foundPayer || { id: editingExpense.paidBy, name: 'Integrante' });
+        } else {
+          setPayerType('common');
+          setSelectedPayer(null);
+        }
+      } else {
+        setAmount('');
+        setTitle('');
+        setCategory('Comida');
+        setPayerType('common');
+        setSelectedPayer(null);
+      }
     }
-  }, [activeModal]);
+  }, [activeModal, editingExpense, activeEvent]);
 
   if (activeModal !== 'quickExpense' || !activeEvent) return null;
 
@@ -221,7 +243,7 @@ export const QuickExpenseModal = () => {
     setBatchItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // Guardar Gasto Individual
+  // Guardar o Actualizar Gasto Individual
   const handleSingleSubmit = async (e) => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount);
@@ -245,19 +267,31 @@ export const QuickExpenseModal = () => {
 
     setSubmitting(true);
     try {
-      await addExpense(activeEvent.id, {
-        title: title.trim(),
-        amount: parsedAmount,
-        category,
-        paidBy: paidById,
-      });
-
-      await refreshActiveEvent();
-      closeModal();
-      showToast(`Gasto "${title.trim()}" registrado correctamente`, 'success');
+      if (isEditMode && editingExpense?.id) {
+        await updateExpense(activeEvent.id, editingExpense.id, {
+          title: title.trim(),
+          amount: parsedAmount,
+          category,
+          paidBy: paidById,
+          splitBetween: editingExpense.splitBetween || [],
+        });
+        await refreshActiveEvent();
+        closeModal();
+        showToast(`Gasto "${title.trim()}" actualizado correctamente`, 'success');
+      } else {
+        await addExpense(activeEvent.id, {
+          title: title.trim(),
+          amount: parsedAmount,
+          category,
+          paidBy: paidById,
+        });
+        await refreshActiveEvent();
+        closeModal();
+        showToast(`Gasto "${title.trim()}" registrado correctamente`, 'success');
+      }
     } catch (err) {
       console.error('Error guardando gasto:', err);
-      showToast('Error al registrar gasto', 'error');
+      showToast(isEditMode ? 'Error al actualizar gasto' : 'Error al registrar gasto', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -307,9 +341,15 @@ export const QuickExpenseModal = () => {
         <div className="dialog-content">
           <div className="dialog-header">
             <div className="dialog-title-group">
-              <span className="dialog-badge badge-cyan">REGISTRO DE GASTO</span>
+              <span className="dialog-badge badge-cyan">
+                {isEditMode ? 'EDICIÓN DE COMPRA' : 'REGISTRO DE GASTO'}
+              </span>
               <h3 className="dialog-title">
-                {mode === 'single' ? 'Registrar Nueva Compra' : 'Escaneo Masivo por Lotes (Batch)'}
+                {isEditMode
+                  ? 'Editar Gasto Registrado'
+                  : mode === 'single'
+                    ? 'Registrar Nueva Compra'
+                    : 'Escaneo Masivo por Lotes (Batch)'}
               </h3>
             </div>
             <button 
@@ -322,25 +362,27 @@ export const QuickExpenseModal = () => {
             </button>
           </div>
 
-          {/* Selector de Modo: Individual vs Lotes con IA */}
-          <div className="payer-type-toggle-bar" style={{ marginBottom: '14px' }}>
-            <button 
-              type="button" 
-              className={`payer-type-btn ${mode === 'single' ? 'active' : ''}`}
-              onClick={() => setMode('single')}
-            >
-              <Icon name="receipt" size={15} />
-              <span>Gasto Individual</span>
-            </button>
-            <button 
-              type="button" 
-              className={`payer-type-btn ${mode === 'batch' ? 'active' : ''}`}
-              onClick={() => setMode('batch')}
-            >
-              <Icon name="sparkles" size={15} />
-              <span>Lote de Tickets IA (Batch)</span>
-            </button>
-          </div>
+          {/* Selector de Modo: Individual vs Lotes con IA (solo al crear) */}
+          {!isEditMode && (
+            <div className="payer-type-toggle-bar" style={{ marginBottom: '14px' }}>
+              <button 
+                type="button" 
+                className={`payer-type-btn ${mode === 'single' ? 'active' : ''}`}
+                onClick={() => setMode('single')}
+              >
+                <Icon name="receipt" size={15} />
+                <span>Gasto Individual</span>
+              </button>
+              <button 
+                type="button" 
+                className={`payer-type-btn ${mode === 'batch' ? 'active' : ''}`}
+                onClick={() => setMode('batch')}
+              >
+                <Icon name="sparkles" size={15} />
+                <span>Lote de Tickets IA (Batch)</span>
+              </button>
+            </div>
+          )}
 
           {/* ============================================================== */}
           {/* MODO 1: GASTO INDIVIDUAL                                        */}
@@ -566,7 +608,13 @@ export const QuickExpenseModal = () => {
                     disabled={submitting}
                   >
                     <Icon name="check" size={16} />
-                    <span>{submitting ? 'Guardando...' : 'Guardar Gasto'}</span>
+                    <span>
+                      {submitting
+                        ? 'Guardando...'
+                        : isEditMode
+                          ? 'Guardar Cambios'
+                          : 'Guardar Gasto'}
+                    </span>
                   </button>
                 </div>
               </form>
