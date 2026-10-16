@@ -15,12 +15,12 @@ export const CapsuleSidebar = () => {
     isSidebarCollapsed, 
     setIsSidebarCollapsed,
     navigateToView,
-    openModal 
+    familyGroups
   } = useApp();
 
   if (!activeEvent) return null;
 
-  const totals = calculateEventTotals(activeEvent);
+  const totals = calculateEventTotals(activeEvent, null, familyGroups);
 
   return (
     <aside 
@@ -40,17 +40,17 @@ export const CapsuleSidebar = () => {
         <Icon name={isSidebarCollapsed ? 'chevron-right' : 'chevron-left'} size={16} />
       </button>
 
-      {/* Grupo de Pestañas en Cápsula */}
+      {/* Grupo de Pestañas en Cápsula con Identidad Cromática */}
       <div className="capsule-tabs-group">
-        {/* Tab 1: Corte y Tickets */}
+        {/* Tab 1: Corte y Tickets (Cian Turquesa) */}
         <button 
           type="button"
-          className={`capsule-tab-item dash-tab-btn ${activeDashboardTab === 'summary' ? 'active' : ''}`} 
+          className={`capsule-tab-item tab-tone-cyan dash-tab-btn ${activeDashboardTab === 'summary' ? 'active' : ''}`} 
           onClick={() => setActiveDashboardTab('summary')}
           title="1. Corte y Tickets POS"
         >
           <div className="capsule-icon-box">
-            <Icon name="grid" size={20} />
+            <Icon name="grid" size={19} />
           </div>
           <div className="capsule-text-box">
             <span className="capsule-tab-title">Corte y Tickets</span>
@@ -58,15 +58,15 @@ export const CapsuleSidebar = () => {
           </div>
         </button>
 
-        {/* Tab 2: Subfamilias y Asistencia */}
+        {/* Tab 2: Subfamilias y Asistencia (Esmeralda Menta) */}
         <button 
           type="button"
-          className={`capsule-tab-item dash-tab-btn ${activeDashboardTab === 'subfamilies' ? 'active' : ''}`} 
+          className={`capsule-tab-item tab-tone-emerald dash-tab-btn ${activeDashboardTab === 'subfamilies' ? 'active' : ''}`} 
           onClick={() => setActiveDashboardTab('subfamilies')}
           title="2. Subfamilias y Asistencia"
         >
           <div className="capsule-icon-box">
-            <Icon name="users" size={20} />
+            <Icon name="users" size={19} />
           </div>
           <div className="capsule-text-box">
             <span className="capsule-tab-title">Subfamilias</span>
@@ -75,15 +75,15 @@ export const CapsuleSidebar = () => {
           <span className="capsule-count-badge">{activeEvent.participants?.length || 0}</span>
         </button>
 
-        {/* Tab 3: Gastos e Insumos */}
+        {/* Tab 3: Gastos e Insumos (Ámbar Dorado) */}
         <button 
           type="button"
-          className={`capsule-tab-item dash-tab-btn ${activeDashboardTab === 'expenses' ? 'active' : ''}`} 
+          className={`capsule-tab-item tab-tone-amber dash-tab-btn ${activeDashboardTab === 'expenses' ? 'active' : ''}`} 
           onClick={() => setActiveDashboardTab('expenses')}
           title="3. Gastos Registrados"
         >
           <div className="capsule-icon-box">
-            <Icon name="folder" size={20} />
+            <Icon name="receipt" size={19} />
           </div>
           <div className="capsule-text-box">
             <span className="capsule-tab-title">Gastos</span>
@@ -98,9 +98,9 @@ export const CapsuleSidebar = () => {
         <button 
           type="button"
           id="btn-capsule-directory" 
-          className="capsule-shortcut-btn btn-pill-glass" 
+          className="capsule-shortcut-btn tab-tone-purple btn-pill-glass" 
           onClick={() => navigateToView('directory')}
-          title="Directorio General"
+          title="Directorio General y Jerarquía Familiar"
         >
           <div className="capsule-icon-box">
             <Icon name="users" size={18} />

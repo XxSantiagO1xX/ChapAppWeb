@@ -414,7 +414,15 @@ export const PosTicketView = () => {
 
       {/* Columna Derecha: Ticket de Cobro POS de la Subfamilia Seleccionada */}
       <main className="pos-detail-col">
-        <div className="pos-ticket-card glass-panel animate-fade-in">
+        <div
+          className={`pos-ticket-card glass-panel animate-fade-in ${
+            activeSf.isFullySettled
+              ? 'ticket-vault-settled'
+              : hasPartialPayment
+                ? 'ticket-vault-partial'
+                : 'ticket-vault-pending'
+          }`}
+        >
           {/* Cabecera del Ticket POS */}
           <div className="ticket-header">
             <div className="ticket-family-title-group">

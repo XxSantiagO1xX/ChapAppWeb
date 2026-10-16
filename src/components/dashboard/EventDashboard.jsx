@@ -97,6 +97,7 @@ export const EventDashboard = () => {
               <Category3DBars 
                 expenses={activeEvent.expenses || []} 
                 totalExpenses={totals.totalExpenses} 
+                daysCount={activeEvent.availableDays?.length || 4}
               />
             </div>
 

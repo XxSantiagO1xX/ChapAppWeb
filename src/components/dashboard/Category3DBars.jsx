@@ -17,7 +17,8 @@ const LUMINOUS_3D_CATEGORY_COLORS = {
   Varios: { hex: '#A855F7', glow: 'rgba(168, 85, 247, 0.60)', label: 'Varios' },
 };
 
-export const Category3DBars = ({ expenses = [], totalExpenses = 0 }) => {
+export const Category3DBars = ({ expenses = [], totalExpenses = 0, daysCount = 4 }) => {
+  const safeDaysCount = Math.max(1, Number(daysCount) || 4);
   const catTotals = {
     Comida: 0,
     Bebidas: 0,
@@ -44,7 +45,7 @@ export const Category3DBars = ({ expenses = [], totalExpenses = 0 }) => {
     <div className="glass-panel chart-liquid-card animate-fade-in">
       <div className="card-header-compact">
         <div className="header-icon-title-group">
-          <div className="chart-icon-box" style={{ color: '#A855F7' }}>
+          <div className="chart-icon-box" style={{ color: '#A855F7', background: 'rgba(168, 85, 247, 0.12)' }}>
             <Icon name="receipt" size={18} />
           </div>
           <div>
@@ -63,7 +64,7 @@ export const Category3DBars = ({ expenses = [], totalExpenses = 0 }) => {
           const catConfig = LUMINOUS_3D_CATEGORY_COLORS[cat] || LUMINOUS_3D_CATEGORY_COLORS.Varios;
           const color = catConfig.hex;
           const glow = catConfig.glow;
-          const heightPercent = Math.min(94, Math.max(6, percent));
+          const heightPercent = Math.min(94, Math.max(8, percent));
           const animDelay = (idx * 0.12).toFixed(2);
 
           return (
@@ -118,7 +119,7 @@ export const Category3DBars = ({ expenses = [], totalExpenses = 0 }) => {
                     height: `${heightPercent}%`,
                   }}
                 >
-                  {/* Menisco / Tapa Líquida Superior limpia (sin borde/perla blanca) */}
+                  {/* Menisco / Tapa Líquida Superior limpia */}
                   <div className="fluid-meniscus-cap">
                     <div className="meniscus-flare"></div>
                   </div>
@@ -127,7 +128,7 @@ export const Category3DBars = ({ expenses = [], totalExpenses = 0 }) => {
                 </div>
               </div>
 
-              {/* Pedestal Inferior */}
+              {/* Pedestal Inferior con reflejo luminoso */}
               <div className="cylinder-bottom-pedestal">
                 <span className="pedestal-dot"></span>
                 <span className="pedestal-label">{cat}</span>
@@ -142,8 +143,9 @@ export const Category3DBars = ({ expenses = [], totalExpenses = 0 }) => {
         <span>
           Total <strong>{formatCurrency(totalExpenses)}</strong> • Promedio{' '}
           <strong className="text-purple">
-            {formatCurrency(totalExpenses > 0 ? totalExpenses / 4 : 0)}/día
-          </strong>
+            {formatCurrency(totalExpenses > 0 ? totalExpenses / safeDaysCount : 0)}/día
+          </strong>{' '}
+          <span style={{ opacity: 0.7, fontSize: '0.8rem' }}>({safeDaysCount} {safeDaysCount === 1 ? 'día' : 'días'})</span>
         </span>
       </div>
     </div>

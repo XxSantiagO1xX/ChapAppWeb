@@ -184,6 +184,11 @@
   text-shadow: 0 0 24px rgba(0, 240, 255, 0.40), 0 2px 8px rgba(0, 0, 0, 0.75);
 }
 
+[data-theme="light"] .hub-percentage-text-clean {
+  color: #0F172A;
+  text-shadow: 0 0 18px rgba(2, 132, 199, 0.22);
+}
+
 .hub-ratio-sub-clean {
   font-size: 0.82rem;
   font-weight: 700;
@@ -191,6 +196,11 @@
   font-variant-numeric: tabular-nums;
   margin-top: 5px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="light"] .hub-ratio-sub-clean {
+  color: #475569;
+  text-shadow: none;
 }
 
 .liquid-card-footer-pills {
@@ -253,7 +263,7 @@
   grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   align-items: flex-end;
-  height: 220px;
+  height: 224px;
   margin: 12px 0 10px;
   padding: 0 4px;
 }
@@ -281,7 +291,7 @@
 }
 
 .cylinder-percent-text {
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   color: var(--cat-color);
@@ -297,41 +307,44 @@
 }
 
 .liquid-cylinder-chamber {
-  width: 38px;
-  height: 140px;
-  background: rgba(0, 0, 0, 0.45);
+  width: 44px;
+  height: 144px;
+  background: linear-gradient(180deg, rgba(10, 18, 34, 0.55) 0%, rgba(4, 8, 18, 0.75) 100%);
   border-radius: var(--radius-pill);
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: flex-end;
-  box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.75), 0 6px 18px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 3px 12px rgba(0, 0, 0, 0.75),
+    0 8px 22px rgba(0, 0, 0, 0.45),
+    0 0 16px var(--cat-glow, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 [data-theme="light"] .liquid-cylinder-chamber {
-  background: rgba(15, 23, 42, 0.06);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(226, 232, 240, 0.65) 100%);
   border: 1.5px solid rgba(15, 23, 42, 0.14);
-  box-shadow: inset 0 2px 8px rgba(15, 23, 42, 0.12);
+  box-shadow: inset 0 2px 8px rgba(15, 23, 42, 0.08), 0 6px 16px rgba(15, 23, 42, 0.06);
 }
 
 /* Reflejo de cristal lateral */
 .chamber-glass-shine {
   position: absolute;
-  top: 4px;
-  left: 3px;
+  top: 6px;
+  left: 4px;
   width: 5px;
-  bottom: 4px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.45), transparent);
+  bottom: 6px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.50), transparent);
   border-radius: var(--radius-pill);
   z-index: 6;
   pointer-events: none;
 }
 
 [data-theme="light"] .chamber-glass-shine {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.85), transparent);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.92), transparent);
 }
 
 /* Hilo / Rayo láser eléctrico que desciende desde el tope al menisco */
@@ -360,13 +373,17 @@
   100% { opacity: 0.75; transform: scaleX(0.95); }
 }
 
-/* Columna de fluido líquido */
+/* Columna de fluido líquido vibrante */
 .liquid-fluid-stream {
   width: 100%;
   border-radius: 0 0 var(--radius-pill) var(--radius-pill);
   position: relative;
-  background: linear-gradient(180deg, var(--cat-color) 0%, rgba(var(--bg-app-rgb), 0.88) 100%);
-  box-shadow: 0 0 22px var(--cat-glow), inset 0 2px 6px rgba(255, 255, 255, 0.5);
+  background: linear-gradient(
+    180deg,
+    var(--cat-color) 0%,
+    color-mix(in srgb, var(--cat-color) 65%, #070D18) 100%
+  );
+  box-shadow: 0 0 24px var(--cat-glow), inset 0 2px 8px rgba(255, 255, 255, 0.55);
   transition: height 1s cubic-bezier(0.16, 1, 0.3, 1);
   animation: liquidRise 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   animation-delay: var(--anim-delay, 0s);
@@ -381,14 +398,14 @@
 /* Menisco de superficie neón limpio */
 .fluid-meniscus-cap {
   position: absolute;
-  top: 0;
+  top: -3px;
   left: 0;
   right: 0;
   height: 8px;
   background: var(--cat-color);
-  box-shadow: 0 0 14px var(--cat-glow), 0 0 6px var(--cat-color);
+  box-shadow: 0 0 14px var(--cat-glow), 0 0 6px #FFFFFF;
   border-radius: 50%;
-  opacity: 0.95;
+  opacity: 0.98;
   z-index: 4;
 }
 
@@ -397,6 +414,13 @@
   align-items: center;
   gap: 5px;
   margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="light"] .cylinder-bottom-pedestal {
+  background: rgba(15, 23, 42, 0.04);
 }
 
 .pedestal-dot {
@@ -408,7 +432,7 @@
 }
 
 .pedestal-label {
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: var(--text-secondary);
   white-space: nowrap;
@@ -434,7 +458,8 @@
 }
 
 [data-theme="light"] .chart-summary-footer-bar {
-  background: rgba(255, 255, 255, 0.70);
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(226, 232, 240, 0.95);
 }
 
 /* ==========================================================================
@@ -688,11 +713,40 @@
 }
 
 .pos-ticket-card {
-  padding: 24px 26px;
+  position: relative;
+  overflow: hidden;
+  padding: 26px 28px 24px 28px;
   border-radius: var(--radius-2xl);
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.pos-ticket-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.25), #00F0FF, rgba(0, 240, 255, 0.25));
+  box-shadow: 0 2px 14px rgba(0, 240, 255, 0.45);
+  z-index: 2;
+}
+
+.pos-ticket-card.ticket-vault-settled::before {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.20), #10B981, #34D399, rgba(16, 185, 129, 0.20));
+  box-shadow: 0 2px 16px rgba(16, 185, 129, 0.55);
+}
+
+.pos-ticket-card.ticket-vault-partial::before {
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.20), #00F0FF, #38BDF8, rgba(0, 240, 255, 0.20));
+  box-shadow: 0 2px 16px rgba(0, 240, 255, 0.55);
+}
+
+.pos-ticket-card.ticket-vault-pending::before {
+  background: linear-gradient(90deg, rgba(244, 63, 94, 0.20), #F43F5E, #FB7185, rgba(244, 63, 94, 0.20));
+  box-shadow: 0 2px 16px rgba(244, 63, 94, 0.50);
 }
 
 /* Grilla Particionada de 2 Columnas para el Cuerpo del Ticket POS */
