@@ -11,6 +11,8 @@ import { Icon } from '../../utils/icons.jsx';
 const CAT_COLORS = {
   Comida: '#F59E0B',
   Bebidas: '#00F0FF',
+  Mantenimiento: '#38BDF8',
+  Salarios: '#FF7A00',
   Transporte: '#38BDF8',
   Hospedaje: '#FF7A00',
   Varios: '#A855F7',
@@ -56,68 +58,73 @@ export const AnalyticsModal = () => {
             </button>
           </div>
 
-          <div className="analytics-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* 4 Métricas Macro */}
-            <div className="hud-metrics-grid">
-              <div className="hud-metric-card glass-panel metric-cyan">
-                <div className="hud-header">
-                  <span className="hud-label">TOTAL HISTÓRICO GASTADO</span>
-                  <span className="hud-icon"><Icon name="receipt" size={16} /></span>
+          <div className="analytics-modal-body">
+            {/* 4 Métricas Macro Compactas con acento neón */}
+            <div className="cut-modal-metrics-grid">
+              <div className="cut-metric-box metric-accent-cyan">
+                <div className="cut-metric-top">
+                  <span>Total Histórico Gastado</span>
+                  <Icon name="receipt" size={14} className="text-cyan" />
                 </div>
-                <div className="hud-value">{formatCurrency(analytics.totalSpentHistorical)}</div>
-                <div className="hud-sub">{analytics.totalEvents} eventos registrados</div>
+                <strong>{formatCurrency(analytics.totalSpentHistorical)}</strong>
+                <small className="cut-metric-sub">{analytics.totalEvents} eventos registrados</small>
               </div>
 
-              <div className="hud-metric-card glass-panel metric-emerald">
-                <div className="hud-header">
-                  <span className="hud-label">RECAUDACIÓN TOTAL</span>
-                  <span className="hud-icon"><Icon name="trending-up" size={16} /></span>
+              <div className="cut-metric-box metric-accent-emerald">
+                <div className="cut-metric-top">
+                  <span>Recaudación Histórica</span>
+                  <Icon name="trending-up" size={14} className="text-emerald" />
                 </div>
-                <div className="hud-value text-emerald">{formatCurrency(analytics.totalCollectedHistorical)}</div>
-                <div className="hud-sub">Fondo común histórico</div>
+                <strong className="text-emerald">{formatCurrency(analytics.totalCollectedHistorical)}</strong>
+                <small className="cut-metric-sub">Fondo común consolidado</small>
               </div>
 
-              <div className="hud-metric-card glass-panel metric-amber">
-                <div className="hud-header">
-                  <span className="hud-label">PROMEDIO POR EVENTO</span>
-                  <span className="hud-icon"><Icon name="chart" size={16} /></span>
+              <div className="cut-metric-box metric-accent-amber">
+                <div className="cut-metric-top">
+                  <span>Promedio por Evento</span>
+                  <Icon name="chart" size={14} className="text-amber" />
                 </div>
-                <div className="hud-value text-amber">{formatCurrency(analytics.averageSpentPerEvent)}</div>
-                <div className="hud-sub">Por vacaciones anuales</div>
+                <strong className="text-amber">{formatCurrency(analytics.averageSpentPerEvent)}</strong>
+                <small className="cut-metric-sub">Por vacaciones anuales</small>
               </div>
 
-              <div className="hud-metric-card glass-panel metric-purple">
-                <div className="hud-header">
-                  <span className="hud-label">INTEGRANTES TOTALES</span>
-                  <span className="hud-icon"><Icon name="users" size={16} /></span>
+              <div className="cut-metric-box metric-accent-purple">
+                <div className="cut-metric-top">
+                  <span>Asistencias Acumuladas</span>
+                  <Icon name="users" size={14} className="text-cyan" />
                 </div>
-                <div className="hud-value text-cyan">{analytics.totalParticipantsHistorical}</div>
-                <div className="hud-sub">Padrón consolidado</div>
+                <strong className="text-cyan">{analytics.totalParticipantsHistorical}</strong>
+                <small className="cut-metric-sub">Padrón histórico total</small>
               </div>
             </div>
 
             {/* Sección 1: Distribución Global por Rubros */}
-            <div className="glass-panel" style={{ padding: '20px', borderRadius: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <strong style={{ fontSize: '1.0rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Icon name="receipt" size={16} /> Distribución Acumulada por Categoría
-                </strong>
-                <span className="badge-pill badge-neutral">5 Categorías</span>
+            <div className="analytics-section-card glass-panel">
+              <div className="analytics-section-header">
+                <div className="analytics-section-title">
+                  <Icon name="receipt" size={16} className="text-cyan" />
+                  <span>Distribución Acumulada por Categoría</span>
+                </div>
+                <span className="badge-pill badge-neutral">5 Rubros</span>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className="analytics-categories-list">
                 {Object.entries(analytics.categoryDistribution).map(([cat, amt]) => {
                   const pct = totalCatAmount > 0 ? (amt / totalCatAmount) * 100 : 0;
                   const color = CAT_COLORS[cat] || '#00F0FF';
                   return (
-                    <div key={cat} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                        <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
+                    <div key={cat} className="analytics-category-item">
+                      <div className="analytics-category-row">
+                        <span className="analytics-category-name">
+                          <span
+                            className="analytics-category-dot"
+                            style={{ background: color, boxShadow: `0 0 8px ${color}` }}
+                          />
                           {cat}
                         </span>
-                        <span>
-                          <strong>{formatCurrency(amt)}</strong> ({pct.toFixed(1)}%)
+                        <span className="analytics-category-stats">
+                          <strong>{formatCurrency(amt)}</strong>
+                          <span className="analytics-category-pct">{pct.toFixed(1)}%</span>
                         </span>
                       </div>
                       <div className="progress-track-glass" style={{ height: '6px' }}>
@@ -126,8 +133,9 @@ export const AnalyticsModal = () => {
                             width: `${pct}%`, 
                             height: '100%', 
                             background: color, 
+                            boxShadow: `0 0 8px ${color}66`,
                             borderRadius: '9999px',
-                            transition: 'width 0.8s ease',
+                            transition: 'width 0.6s ease',
                           }} 
                         />
                       </div>
@@ -139,12 +147,16 @@ export const AnalyticsModal = () => {
 
             {/* Sección 2: Comparador de Eventos */}
             {events.length > 1 && (
-              <div className="glass-panel" style={{ padding: '20px', borderRadius: '18px' }}>
-                <strong style={{ display: 'block', fontSize: '1.0rem', color: 'var(--text-primary)', marginBottom: '12px' }}>
-                  ⚖️ Comparador Directo entre Eventos
-                </strong>
+              <div className="analytics-section-card glass-panel">
+                <div className="analytics-section-header">
+                  <div className="analytics-section-title">
+                    <Icon name="chart" size={16} className="text-amber" />
+                    <span>Comparador Directo entre Eventos</span>
+                  </div>
+                  <span className="badge-pill badge-cyan">A vs B</span>
+                </div>
 
-                <div className="form-row-2" style={{ marginBottom: '14px' }}>
+                <div className="form-row-2" style={{ marginBottom: '12px' }}>
                   <div className="form-group">
                     <label>Evento Base (A):</label>
                     <select 
@@ -172,13 +184,13 @@ export const AnalyticsModal = () => {
                 </div>
 
                 {comparison && (
-                  <div className="cut-modal-metrics-grid">
+                  <div className="cut-modal-metrics-grid" style={{ marginBottom: 0 }}>
                     <div className="cut-metric-box">
-                      <span>Total Evento A</span>
+                      <span>Total Evento A ({comparison.eventA.year})</span>
                       <strong>{formatCurrency(comparison.eventA.totals.totalExpenses)}</strong>
                     </div>
                     <div className="cut-metric-box">
-                      <span>Total Evento B</span>
+                      <span>Total Evento B ({comparison.eventB.year})</span>
                       <strong>{formatCurrency(comparison.eventB.totals.totalExpenses)}</strong>
                     </div>
                     <div className="cut-metric-box">
@@ -199,15 +211,16 @@ export const AnalyticsModal = () => {
             )}
 
             {/* Sección 3: Resumen Histórico por Subfamilia */}
-            <div className="glass-panel" style={{ padding: '20px', borderRadius: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <strong style={{ fontSize: '1.0rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Icon name="users" size={16} /> Aportaciones y Participación por Subfamilia
-                </strong>
+            <div className="analytics-section-card glass-panel">
+              <div className="analytics-section-header">
+                <div className="analytics-section-title">
+                  <Icon name="users" size={16} className="text-emerald" />
+                  <span>Aportaciones y Participación por Subfamilia</span>
+                </div>
                 <span className="badge-pill badge-cyan">{analytics.subFamilyHistoricalStats.length} familias</span>
               </div>
 
-              <div className="cut-table-scroll" style={{ maxHeight: '220px' }}>
+              <div className="cut-table-scroll" style={{ maxHeight: '220px', marginTop: 0 }}>
                 <table className="pos-table">
                   <thead>
                     <tr>
@@ -220,9 +233,18 @@ export const AnalyticsModal = () => {
                   <tbody>
                     {analytics.subFamilyHistoricalStats.map((sf) => (
                       <tr key={sf.subFamilyName}>
-                        <td><strong><Icon name="users" size={14} /> {sf.subFamilyName}</strong></td>
-                        <td style={{ textAlign: 'center' }}>{sf.timesParticipated}</td>
-                        <td className="col-num text-emerald"><strong>{formatCurrency(sf.totalPaidPurchases)}</strong></td>
+                        <td>
+                          <div className="cut-sf-cell">
+                            <Icon name="users" size={14} className="text-cyan" />
+                            <strong>{sf.subFamilyName}</strong>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className="badge-pill badge-neutral">{sf.timesParticipated}</span>
+                        </td>
+                        <td className="col-num text-emerald">
+                          <strong>{formatCurrency(sf.totalPaidPurchases)}</strong>
+                        </td>
                         <td className="col-num">{formatCurrency(sf.totalAssignedQuota)}</td>
                       </tr>
                     ))}
@@ -232,9 +254,10 @@ export const AnalyticsModal = () => {
             </div>
           </div>
 
-          <div className="dialog-footer" style={{ marginTop: '16px' }}>
+          <div className="dialog-footer" style={{ marginTop: '14px' }}>
             <button type="button" className="btn-pill-primary" onClick={closeModal}>
-              Cerrar Analítica
+              <Icon name="check" size={16} />
+              <span>Cerrar Analítica</span>
             </button>
           </div>
         </div>

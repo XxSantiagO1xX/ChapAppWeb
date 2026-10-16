@@ -17,11 +17,22 @@ export const EventCard = ({ event }) => {
       ? Math.min(100, Math.round((totals.totalCollected / totals.totalToCollect) * 100))
       : 100;
 
+  const daysCount = Array.isArray(event.availableDays) && event.availableDays.length > 0
+    ? event.availableDays.length
+    : 4;
+
+  const handleEdit = (e) => {
+    e.stopPropagation();
+    openModal('newEvent', { event });
+  };
+
   const handleToggleArchive = async (e) => {
     e.stopPropagation();
     try {
       await archiveEvent(event.id, !event.isArchived);
-      setEvents((prev) => prev.map((item) => (item.id === event.id ? { ...item, isArchived: !event.isArchived } : item)));
+      setEvents((prev) =>
+        prev.map((item) => (item.id === event.id ? { ...item, isArchived: !event.isArchived } : item))
+      );
       showToast(
         !event.isArchived ? `Evento "${event.title}" archivado` : `Evento "${event.title}" reactivado`,
         'info'
@@ -61,6 +72,9 @@ export const EventCard = ({ event }) => {
         <div className="event-card-header">
           <div className="event-card-badges-row">
             <span className="event-year-tag">Año {event.year}</span>
+            <span className="event-days-tag">
+              <Icon name="calendar" size={12} /> {daysCount} {daysCount === 1 ? 'día' : 'días'}
+            </span>
             <span className={`badge-status ${event.isArchived ? 'status-archived' : 'status-active'}`}>
               {event.isArchived ? 'Archivado' : 'Activo'}
             </span>
@@ -68,33 +82,55 @@ export const EventCard = ({ event }) => {
           <div className="event-card-menu-group" onClick={(e) => e.stopPropagation()}>
             <button 
               type="button"
-              className="btn-icon-glass btn-toggle-archive-card" 
+              className="btn-icon-glass btn-card-action-sm" 
+              onClick={handleEdit}
+              title="Editar título, año o días del evento"
+              aria-label="Editar evento"
+            >
+              <Icon name="edit" size={15} />
+            </button>
+            <button 
+              type="button"
+              className="btn-icon-glass btn-card-action-sm btn-toggle-archive-card" 
               onClick={handleToggleArchive}
               title={event.isArchived ? 'Desarchivar evento' : 'Archivar evento'}
               aria-label={event.isArchived ? 'Desarchivar' : 'Archivar'}
             >
-              <Icon name="archive" size={16} />
+              <Icon name="archive" size={15} />
             </button>
             <button 
               type="button"
-              className="btn-icon-danger btn-delete-event-card" 
+              className="btn-icon-danger btn-card-action-sm btn-delete-event-card" 
               onClick={handleDelete}
               title="Eliminar evento"
               aria-label="Eliminar"
             >
-              <Icon name="trash" size={16} />
+              <Icon name="trash" size={15} />
             </button>
           </div>
         </div>
 
         <h3 className="event-card-title">{event.title}</h3>
 
+        {/* Mini KPIs Financieros del Evento */}
+        <div className="event-card-kpis-row">
+          <div className="event-card-kpi-box">
+            <span className="event-kpi-label">Total Gastado</span>
+            <strong className="event-kpi-val text-cyan">{formatCurrency(totals.totalExpenses)}</strong>
+          </div>
+          <div className="event-card-kpi-box">
+            <span className="event-kpi-label">Recaudado</span>
+            <strong className="event-kpi-val text-emerald">{formatCurrency(totals.totalCollected)}</strong>
+          </div>
+        </div>
+
         {/* Barra de Progreso de Recaudación */}
         <div className="event-progress-section">
           <div className="event-progress-labels">
-            <span className="progress-title">Meta de Recaudación</span>
+            <span className="progress-title">Avance de Liquidación</span>
             <span className="progress-stats text-emerald">
-              <strong>{collectionPercent}%</strong> ({formatCurrency(totals.totalCollected)})
+              <strong>{collectionPercent}%</strong>
+              {totals.pendingToCollect > 0.01 ? ` • Falta ${formatCurrency(totals.pendingToCollect)}` : ' • Completado'}
             </span>
           </div>
           <div className="progress-track-glass">
@@ -105,7 +141,7 @@ export const EventCard = ({ event }) => {
 
       <div className="event-card-footer">
         <div className="event-members-pill">
-          <Icon name="users" size={15} />
+          <Icon name="users" size={14} />
           <span>{totals.totalAttendingCount} de {totals.totalParticipantsCount} asistentes</span>
         </div>
         <button 

@@ -592,6 +592,92 @@ export const archiveEvent = async (id, isArchived) => {
 };
 
 /**
+ * Actualizar Evento (título, año, días cobrables)
+ */
+export const updateEvent = async (id, eventData = {}) => {
+  const list = loadLocalEvents();
+  const found = list.find((e) => e.id === id || e.slug === id);
+
+  const nextTitle = (eventData.title ?? found?.title ?? '').trim() || 'Evento';
+  const nextYear = Number(eventData.year) || found?.year || new Date().getFullYear();
+  const nextDays = Array.isArray(eventData.availableDays) && eventData.availableDays.length > 0
+    ? eventData.availableDays
+    : found?.availableDays || ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
+
+  const oldMaxDays = found?.availableDays?.length || 4;
+  const newMaxDays = nextDays.length;
+
+  // Ajustar los días activos de los participantes si cambió el número de días
+  if (found && Array.isArray(found.participants) && oldMaxDays !== newMaxDays) {
+    found.participants = found.participants.map((p) => {
+      const currentActiveCount = Array.isArray(p.activeDays) ? p.activeDays.length : oldMaxDays;
+      // Si el integrante asistía todos los días anteriores, expandir al nuevo total; si no, recortar al máximo nuevo
+      const nextActiveCount =
+        currentActiveCount >= oldMaxDays ? newMaxDays : Math.min(currentActiveCount, newMaxDays);
+      return {
+        ...p,
+        activeDays: nextDays.slice(0, Math.max(1, nextActiveCount)),
+      };
+    });
+  }
+
+  const supabase = await initSupabaseClient();
+  if (supabase) {
+    try {
+      await supabase
+        .from('events')
+        .update({
+          title: nextTitle,
+          year: nextYear,
+          available_days: nextDays,
+        })
+        .eq('id', id);
+
+      if (found && Array.isArray(found.participants) && oldMaxDays !== newMaxDays) {
+        for (const p of found.participants) {
+          await supabase
+            .from('participants')
+            .update({
+              active_days: {
+                days: p.activeDays,
+                isAttending: p.isAttending !== false,
+                isSettled: Boolean(p.isSettled),
+                subFamily: p.subFamily || 'Familia General',
+                grupo_familiar_id: p.grupo_familiar_id || null,
+                nombre: p.nombre,
+                apellido_paterno: p.apellido_paterno,
+                apellido_materno: p.apellido_materno,
+                telefono: p.telefono,
+                categoria: p.categoria || p.category,
+                ponderacion: p.ponderacion || p.weight,
+                subFamilyPartialPayment: p.subFamilyPartialPayment || 0,
+              },
+            })
+            .eq('id', p.id);
+        }
+      }
+    } catch (e) {
+      console.error('[Database] Error actualizando evento en Supabase:', e);
+    }
+  }
+
+  if (found) {
+    found.title = nextTitle;
+    found.year = nextYear;
+    found.availableDays = nextDays;
+    saveLocalEvents(list);
+    return { ...found };
+  }
+
+  return {
+    id,
+    title: nextTitle,
+    year: nextYear,
+    availableDays: nextDays,
+  };
+};
+
+/**
  * Eliminar evento
  */
 export const deleteEvent = async (id) => {

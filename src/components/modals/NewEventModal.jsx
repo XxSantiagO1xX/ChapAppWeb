@@ -1,14 +1,17 @@
 /**
- * ChapApp - Modal Crear Nuevo Evento (NewEventModal) React
+ * ChapApp - Modal Crear / Editar Evento (NewEventModal) React
  */
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
-import { createEvent, getGlobalDirectory } from '../../services/database.js';
+import { createEvent, updateEvent, getGlobalDirectory } from '../../services/database.js';
 import { Icon } from '../../utils/icons.jsx';
 
 export const NewEventModal = () => {
-  const { activeModal, closeModal, setEvents, selectEvent, showToast } = useApp();
+  const { activeModal, modalPayload, closeModal, setEvents, selectEvent, activeEvent, refreshActiveEvent, showToast } = useApp();
+
+  const editingEvent = modalPayload?.event || null;
+  const isEditMode = Boolean(editingEvent);
 
   const [title, setTitle] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
@@ -19,20 +22,30 @@ export const NewEventModal = () => {
 
   useEffect(() => {
     if (activeModal === 'newEvent') {
-      try {
-        const dir = getGlobalDirectory();
-        setDirectory(dir || []);
-        if (dir && dir.length > 0) {
-          setSelectedDirectoryIds(new Set(dir.map((d) => d.id)));
+      if (editingEvent) {
+        setTitle(editingEvent.title || '');
+        setYear(editingEvent.year || new Date().getFullYear());
+        setDays(
+          Array.isArray(editingEvent.availableDays) && editingEvent.availableDays.length > 0
+            ? editingEvent.availableDays.length
+            : 4
+        );
+      } else {
+        try {
+          const dir = getGlobalDirectory();
+          setDirectory(dir || []);
+          if (dir && dir.length > 0) {
+            setSelectedDirectoryIds(new Set(dir.map((d) => d.id)));
+          }
+        } catch (err) {
+          console.warn('[NewEventModal] Error cargando directorio:', err);
         }
-      } catch (err) {
-        console.warn('[NewEventModal] Error cargando directorio:', err);
+        setTitle('');
+        setYear(new Date().getFullYear());
+        setDays(4);
       }
-      setTitle('');
-      setYear(new Date().getFullYear());
-      setDays(4);
     }
-  }, [activeModal]);
+  }, [activeModal, editingEvent]);
 
   if (activeModal !== 'newEvent') return null;
 
@@ -67,42 +80,86 @@ export const NewEventModal = () => {
     try {
       const numDays = Math.max(1, Math.min(30, parseInt(days, 10) || 4));
       const availableDays = Array.from({ length: numDays }, (_, i) => `Día ${i + 1}`);
+      const parsedYear = parseInt(year, 10) || new Date().getFullYear();
 
-      // Participantes seleccionados del directorio
-      const participants = directory
-        .filter((d) => selectedDirectoryIds.has(d.id))
-        .map((d) => ({
-          name: d.name,
-          nombre: d.nombre || d.name?.split(' ')[0] || '',
-          apellido_paterno: d.apellido_paterno || '',
-          apellido_materno: d.apellido_materno || '',
-          telefono: d.telefono || '',
-          categoria: d.categoria || d.category || 'adulto',
-          category: d.category || d.categoria || 'adulto',
-          ponderacion: typeof d.ponderacion === 'number' ? d.ponderacion : (typeof d.weight === 'number' ? d.weight : (d.category === 'nino' ? 0.5 : 1.0)),
-          weight: typeof d.weight === 'number' ? d.weight : (typeof d.ponderacion === 'number' ? d.ponderacion : (d.category === 'nino' ? 0.5 : 1.0)),
-          grupo_familiar_id: d.grupo_familiar_id || null,
-          subFamily: d.subFamily || 'Familia General',
-          activeDays: [...availableDays],
-          isAttending: true,
-          isSettled: false,
-        }));
+      if (isEditMode && editingEvent?.id) {
+        const updated = await updateEvent(editingEvent.id, {
+          title: title.trim(),
+          year: parsedYear,
+          availableDays,
+        });
 
-      const newEvt = await createEvent({
-        title: title.trim(),
-        year: parseInt(year, 10) || new Date().getFullYear(),
-        availableDays,
-        participants,
-        expenses: [],
-      });
+        setEvents((prev) =>
+          prev.map((item) =>
+            item.id === editingEvent.id
+              ? {
+                  ...item,
+                  title: updated.title,
+                  year: updated.year,
+                  availableDays: updated.availableDays,
+                  participants: updated.participants || item.participants,
+                }
+              : item
+          )
+        );
 
-      setEvents((prev) => [newEvt, ...prev]);
-      closeModal();
-      showToast(`Evento "${newEvt.title}" creado con éxito`, 'success');
-      selectEvent(newEvt.id);
+        if (activeEvent && activeEvent.id === editingEvent.id) {
+          await refreshActiveEvent();
+        }
+
+        closeModal();
+        showToast(`Evento "${updated.title}" actualizado correctamente`, 'success');
+      } else {
+        // Participantes seleccionados del directorio
+        const participants = directory
+          .filter((d) => selectedDirectoryIds.has(d.id))
+          .map((d) => ({
+            name: d.name,
+            nombre: d.nombre || d.name?.split(' ')[0] || '',
+            apellido_paterno: d.apellido_paterno || '',
+            apellido_materno: d.apellido_materno || '',
+            telefono: d.telefono || '',
+            categoria: d.categoria || d.category || 'adulto',
+            category: d.category || d.categoria || 'adulto',
+            ponderacion:
+              typeof d.ponderacion === 'number'
+                ? d.ponderacion
+                : typeof d.weight === 'number'
+                  ? d.weight
+                  : d.category === 'nino'
+                    ? 0.5
+                    : 1.0,
+            weight:
+              typeof d.weight === 'number'
+                ? d.weight
+                : typeof d.ponderacion === 'number'
+                  ? d.ponderacion
+                  : d.category === 'nino'
+                    ? 0.5
+                    : 1.0,
+            grupo_familiar_id: d.grupo_familiar_id || null,
+            subFamily: d.subFamily || 'Familia General',
+            activeDays: [...availableDays],
+            isAttending: true,
+            isSettled: false,
+          }));
+
+        const newEvt = await createEvent({
+          title: title.trim(),
+          year: parsedYear,
+          availableDays,
+          participants,
+          expenses: [],
+        });
+
+        setEvents((prev) => [newEvt, ...prev]);
+        closeModal();
+        showToast(`Evento "${newEvt.title}" creado con éxito`, 'success');
+        selectEvent(newEvt.id);
+      }
     } catch (err) {
-      console.error('Error creando evento:', err);
-      showToast('Error al crear evento', 'error');
+      console.error('Error guardando evento:', err);
+      showToast(isEditMode ? 'Error al actualizar evento' : 'Error al crear evento', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -119,8 +176,12 @@ export const NewEventModal = () => {
         <div className="dialog-content">
           <div className="dialog-header">
             <div className="dialog-title-group">
-              <span className="dialog-badge">NUEVO EVENTO</span>
-              <h3 className="dialog-title">Crear Evento Anual</h3>
+              <span className="dialog-badge badge-cyan">
+                {isEditMode ? 'CONFIGURACIÓN DE EVENTO' : 'NUEVO EVENTO'}
+              </span>
+              <h3 className="dialog-title">
+                {isEditMode ? 'Editar Evento Anual' : 'Crear Evento Anual'}
+              </h3>
             </div>
             <button 
               type="button" 
@@ -143,7 +204,7 @@ export const NewEventModal = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required 
-                autocomplete="off"
+                autoComplete="off"
               />
             </div>
 
@@ -174,38 +235,50 @@ export const NewEventModal = () => {
               </div>
             </div>
 
-            <div className="directory-picker-section">
-              <div className="picker-header">
-                <span className="picker-title">
-                  Importar Integrantes del Directorio ({selectedDirectoryIds.size} seleccionados)
-                </span>
-                <button 
-                  type="button" 
-                  onClick={handleSelectAll} 
-                  className="btn-link-cyan"
-                >
-                  {selectedDirectoryIds.size === directory.length ? 'Deseleccionar Todos' : 'Seleccionar Todos'}
-                </button>
+            {isEditMode ? (
+              <div className="payer-common-banner glass-panel animate-fade-in">
+                <div className="common-banner-icon">📅</div>
+                <div className="common-banner-text">
+                  <strong>Ajuste Automático de Estancia</strong>
+                  <span>
+                    Si cambias la cantidad de días cobrables, la estancia de los asistentes se ajustará proporcionalmente al nuevo calendario ({days} {Number(days) === 1 ? 'día' : 'días'}).
+                  </span>
+                </div>
               </div>
+            ) : (
+              <div className="directory-picker-section">
+                <div className="picker-header">
+                  <span className="picker-title">
+                    Importar Integrantes del Directorio ({selectedDirectoryIds.size} seleccionados)
+                  </span>
+                  <button 
+                    type="button" 
+                    onClick={handleSelectAll} 
+                    className="btn-link-cyan"
+                  >
+                    {selectedDirectoryIds.size === directory.length ? 'Deseleccionar Todos' : 'Seleccionar Todos'}
+                  </button>
+                </div>
 
-              <div className="directory-checklist-scroll">
-                {directory.length === 0 ? (
-                  <p className="empty-hint-text">No hay contactos en el directorio maestro aún.</p>
-                ) : (
-                  directory.map((d) => (
-                    <label key={d.id} className="directory-check-item">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedDirectoryIds.has(d.id)}
-                        onChange={() => handleToggleParticipant(d.id)}
-                      />
-                      <span className="dir-item-name">{d.name}</span>
-                      <span className="dir-item-sub">({d.subFamily || 'General'})</span>
-                    </label>
-                  ))
-                )}
+                <div className="directory-checklist-scroll">
+                  {directory.length === 0 ? (
+                    <p className="empty-hint-text">No hay contactos en el directorio maestro aún.</p>
+                  ) : (
+                    directory.map((d) => (
+                      <label key={d.id} className="directory-check-item">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedDirectoryIds.has(d.id)}
+                          onChange={() => handleToggleParticipant(d.id)}
+                        />
+                        <span className="dir-item-name">{d.name}</span>
+                        <span className="dir-item-sub">({d.subFamily || 'General'})</span>
+                      </label>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="dialog-footer">
               <button type="button" className="btn-pill-glass" onClick={closeModal}>
@@ -216,8 +289,14 @@ export const NewEventModal = () => {
                 className="btn-pill-primary" 
                 disabled={submitting}
               >
-                <Icon name="plus" size={16} />
-                <span>{submitting ? 'Creando...' : 'Crear Evento'}</span>
+                <Icon name={isEditMode ? 'check' : 'plus'} size={16} />
+                <span>
+                  {submitting
+                    ? 'Guardando...'
+                    : isEditMode
+                      ? 'Guardar Cambios'
+                      : 'Crear Evento'}
+                </span>
               </button>
             </div>
           </form>
