@@ -161,8 +161,8 @@ export const AppProvider = ({ children }) => {
   }, [showToast]);
 
   // Cargar eventos iniciales desde Supabase o Caché local
-  const loadInitialData = useCallback(async () => {
-    setLoading(true);
+  const loadInitialData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const allEvents = await getAllEvents();
       setEvents(allEvents || []);
@@ -171,8 +171,8 @@ export const AppProvider = ({ children }) => {
       const groups = await getAllFamilyGroups();
       setFamilyGroups(groups || []);
 
-      // Si la URL tiene un hash específico
-      if (typeof window !== 'undefined') {
+      // Si la URL tiene un hash específico (solo en carga inicial)
+      if (!silent && typeof window !== 'undefined') {
         const hash = window.location.hash;
         if (hash === '#/directory') {
           setCurrentView('directory');
@@ -188,12 +188,12 @@ export const AppProvider = ({ children }) => {
     } catch (err) {
       console.warn('[AppProvider] Error cargando eventos iniciales:', err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadInitialData();
+    loadInitialData(false);
   }, [loadInitialData]);
 
   // Manejar navegación por historial del navegador (hashchange)
@@ -222,30 +222,36 @@ export const AppProvider = ({ children }) => {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  // Suscripción Realtime a Supabase con pulso visual y actualización reactiva
+  // Suscripción Realtime a Supabase con pulso visual y actualización reactiva silenciosa (debounced)
   useEffect(() => {
-    const unsubscribe = subscribeToEventsListRealtime(async () => {
-      console.log('[AppProvider] Cambio detectado en Supabase Realtime, actualizando...');
-      setLiveSyncPulse(true);
-      setTimeout(() => setLiveSyncPulse(false), 2500);
+    let debounceTimer = null;
 
-      // Refrescar lista de eventos y directorio
-      await loadInitialData();
+    const unsubscribe = subscribeToEventsListRealtime(() => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        console.log('[AppProvider] Cambio detectado en Supabase Realtime, sincronizando en segundo plano...');
+        setLiveSyncPulse(true);
+        setTimeout(() => setLiveSyncPulse(false), 2500);
 
-      // Si hay un evento abierto en este dispositivo, refrescar su detalle
-      if (activeEventRef.current?.id) {
-        try {
-          const refreshed = await getEventById(activeEventRef.current.id);
-          if (refreshed) {
-            setActiveEvent(refreshed);
+        // Refrescar lista de eventos y directorio de forma silenciosa (sin parpadeo de loading)
+        await loadInitialData(true);
+
+        // Si hay un evento abierto en este dispositivo, refrescar su detalle inmediatamente
+        if (activeEventRef.current?.id) {
+          try {
+            const refreshed = await getEventById(activeEventRef.current.id);
+            if (refreshed) {
+              setActiveEvent(refreshed);
+            }
+          } catch (err) {
+            console.warn('[AppProvider] Error refrescando evento activo en Realtime:', err);
           }
-        } catch (err) {
-          console.warn('[AppProvider] Error refrescando evento activo en Realtime:', err);
         }
-      }
+      }, 350);
     });
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, [loadInitialData]);

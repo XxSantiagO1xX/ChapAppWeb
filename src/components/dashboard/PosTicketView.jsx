@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { formatCurrency, calculateEventTotals } from '../../utils/calculations.js';
 import { generateSubfamilyWhatsAppText } from '../../utils/reports.js';
+import { openSubfamilyTicketPrintReport, downloadSubfamilyTicketImage } from '../../utils/pdfReport.js';
 import { 
   updateParticipant, 
   settleSubFamily, 
@@ -254,9 +255,24 @@ export const PosTicketView = () => {
     window.open(url, '_blank');
   };
 
-  // Imprimir Ticket
+  // Descargar Ticket POS en Imagen PNG (Retina 2x) para enviar por WhatsApp
+  const handleDownloadTicketImage = async () => {
+    try {
+      const ok = await downloadSubfamilyTicketImage(activeSf.subFamilyName, activeEvent, totals);
+      if (ok) {
+        showToast(`Imagen PNG del ticket de ${activeSf.subFamilyName} descargada`, 'success');
+      } else {
+        showToast('No se pudo generar la imagen del ticket', 'error');
+      }
+    } catch (err) {
+      console.error('Error generando imagen PNG del ticket:', err);
+      showToast('Error al descargar imagen del ticket', 'error');
+    }
+  };
+
+  // Imprimir / Exportar PDF del Ticket POS Individual
   const handlePrintTicket = () => {
-    window.print();
+    openSubfamilyTicketPrintReport(activeSf.subFamilyName, activeEvent, totals);
   };
 
   // Filtrar subfamilias en la columna izquierda
@@ -888,11 +904,21 @@ export const PosTicketView = () => {
                 </button>
                 <button 
                   type="button"
+                  onClick={handleDownloadTicketImage}
+                  className="btn-pill-cyan"
+                  title="Descargar imagen PNG en alta definición lista para adjuntar en WhatsApp"
+                >
+                  <Icon name="camera" size={16} />
+                  <span>Imagen PNG</span>
+                </button>
+                <button 
+                  type="button"
                   onClick={handlePrintTicket}
                   className="btn-pill-glass"
+                  title="Abrir reporte PDF individual de esta subfamilia para guardar o imprimir"
                 >
                   <Icon name="print" size={16} />
-                  <span>Imprimir Ticket POS</span>
+                  <span>Ticket PDF / Imprimir</span>
                 </button>
               </div>
             </div>
