@@ -4,9 +4,12 @@
  * Logo familiar protagónico al centro, dock de utilidades y cero saturación
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { Icon } from '../../utils/icons.jsx';
+import { calculateEventTotals } from '../../utils/calculations.js';
+import { generateEventReportPlainText } from '../../utils/reports.js';
+import { openExecutivePrintReport } from '../../utils/pdfReport.js';
 
 export const Header = () => {
   const { 
@@ -20,9 +23,22 @@ export const Header = () => {
     syncCloud, 
     liveSyncPulse, 
     openModal, 
-    currentUser 
+    currentUser,
+    familyGroups
   } = useApp();
   const isDark = theme === 'dark';
+
+  const eventTotals = useMemo(() => {
+    if (!activeEvent) return null;
+    return calculateEventTotals(activeEvent, null, familyGroups);
+  }, [activeEvent, familyGroups]);
+
+  const daysCount = useMemo(() => {
+    if (!activeEvent) return 0;
+    return Array.isArray(activeEvent.availableDays) && activeEvent.availableDays.length > 0
+      ? activeEvent.availableDays.length
+      : 4;
+  }, [activeEvent]);
 
   const handleCenterClick = () => {
     if (currentView === 'directory' && activeEvent) {
@@ -33,8 +49,27 @@ export const Header = () => {
     }
   };
 
+  const handleQuickWhatsAppShare = () => {
+    if (!activeEvent || !eventTotals) return;
+    const text = generateEventReportPlainText(activeEvent, eventTotals);
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleQuickPdfExport = () => {
+    if (!activeEvent || !eventTotals) return;
+    openExecutivePrintReport(activeEvent, eventTotals);
+  };
+
+  const headerStatusClass =
+    activeEvent && currentView !== 'directory'
+      ? activeEvent.isArchived
+        ? 'header-event-inactive'
+        : 'header-event-active'
+      : '';
+
   return (
-    <header className="app-header floating-navbar-capsule">
+    <header className={`app-header floating-navbar-capsule ${headerStatusClass}`}>
       {/* ============================================================== */}
       {/* ZONA IZQUIERDA: Contexto o Menú de Navegación                 */}
       {/* ============================================================== */}
@@ -65,14 +100,13 @@ export const Header = () => {
               <Icon name="arrow-left" size={15} />
               <span className="navbar-btn-text">Eventos</span>
             </button>
-            <div className="navbar-event-info">
+            <div className="navbar-event-stack">
+              <span className="navbar-event-meta">
+                AÑO {activeEvent.year} • {daysCount} {daysCount === 1 ? 'DÍA' : 'DÍAS'} • {eventTotals?.totalAttendingCount || 0} ASISTENTES
+              </span>
               <span className="navbar-event-title" title={activeEvent.title}>
                 {activeEvent.title}
               </span>
-              <span 
-                className={`navbar-status-dot ${activeEvent.isArchived ? 'status-archived' : 'status-active'}`} 
-                title={activeEvent.isArchived ? 'Archivado' : 'Activo'} 
-              />
             </div>
           </div>
         ) : (
@@ -106,9 +140,10 @@ export const Header = () => {
           type="button"
           onClick={handleCenterClick}
           className="navbar-center-emblem"
-          title="ChapApp - Inicio / Actualizar"
+          title="ChapApp - Inicio"
           aria-label="Ir al inicio"
         >
+          <span className="navbar-emblem-aura" aria-hidden="true" />
           <img
             src="/assets/logo_tree.png"
             alt="ChapApp Logo"
@@ -129,7 +164,7 @@ export const Header = () => {
             type="button"
             onClick={syncCloud}
             className={`navbar-dock-btn sync-btn ${isSyncing ? 'syncing-spin' : ''}`}
-            title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar con Supabase Cloud'}
+            title={liveSyncPulse ? '¡Sincronizado en tiempo real!' : 'Sincronizar datos'}
             aria-label="Sincronizar"
           >
             <Icon name="refresh" size={16} />
@@ -141,13 +176,13 @@ export const Header = () => {
             type="button"
             onClick={() => openModal('analytics')}
             className="navbar-dock-btn analytics-btn"
-            title="Analítica Histórica y Estadísticas Globales"
+            title="Estadísticas y Analítica"
             aria-label="Analítica"
           >
             <Icon name="chart" size={16} />
           </button>
 
-          {/* Alternador de Tema Claro / Oscuro con active constante sutil */}
+          {/* Alternador de Tema Claro / Oscuro */}
           <button
             type="button"
             onClick={toggleTheme}
@@ -158,26 +193,26 @@ export const Header = () => {
             <Icon name={isDark ? 'sun' : 'moon'} size={17} />
           </button>
 
-          {/* Acceso a Directorio (si estamos en Home) */}
-          {!activeEvent && currentView !== 'directory' && (
+          {/* Acceso a Directorio General (disponible tanto en Inicio como dentro del Evento) */}
+          {currentView !== 'directory' && (
             <button
               type="button"
               onClick={() => navigateToView('directory')}
               className="navbar-dock-btn directory-btn"
-              title="Directorio General & Jerarquía Familiar"
+              title="Directorio General"
               aria-label="Directorio"
             >
               <Icon name="users" size={16} />
             </button>
           )}
 
-          {/* Perfil de Usuario / Ajustes con color distintivo de Rol (Admin vs Operador) */}
+          {/* Perfil de Usuario / Ajustes con color distintivo de Rol */}
           {currentUser && (
             <button
               type="button"
               onClick={() => openModal('settings')}
               className={`navbar-dock-btn user-btn ${currentUser.role === 'admin' ? 'role-admin' : 'role-operator'}`}
-              title={`Configuración (${currentUser.name} - ${currentUser.role === 'admin' ? 'Administrador' : 'Segundo al Mando'})`}
+              title={`Configuración (${currentUser.name})`}
               aria-label="Configuración de usuario"
             >
               <Icon name={currentUser.role === 'admin' ? 'shield' : 'user'} size={16} />
@@ -185,18 +220,38 @@ export const Header = () => {
           )}
         </div>
 
-        {/* Botón de Acción Principal */}
+        {/* Acciones Rápidas de Exportación + Botón Principal */}
         {activeEvent && currentView !== 'directory' ? (
-          <button
-            type="button"
-            onClick={() => openModal('cut')}
-            className="navbar-cta-btn cut-cta"
-            title="Generar Corte de Caja"
-            aria-label="Corte de caja"
-          >
-            <Icon name="receipt" size={15} />
-            <span>Corte</span>
-          </button>
+          <div className="navbar-event-actions-group">
+            <button
+              type="button"
+              onClick={handleQuickWhatsAppShare}
+              className="navbar-quick-action-btn whatsapp-quick-btn"
+              title="Compartir resumen del evento por WhatsApp"
+              aria-label="Compartir por WhatsApp"
+            >
+              <Icon name="whatsapp" size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={handleQuickPdfExport}
+              className="navbar-quick-action-btn pdf-quick-btn"
+              title="Exportar reporte PDF del evento"
+              aria-label="Exportar PDF"
+            >
+              <Icon name="printer" size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={() => openModal('cut')}
+              className="navbar-cta-btn cut-cta"
+              title="Abrir Corte de Caja"
+              aria-label="Corte de caja"
+            >
+              <Icon name="receipt" size={15} />
+              <span className="navbar-btn-text">Corte</span>
+            </button>
+          </div>
         ) : !activeEvent && currentView !== 'directory' ? (
           <button
             type="button"
