@@ -1,6 +1,5 @@
 /**
  * ChapApp - Pantalla de Inicio de Sesión (Login) Liquid Glass 3D
- * Inspirada en la estética visual de cristal translúcido, pedestal orbital y diseño hermético
  */
 
 import React, { useState } from 'react';
@@ -8,7 +7,8 @@ import { useApp } from '../../context/AppContext.jsx';
 import { Icon } from '../../utils/icons.jsx';
 
 export const LoginScreen = () => {
-  const { loginUser, showToast } = useApp();
+  const { loginUser, showToast, theme, toggleTheme } = useApp();
+  const isDark = theme === 'dark';
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +28,7 @@ export const LoginScreen = () => {
 
     try {
       const user = await loginUser(username.trim(), password.trim());
-      showToast(`¡Bienvenido de vuelta, ${user.name}!`, 'success');
+      showToast(`¡Bienvenido, ${user.name}!`, 'success');
     } catch (err) {
       console.warn('[LoginScreen] Error de inicio de sesión:', err);
       setErrorMessage(err.message || 'Credenciales inválidas. Por favor intenta de nuevo.');
@@ -40,18 +40,32 @@ export const LoginScreen = () => {
 
   return (
     <div className="login-viewport-container">
+      {/* Botón flotante para cambiar tema Claro / Oscuro desde el Login */}
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="login-theme-toggle-btn"
+        title={isDark ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+        aria-label="Cambiar tema"
+      >
+        <Icon name={isDark ? 'sun' : 'moon'} size={18} />
+        <span>{isDark ? 'Modo Claro' : 'Modo Oscuro'}</span>
+      </button>
+
       <div className="login-split-layout">
         {/* ============================================================== */}
-        {/* LADO IZQUIERDO: EMBLEMA FAMILIAR PROTAGÓNICO EN CRISTAL       */}
+        {/* LADO IZQUIERDO: EMBLEMA FAMILIAR PROTAGÓNICO CON ANILLOS       */}
         {/* ============================================================== */}
         <div className="login-visual-stage">
           <div className="login-emblem-showcase">
             <div className="login-emblem-aura" />
+            <div className="login-orbital-ring ring-outer" aria-hidden="true" />
+            <div className="login-orbital-ring ring-inner" aria-hidden="true" />
             <div className="login-emblem-capsule">
               <div className="login-emblem-glass-facet">
                 <img 
                   src="/assets/logo_tree.png" 
-                  alt="ChapApp Emblema Familiar" 
+                  alt="ChapApp" 
                   className="login-emblem-tree-img" 
                   onError={(e) => { e.target.src = './assets/logo_tree.png'; }} 
                 />
@@ -61,7 +75,7 @@ export const LoginScreen = () => {
           </div>
         </div>
 
-        {/* Divisor estético elegante entre logo y formulario */}
+        {/* Divisor luminoso entre logo y formulario */}
         <div className="login-stage-divider" aria-hidden="true" />
 
         {/* ============================================================== */}
@@ -69,21 +83,13 @@ export const LoginScreen = () => {
         {/* ============================================================== */}
         <div className="login-card-stage">
           <div className="liquid-glass-card animate-scale-in">
-            {/* Header de la tarjeta */}
+            {/* Encabezado limpio sin repetir el logo */}
             <div className="card-brand-header">
-              <div className="card-floating-emblem">
-                <img 
-                  src="/assets/logo_tree.png" 
-                  alt="Logo" 
-                  className="card-tree-icon" 
-                  onError={(e) => { e.target.src = './assets/logo_tree.png'; }} 
-                />
-              </div>
               <h1 className="card-brand-name">ChapApp</h1>
-              <p className="card-brand-motto">Acceso al Sistema Privado</p>
+              <p className="card-brand-motto">Inicia sesión para continuar</p>
             </div>
 
-            {/* Formulario de Login Hermético */}
+            {/* Formulario de Login */}
             <form onSubmit={handleSubmit} className="login-form">
               {errorMessage && (
                 <div className="login-alert-box animate-shake" role="alert">
@@ -103,7 +109,7 @@ export const LoginScreen = () => {
                     type="text"
                     id="login-username"
                     className="glass-input login-input"
-                    placeholder="ej. admin o segundo"
+                    placeholder="Tu nombre de usuario"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"
@@ -140,32 +146,18 @@ export const LoginScreen = () => {
                 </div>
               </div>
 
-              {/* Botón Primario de Ingreso con Degradado Neón */}
+              {/* Botón Primario de Ingreso */}
               <button
                 type="submit"
                 className="btn-login-gradient"
                 disabled={loading}
               >
-                <span>{loading ? 'Verificando...' : 'Iniciar Sesión'}</span>
+                <span>{loading ? 'Ingresando...' : 'Iniciar Sesión'}</span>
                 <span className="btn-arrow-icon">
                   {loading ? <div className="spinner-sm" /> : <Icon name="arrow-right" size={18} />}
                 </span>
               </button>
             </form>
-
-            {/* Paginación / Puntos de estado visual inspirados en la referencia */}
-            <div className="card-bottom-indicators">
-              <span className="indicator-line" />
-              <span className="indicator-dot active" />
-              <span className="indicator-dot" />
-              <span className="indicator-dot" />
-              <span className="indicator-line" />
-            </div>
-
-            <div className="card-security-badge">
-              <Icon name="shield" size={13} />
-              <span>Autenticación Criptográfica Local & Nube</span>
-            </div>
           </div>
         </div>
       </div>
