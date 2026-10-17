@@ -1,6 +1,6 @@
 /**
- * ChapApp - Sistema de Fondos Oficiales HD (Claro / Oscuro)
- * Renderizado de alta definición sin filtros de desenfoque (cero blur) ni compresión forzada
+ * ChapApp - Sistema de Fondo Vectorial SVG (Flor de Loto de Cristal)
+ * Resolución matemática infinita sin pixelación ni compresión de mapa de bits
  */
 
 /* ==========================================================================
@@ -15,14 +15,11 @@ body {
 }
 
 /* ==========================================================================
-   2. ESCENA BASE FIJA DE FONDO
+   2. ESCENA BASE FIJA DE FONDO VECTORIAL
    ========================================================================== */
 .app-backdrop-scene {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   z-index: -1;
@@ -30,47 +27,33 @@ body {
   overflow: hidden;
   background-color: #000000;
   transition: background-color 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 [data-theme='light'] .app-backdrop-scene {
-  background-color: #F6F1EA;
+  background-color: #F5F0E6;
 }
 
-/* ==========================================================================
-   3. CAPAS DE IMAGEN DE ALTA DEFINICIÓN (PROPIEDADES EXACTAS DE ALTA NITIDEZ)
-   ========================================================================== */
-.app-background-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.lotus-vector-svg {
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center 42%;
-  background-repeat: no-repeat;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: high-quality;
-  transform: translate3d(0, 0, 0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  opacity: 0;
-  filter: none !important;
-  -webkit-filter: none !important;
-  transition: opacity 0.45s ease;
-  will-change: opacity;
+  display: block;
+  shape-rendering: geometricPrecision;
+  user-select: none;
+  pointer-events: none;
 }
 
-/* Viñeta atmosférica sutil para realzar el cristal líquido sin restar nitidez al loto */
+/* Viñeta atmosférica sutil para realzar el cristal líquido de las tarjetas */
 .app-backdrop-scene::after {
   content: '';
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    circle at 50% 42%,
-    transparent 45%,
-    rgba(4, 8, 16, 0.48) 100%
+    circle at 50% 48%,
+    transparent 48%,
+    rgba(4, 8, 16, 0.45) 100%
   );
   pointer-events: none;
   z-index: 1;
@@ -78,20 +61,8 @@ body {
 
 [data-theme='light'] .app-backdrop-scene::after {
   background: radial-gradient(
-    circle at 50% 42%,
-    transparent 50%,
-    rgba(226, 232, 240, 0.35) 100%
+    circle at 50% 48%,
+    transparent 55%,
+    rgba(214, 205, 190, 0.32) 100%
   );
-}
-
-.app-background-layer.active {
-  opacity: 1;
-}
-
-.app-background-layer.bg-dark-layer {
-  background-image: url('/assets/bg_dark.jpg');
-}
-
-.app-background-layer.bg-light-layer {
-  background-image: url('/assets/bg_light.jpg');
 }
