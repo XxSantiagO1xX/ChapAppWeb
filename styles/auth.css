@@ -417,113 +417,73 @@
 }
 
 /* ==========================================================================
-   TÍTULO "ChapApp" ESTILO BURBUJA DE CRISTAL 3D (LIQUID BUBBLE WORDMARK)
+   TIPOGRAFÍA BURBUJA 3D ("ChapApp") SIN CONTENEDOR ALREDEDOR
    ========================================================================== */
-.chapapp-bubble-badge {
-  position: relative;
-  display: inline-flex;
+.chapapp-bubble-wordmark {
+  margin: 0;
+  padding: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 28px 12px;
-  border-radius: 9999px;
-  background: radial-gradient(
-    ellipse at 50% 22%,
-    rgba(255, 255, 255, 0.28) 0%,
-    rgba(0, 240, 255, 0.16) 45%,
-    rgba(16, 185, 129, 0.12) 85%,
-    rgba(6, 18, 38, 0.35) 100%
-  );
-  border: 1.5px solid rgba(255, 255, 255, 0.42);
-  border-top: 2px solid rgba(255, 255, 255, 0.85);
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.35),
-    0 0 24px rgba(0, 240, 255, 0.28),
-    inset 0 4px 10px rgba(255, 255, 255, 0.65),
-    inset 0 -5px 12px rgba(0, 240, 255, 0.32);
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.chapapp-bubble-badge:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow:
-    0 14px 34px rgba(0, 0, 0, 0.45),
-    0 0 32px rgba(0, 240, 255, 0.42),
-    inset 0 4px 12px rgba(255, 255, 255, 0.80),
-    inset 0 -5px 14px rgba(0, 240, 255, 0.45);
-}
-
-/* Reflejo superior curvo tipo burbuja de cristal */
-.bubble-gloss-reflection {
-  position: absolute;
-  top: 2px;
-  left: 12%;
-  right: 12%;
-  height: 44%;
-  border-radius: 9999px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.55) 0%,
-    rgba(255, 255, 255, 0.08) 70%,
-    transparent 100%
-  );
-  pointer-events: none;
-}
-
-/* Letras con volumen 3D inflado tipo Burbuja / Cromo Líquido */
-.chapapp-bubble-title {
-  position: relative;
-  z-index: 2;
-  margin: 0;
-  font-size: 2.15rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1.08;
-  background: linear-gradient(
-    180deg,
-    #FFFFFF 0%,
-    #E0F2FE 28%,
-    #67E8F9 62%,
-    #34D399 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter:
-    drop-shadow(0 2px 0 rgba(3, 105, 161, 0.85))
-    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.50))
-    drop-shadow(0 0 14px rgba(0, 240, 255, 0.45));
+  width: 100%;
   user-select: none;
 }
 
-[data-theme='light'] .chapapp-bubble-badge {
-  background: radial-gradient(
-    ellipse at 50% 22%,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(186, 230, 253, 0.55) 55%,
-    rgba(167, 243, 208, 0.45) 100%
-  );
-  border-color: #FFFFFF;
-  box-shadow:
-    0 10px 24px rgba(2, 132, 199, 0.16),
-    0 0 18px rgba(56, 189, 248, 0.22),
-    inset 0 4px 10px #FFFFFF,
-    inset 0 -4px 10px rgba(14, 165, 233, 0.22);
+.chapapp-bubble-svg {
+  width: 100%;
+  max-width: 285px;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 18px rgba(0, 240, 255, 0.32));
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
 }
 
-[data-theme='light'] .chapapp-bubble-title {
-  background: linear-gradient(
-    180deg,
-    #0284C7 0%,
-    #0369A1 45%,
-    #059669 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter:
-    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95))
-    drop-shadow(0 3px 6px rgba(2, 132, 199, 0.25));
+.chapapp-bubble-svg:hover {
+  transform: scale(1.04) translateY(-2px);
+  filter: drop-shadow(0 0 26px rgba(0, 240, 255, 0.52));
+}
+
+.bubble-svg-extrude,
+.bubble-svg-main {
+  font-family: 'Baloo 2', 'Fredoka', 'Arial Rounded MT Bold', 'Inter', sans-serif;
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* Extrusión 3D trasera de cada letra */
+.bubble-svg-extrude {
+  fill: #075985;
+  stroke: #0C4A6E;
+  stroke-width: 10px;
+  opacity: 0.90;
+}
+
+/* Cuerpo inflado de cada letra con brillo especular 3D */
+.bubble-svg-main {
+  fill: url(#bubbleFillDark);
+  stroke: url(#bubbleStrokeGrad);
+  stroke-width: 3.5px;
+}
+
+[data-theme='light'] .chapapp-bubble-svg {
+  filter: drop-shadow(0 6px 14px rgba(2, 132, 199, 0.22));
+}
+
+[data-theme='light'] .bubble-svg-extrude {
+  fill: #0369A1;
+  stroke: #0284C7;
+  stroke-width: 8px;
+  opacity: 0.85;
+}
+
+[data-theme='light'] .bubble-svg-main {
+  fill: url(#bubbleFillLight);
+  stroke: #FFFFFF;
+  stroke-width: 3px;
 }
 
 .card-brand-motto {
