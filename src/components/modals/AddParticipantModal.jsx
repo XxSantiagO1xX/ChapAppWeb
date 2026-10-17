@@ -117,7 +117,7 @@ export const AddParticipantModal = () => {
                 type="text" 
                 id="participant-firstname" 
                 className="glass-input" 
-                placeholder="ej. Ariel" 
+                placeholder="ej. Alejandro" 
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required 
@@ -132,7 +132,7 @@ export const AddParticipantModal = () => {
                   type="text" 
                   id="participant-paternal" 
                   className="glass-input" 
-                  placeholder="ej. Santiago" 
+                  placeholder="ej. Hernández" 
                   value={lastNamePaternal}
                   onChange={(e) => setLastNamePaternal(e.target.value)}
                   autoComplete="off"
@@ -144,7 +144,7 @@ export const AddParticipantModal = () => {
                   type="text" 
                   id="participant-maternal" 
                   className="glass-input" 
-                  placeholder="ej. Velázquez" 
+                  placeholder="ej. López" 
                   value={lastNameMaternal}
                   onChange={(e) => setLastNameMaternal(e.target.value)}
                   autoComplete="off"
@@ -194,7 +194,7 @@ export const AddParticipantModal = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="participant-group">Grupo Familiar / Núcleo *</label>
+              <label htmlFor="participant-group">Familia *</label>
               <select 
                 id="participant-group" 
                 className="glass-select"
@@ -205,8 +205,8 @@ export const AddParticipantModal = () => {
                 {(familyGroups || []).map((g) => {
                   const isSub = Boolean(g.nodo_padre_id);
                   const label = isSub 
-                    ? `↳ ${g.nombre} (${g.es_independiente ? 'Autónomo' : 'Dependiente'})` 
-                    : `★ ${g.nombre} (Rama Principal)`;
+                    ? `↳ ${g.nombre} (${g.es_independiente ? 'Cuenta Propia' : 'Cuenta Agrupada'})` 
+                    : `★ ${g.nombre} (Familia Principal)`;
                   return (
                     <option key={g.id} value={g.id}>
                       {label}

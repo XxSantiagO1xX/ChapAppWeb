@@ -349,7 +349,7 @@ export const QuickExpenseModal = () => {
                   ? 'Editar Gasto Registrado'
                   : mode === 'single'
                     ? 'Registrar Nueva Compra'
-                    : 'Escaneo Masivo por Lotes (Batch)'}
+                    : 'Registrar Varios Tickets'}
               </h3>
             </div>
             <button 
@@ -362,7 +362,7 @@ export const QuickExpenseModal = () => {
             </button>
           </div>
 
-          {/* Selector de Modo: Individual vs Lotes con IA (solo al crear) */}
+          {/* Selector de Modo: Individual vs Varios Tickets (solo al crear) */}
           {!isEditMode && (
             <div className="payer-type-toggle-bar" style={{ marginBottom: '14px' }}>
               <button 
@@ -378,8 +378,8 @@ export const QuickExpenseModal = () => {
                 className={`payer-type-btn ${mode === 'batch' ? 'active' : ''}`}
                 onClick={() => setMode('batch')}
               >
-                <Icon name="sparkles" size={15} />
-                <span>Lote de Tickets IA (Batch)</span>
+                <Icon name="camera" size={15} />
+                <span>Varios Tickets</span>
               </button>
             </div>
           )}
@@ -389,11 +389,11 @@ export const QuickExpenseModal = () => {
           {/* ============================================================== */}
           {mode === 'single' && (
             <>
-              {/* Banner de Escaneo Inteligente Individual */}
+              {/* Lector de Ticket Individual */}
               <div className="ai-scanner-banner glass-panel">
                 <div className="ai-scanner-info">
                   <span className="ai-badge">
-                    <Icon name="sparkles" size={13} /> Google Gemini Vision
+                    <Icon name="camera" size={13} /> Lector de Tickets
                   </span>
                   <p className="ai-scanner-desc">Sube foto de tu ticket o nota para autocompletar monto y concepto.</p>
                 </div>
@@ -402,8 +402,8 @@ export const QuickExpenseModal = () => {
                     type="button" 
                     onClick={handleConfigKey} 
                     className="btn-config-key" 
-                    title="Configurar API Key de Google Gemini" 
-                    aria-label="Configurar API Key"
+                    title="Configurar clave de lectura" 
+                    aria-label="Configurar clave"
                   >
                     <Icon name="key" size={14} />
                   </button>
@@ -425,7 +425,7 @@ export const QuickExpenseModal = () => {
               {isAiScanning && (
                 <div className="ai-loading-box animate-fade-in">
                   <div className="spinner-glass"></div>
-                  <p>Analizando ticket con Google Gemini Flash...</p>
+                  <p>Leyendo ticket...</p>
                 </div>
               )}
 
@@ -489,16 +489,6 @@ export const QuickExpenseModal = () => {
                           <span>Integrante</span>
                         </button>
                       </div>
-
-                      {payerType === 'common' && (
-                        <div className="payer-common-banner glass-panel animate-fade-in">
-                          <div className="common-banner-icon">💳</div>
-                          <div className="common-banner-text">
-                            <strong>Gasto General / Fondo Común</strong>
-                            <span>Se divide entre todos sin generar saldo a favor personal.</span>
-                          </div>
-                        </div>
-                      )}
 
                       {payerType === 'member' && (
                         <div className="payer-member-picker-box animate-fade-in">
@@ -647,10 +637,10 @@ export const QuickExpenseModal = () => {
                   <Icon name="upload" size={32} />
                 </div>
                 <strong style={{ display: 'block', fontSize: '1.05rem', color: 'var(--text-primary)' }}>
-                  Arrastra aquí varios tickets o haz clic para seleccionarlos
+                  Selecciona o arrastra las fotos de tus tickets
                 </strong>
                 <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                  Procesa múltiples notas en paralelo con Google Gemini Vision.
+                  Puedes subir varias imágenes al mismo tiempo (JPG, PNG o WEBP).
                 </p>
                 <input 
                   type="file" 
@@ -667,7 +657,7 @@ export const QuickExpenseModal = () => {
                 <div className="batch-progress-box glass-panel animate-fade-in" style={{ marginTop: '14px', padding: '14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.85rem' }}>
                     <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
-                      Analizando ticket {batchProgress.current} de {batchProgress.total} con Gemini...
+                      Leyendo ticket {batchProgress.current} de {batchProgress.total}...
                     </span>
                     <span>{Math.round((batchProgress.current / batchProgress.total) * 100)}%</span>
                   </div>

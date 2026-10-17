@@ -296,7 +296,6 @@ export const PosTicketView = () => {
             <h4 className="pos-master-title">Subfamilias del Evento</h4>
             <span className="badge-pill badge-cyan">{subFamilies.length}</span>
           </div>
-          <p className="pos-master-sub">Selecciona una familia para consultar o liquidar</p>
           
           <div className="pos-master-search-box">
             <span className="search-icon">
@@ -386,13 +385,13 @@ export const PosTicketView = () => {
                       {sf.attendingCount} de {sf.membersCount} asisten • {sf.totalWeightedUnits} uds
                     </span>
                     {sf.hasMultipleNuclei && (
-                      <span className="badge-pill badge-cyan" style={{ fontSize: '0.68rem', padding: '1px 6px' }} title={`Consolida: ${(sf.subGroups || []).join(', ')}`}>
-                        Consolida {sf.subGroups.length} núcleos
+                      <span className="badge-pill badge-cyan" style={{ fontSize: '0.68rem', padding: '1px 6px' }} title={`Incluye: ${(sf.subGroups || []).join(', ')}`}>
+                        Incluye {sf.subGroups.length} familias
                       </span>
                     )}
                     {sf.nodo_padre_id && sf.es_independiente && (
                       <span className="badge-pill badge-neutral" style={{ fontSize: '0.68rem', padding: '1px 6px' }}>
-                        Autónomo
+                        Cuenta Propia
                       </span>
                     )}
                   </div>
@@ -428,7 +427,7 @@ export const PosTicketView = () => {
         </div>
       </aside>
 
-      {/* Columna Derecha: Ticket de Cobro POS de la Subfamilia Seleccionada */}
+      {/* Columna Derecha: Estado de Cuenta de la Subfamilia Seleccionada */}
       <main className="pos-detail-col">
         <div
           className={`pos-ticket-card glass-panel animate-fade-in ${
@@ -439,14 +438,15 @@ export const PosTicketView = () => {
                 : 'ticket-vault-pending'
           }`}
         >
-          {/* Cabecera del Ticket POS */}
+          {/* Cabecera del Estado de Cuenta */}
           <div className="ticket-header">
             <div className="ticket-family-title-group">
-              <span className="ticket-badge-tag">TICKET DE COBRO POS</span>
+              <span className="ticket-badge-tag">ESTADO DE CUENTA</span>
               <h2 className="ticket-family-name">{activeSf.subFamilyName}</h2>
               <p className="ticket-family-sub">
                 {activeSf.attendingCount} asistentes ({activeSf.membersCount} integrantes
-                {calculatedGuests.length > 0 ? ` + ${calculatedGuests.length} invitados` : ''}) • {activeSf.totalWeightedUnits} uds ponderadas
+                {calculatedGuests.length > 0 ? ` + ${calculatedGuests.length} invitados` : ''}) • {activeSf.totalWeightedUnits} uds
+                {activeSf.hasMultipleNuclei ? ` • Incluye a: ${(activeSf.subGroups || []).join(', ')}` : ''}
               </p>
             </div>
             
@@ -454,51 +454,20 @@ export const PosTicketView = () => {
               <span className={`ticket-status-pill ${activeSf.isFullySettled ? 'settled' : 'pending'}`}>
                 {activeSf.isFullySettled ? (
                   <>
-                    <Icon name="check" size={14} /> Familia 100% Liquidada
+                    <Icon name="check" size={14} /> Liquidada
                   </>
                 ) : hasPartialPayment ? (
                   <>
-                    <Icon name="clock" size={14} /> Abono Parcial ({paymentProgressPercent}% • {formatCurrency(partialPayment)})
+                    <Icon name="clock" size={14} /> Abono ({paymentProgressPercent}% • {formatCurrency(partialPayment)})
                   </>
                 ) : (
                   <>
-                    <Icon name="clock" size={14} /> Pendiente de Liquidar
+                    <Icon name="clock" size={14} /> Pendiente
                   </>
                 )}
               </span>
             </div>
           </div>
-
-          {/* Banner de Jerarquía Híbrida: Roll-Up o Autonomía */}
-          {activeSf.hasMultipleNuclei && (
-            <div className="glass-panel" style={{ padding: '10px 16px', margin: '0 0 16px 0', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.08)', borderLeft: '4px solid var(--color-cyan)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem' }}>
-                <Icon name="users" size={18} />
-                <span>
-                  <strong>Roll-Up Financiero Consolidado:</strong> Este ticket acumula la cuenta y unidades de los sub-núcleos dependientes: <strong>{(activeSf.subGroups || []).join(', ')}</strong>.
-                </span>
-              </div>
-            </div>
-          )}
-
-          {activeSf.nodo_padre_id && activeSf.es_independiente && (
-            <div className="glass-panel" style={{ padding: '10px 16px', margin: '0 0 16px 0', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.08)', borderLeft: '4px solid var(--color-emerald)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem' }}>
-                <Icon name="check" size={18} />
-                <span>
-                  <strong>Ticket Individual Autónomo:</strong> Este núcleo asume su propia deuda de forma separada a su rama genealógica padre.
-                </span>
-              </div>
-              <button
-                type="button"
-                className="btn-toggle-independence is-indep"
-                onClick={() => updateFamilyGroupIndependence(activeSf.subFamilyId, false)}
-                title="Reasociar financieramente a la rama principal"
-              >
-                <span>Hacer Dependiente del Padre</span>
-              </button>
-            </div>
-          )}
 
           {/* 3 Métricas HUD del Ticket Familiar */}
           <div className="ticket-metrics-row">
@@ -516,25 +485,16 @@ export const PosTicketView = () => {
             </div>
           </div>
 
-          {/* Banner Informativo si la cuenta está 100% saldada */}
-          {activeSf.isFullySettled && (
-            <div className="ticket-settled-banner glass-panel">
-              <span className="settled-dot"></span>
-              <span>Esta cuenta familiar se encuentra 100% saldada y registrada en la caja común.</span>
-            </div>
-          )}
-
           {/* Split Grid en 2 Columnas */}
           <div className="ticket-body-split-grid">
             {/* Columna Izquierda: Integrantes Registrados e Invitados */}
             <div className="ticket-members-col">
-              {/* Sección 1: Integrantes Registrados y Switch de Asistencia */}
+              {/* Sección 1: Integrantes Registrados */}
               <div className="ticket-section-block">
                 <div className="ticket-section-header">
                   <span className="ticket-section-title">
-                    <Icon name="users" size={16} /> Integrantes Registrados ({activeSf.membersCount})
+                    <Icon name="users" size={16} /> Integrantes ({activeSf.membersCount})
                   </span>
-                  <span className="ticket-section-hint">Switch de Asistencia</span>
                 </div>
 
                 <div className="ticket-members-list">
@@ -569,7 +529,7 @@ export const PosTicketView = () => {
                             <span className="badge-pill badge-neutral">
                               {p.category.toUpperCase()} ({p.weight} ud)
                             </span>
-                            <span className="member-days-text">{p.activeDaysCount} días asistidos</span>
+                            <span className="member-days-text">{p.activeDaysCount} días</span>
                           </div>
                         </div>
 
@@ -597,7 +557,7 @@ export const PosTicketView = () => {
               <div className="ticket-section-block">
                 <div className="ticket-section-header">
                   <span className="ticket-section-title">
-                    <Icon name="user-plus" size={16} /> Invitados Temporales ({calculatedGuests.length})
+                    <Icon name="user-plus" size={16} /> Invitados ({calculatedGuests.length})
                   </span>
                   <button 
                     type="button" 
@@ -612,14 +572,14 @@ export const PosTicketView = () => {
                 {/* Formulario Desplegable para Agregar Invitado Temporal */}
                 {showAddGuestForm && (
                   <form onSubmit={handleSaveGuest} className="glass-panel inline-guest-form animate-fade-in">
-                    <h5 className="inline-form-title">Sumar Invitado Temporal a {activeSf.subFamilyName}</h5>
+                    <h5 className="inline-form-title">Nuevo Invitado en {activeSf.subFamilyName}</h5>
                     <div className="inline-form-grid">
                       <div className="form-group">
-                        <label>Nombre o Referencia *</label>
+                        <label>Nombre *</label>
                         <input 
                           type="text" 
                           className="glass-input" 
-                          placeholder="ej. Primo Carlos" 
+                          placeholder="ej. Carlos" 
                           value={guestName}
                           onChange={(e) => setGuestName(e.target.value)}
                           required
@@ -659,7 +619,7 @@ export const PosTicketView = () => {
                       </button>
                       <button type="submit" className="btn-pill-cyan btn-sm">
                         <Icon name="plus" size={14} />
-                        <span>Sumar al Cálculo</span>
+                        <span>Agregar</span>
                       </button>
                     </div>
                   </form>
@@ -668,7 +628,7 @@ export const PosTicketView = () => {
                 <div className="ticket-guests-list">
                   {calculatedGuests.length === 0 ? (
                     <p className="empty-guest-text">
-                      Sin invitados adicionales. Toca "+ Agregar Invitado" para sumarlos al cálculo.
+                      Sin invitados adicionales.
                     </p>
                   ) : (
                     calculatedGuests.map((g) => (
@@ -676,7 +636,7 @@ export const PosTicketView = () => {
                         <div className="guest-name-col">
                           <div className="guest-title-line">
                             <strong><Icon name="receipt" size={14} /> {g.name}</strong>
-                            <span className="badge-pill badge-cyan">Temporal</span>
+                            <span className="badge-pill badge-cyan">Invitado</span>
                           </div>
                           <div className="member-badges-row">
                             <span className="badge-pill badge-neutral">{g.category.toUpperCase()} ({g.weight} ud)</span>
@@ -703,14 +663,14 @@ export const PosTicketView = () => {
               </div>
             </div>
 
-            {/* Columna Derecha: Desglose Matemático, Liquidación y Acciones */}
+            {/* Columna Derecha: Resumen de Cuenta, Liquidación y Acciones */}
             <div className="ticket-calc-col">
-              {/* Sección 3: Desglose Matemático */}
+              {/* Sección 3: Resumen de Cuenta */}
               <div className="ticket-section-block">
                 <div className="math-breakdown-card glass-panel">
                   <div className="breakdown-header">
                     <span className="breakdown-tag">
-                      <Icon name="chart" size={14} /> DESGLOSE MATEMÁTICO
+                      <Icon name="chart" size={14} /> RESUMEN DE CUENTA
                     </span>
                   </div>
                   <div className="breakdown-table-rows">

@@ -177,7 +177,7 @@ export const Drawer = ({ filterTab, setFilterTab }) => {
         )}
 
         <div className="drawer-footer">
-          <p className="drawer-footer-text">ChapApp Web v5.0 • React + Vite</p>
+          <p className="drawer-footer-text">ChapApp</p>
         </div>
       </aside>
     </>

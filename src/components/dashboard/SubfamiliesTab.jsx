@@ -169,11 +169,7 @@ export const SubfamiliesTab = () => {
     <div className="tab-subfamilies-content animate-fade-in">
       <div className="tab-actions-header">
         <div className="section-title-box">
-          <span className="tab-section-badge">CONTROL DE ASISTENCIA</span>
-          <h3 className="section-heading">Subfamilias y Control de Asistencia</h3>
-          <p className="section-subheading">
-            Gestiona integrantes, tarifas (adulto/niño), días activos y presencia para el prorrateo automático.
-          </p>
+          <h3 className="section-heading">Subfamilias y Asistencia</h3>
         </div>
         <div className="tab-buttons-group">
           <button 
@@ -248,12 +244,12 @@ export const SubfamiliesTab = () => {
                       <Icon name="users" size={16} /> {sfName}
                       {sfCalc?.hasMultipleNuclei && (
                         <span className="badge-branch-dependent" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
-                          🔗 Roll-up ({sfCalc.subGroups.length} núcleos)
+                          Incluye {sfCalc.subGroups.length} familias
                         </span>
                       )}
                       {sfCalc?.hasPartialPayment && (
                         <span className="badge-pill badge-cyan" style={{ fontSize: '0.68rem', padding: '2px 8px' }}>
-                          ⏳ Abono {sfCalc.paymentProgressPercent}% ({formatCurrency(sfCalc.partialPayment)})
+                          Abono {sfCalc.paymentProgressPercent}% ({formatCurrency(sfCalc.partialPayment)})
                         </span>
                       )}
                     </h4>

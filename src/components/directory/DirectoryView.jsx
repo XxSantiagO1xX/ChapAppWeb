@@ -442,13 +442,12 @@ export const DirectoryView = () => {
                 <Icon name="arrow-left" size={15} />
                 <span>{activeEvent ? `Volver a ${activeEvent.title}` : 'Volver a Eventos'}</span>
               </button>
-              <span className="dialog-badge" style={{ margin: 0 }}>MODELO HÍBRIDO</span>
             </div>
             <h2 style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
-              Directorio General & Jerarquía Familiar
+              Directorio General
             </h2>
             <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
-              {totalStats.totalMembers} integrantes registrados • {totalStats.totalFamilies} núcleos familiares ({totalStats.rootBranches} ramas principales)
+              {totalStats.totalMembers} integrantes registrados • {totalStats.totalFamilies} familias ({totalStats.rootBranches} principales)
             </p>
           </div>
 
@@ -467,10 +466,10 @@ export const DirectoryView = () => {
               onClick={() => setActiveFormTab((prev) => prev === 'group' ? null : 'group')}
               className={activeFormTab === 'group' ? 'btn-pill-cyan' : 'btn-pill-glass'}
               style={{ height: '42px', padding: '0 18px' }}
-              title="Registrar una nueva rama genealógica o sub-núcleo"
+              title="Registrar una nueva familia o subfamilia"
             >
               <Icon name="users" size={17} />
-              <span>+ Rama / Núcleo</span>
+              <span>+ Familia</span>
             </button>
           </div>
         </div>
@@ -515,7 +514,7 @@ export const DirectoryView = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
             <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
               <Icon name="user-plus" size={20} color="var(--color-primary)" />
-              Registrar Nuevo Integrante
+              Nuevo Integrante
             </h4>
             <button type="button" onClick={() => setActiveFormTab(null)} className="btn-icon-glass" style={{ width: '30px', height: '30px' }}>
               <Icon name="close" size={15} />
@@ -528,7 +527,7 @@ export const DirectoryView = () => {
               <input 
                 type="text" 
                 className="glass-input" 
-                placeholder="ej. Ariel" 
+                placeholder="ej. Alejandro" 
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required 
@@ -540,7 +539,7 @@ export const DirectoryView = () => {
               <input 
                 type="text" 
                 className="glass-input" 
-                placeholder="ej. Santiago" 
+                placeholder="ej. Hernández" 
                 value={lastNamePaternal}
                 onChange={(e) => setLastNamePaternal(e.target.value)}
                 autoComplete="off"
@@ -554,7 +553,7 @@ export const DirectoryView = () => {
               <input 
                 type="text" 
                 className="glass-input" 
-                placeholder="ej. Velázquez" 
+                placeholder="ej. López" 
                 value={lastNameMaternal}
                 onChange={(e) => setLastNameMaternal(e.target.value)}
                 autoComplete="off"
@@ -575,18 +574,18 @@ export const DirectoryView = () => {
 
           <div className="form-row-2">
             <div className="form-group">
-              <label>Núcleo Familiar Asignado</label>
+              <label>Familia Asignada</label>
               <select 
                 className="glass-select"
                 value={selectedGroupId}
                 onChange={(e) => setSelectedGroupId(e.target.value)}
               >
-                <option value="">(Sin núcleo asignado / Familia General)</option>
+                <option value="">(Sin familia asignada / General)</option>
                 {rawGroups.map((g) => {
                   const isSub = Boolean(g.nodo_padre_id);
                   const label = isSub 
-                    ? `↳ ${g.nombre || g.name} (${g.es_independiente ? 'Autónomo' : 'Dependiente'})` 
-                    : `★ ${g.nombre || g.name} (Rama Principal)`;
+                    ? `↳ ${g.nombre || g.name} (${g.es_independiente ? 'Cuenta Propia' : 'Cuenta Agrupada'})` 
+                    : `★ ${g.nombre || g.name} (Familia Principal)`;
                   return (
                     <option key={g.id} value={g.id}>
                       {label}
@@ -597,7 +596,7 @@ export const DirectoryView = () => {
             </div>
 
             <div className="form-group">
-              <label>Categoría y Ponderación de Cobro</label>
+              <label>Categoría y Ponderación</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.9fr', gap: '8px' }}>
                 <select 
                   className="glass-select"
@@ -618,7 +617,7 @@ export const DirectoryView = () => {
                   className="glass-input" 
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
-                  title="Unidades de ponderación en prorrateo"
+                  title="Unidades de ponderación"
                 />
               </div>
             </div>
@@ -635,7 +634,7 @@ export const DirectoryView = () => {
         </form>
       )}
 
-      {/* FORMULARIO 2: Registrar Rama Principal o Sub-núcleo */}
+      {/* FORMULARIO 2: Registrar Familia o Subfamilia */}
       {activeFormTab === 'group' && (
         <form 
           onSubmit={handleSaveGroup}
@@ -645,7 +644,7 @@ export const DirectoryView = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
             <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
               <Icon name="users" size={20} color="#10b981" />
-              Registrar Rama Principal o Sub-núcleo
+              Nueva Familia o Subfamilia
             </h4>
             <button type="button" onClick={() => setActiveFormTab(null)} className="btn-icon-glass" style={{ width: '30px', height: '30px' }}>
               <Icon name="close" size={15} />
@@ -654,11 +653,11 @@ export const DirectoryView = () => {
           
           <div className="form-row-2">
             <div className="form-group">
-              <label>Nombre del Grupo Familiar *</label>
+              <label>Nombre de la Familia *</label>
               <input 
                 type="text" 
                 className="glass-input" 
-                placeholder="ej. Familia Santiago Morales" 
+                placeholder="ej. Familia Hernández" 
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
                 required 
@@ -666,16 +665,16 @@ export const DirectoryView = () => {
               />
             </div>
             <div className="form-group">
-              <label>Nodo Padre (Jerarquía Relacional)</label>
+              <label>Familia Principal (Opcional)</label>
               <select 
                 className="glass-select"
                 value={newGroupParentId}
                 onChange={(e) => setNewGroupParentId(e.target.value)}
               >
-                <option value="">(Ninguno) - Es una Rama Principal</option>
+                <option value="">(Ninguna) - Es Familia Principal</option>
                 {rawGroups.filter((g) => !g.nodo_padre_id).map((root) => (
                   <option key={root.id} value={root.id}>
-                    Cuelga de: {root.nombre || root.name}
+                    Pertenece a: {root.nombre || root.name}
                   </option>
                 ))}
               </select>
@@ -685,11 +684,11 @@ export const DirectoryView = () => {
           {newGroupParentId && (
             <div className="glass-panel" style={{ padding: '14px 16px', margin: '10px 0 16px 0', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px' }}>
               <div>
-                <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>¿Asume deuda propia (Independiente)?</strong>
+                <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>¿Maneja cuenta propia?</strong>
                 <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
                   {newGroupIsIndependent 
-                    ? 'Generará su propio ticket de cobro individual en los cortes y aparecerá como tarjeta de primer nivel.' 
-                    : 'Se acumula (roll-up) en el ticket de cobro de su Rama Principal.'}
+                    ? 'Tendrá su propio estado de cuenta por separado.' 
+                    : 'Su cuenta se suma a la de su familia principal.'}
                 </p>
               </div>
               <label className="switch-toggle" style={{ flexShrink: 0 }}>
@@ -754,7 +753,7 @@ export const DirectoryView = () => {
 
               return (
                 <div key={group.id} className="family-branch-card">
-                  {/* CABECERA DEL GRUPO FAMILIAR / RAMA PRINCIPAL */}
+                  {/* CABECERA DEL GRUPO FAMILIAR / FAMILIA PRINCIPAL */}
                   <div className="family-branch-header">
                     <div className="family-branch-title-group">
                       <span className="family-branch-name">
@@ -762,10 +761,10 @@ export const DirectoryView = () => {
                       </span>
                       
                       {group.isRoot ? (
-                        <span className="badge-branch-root">Rama Principal</span>
+                        <span className="badge-branch-root">Familia Principal</span>
                       ) : (
-                        <span className="badge-branch-independent" title={`Cuelga de ${parentGroup ? (parentGroup.nombre || parentGroup.name) : 'Rama Principal'}`}>
-                          Sub-núcleo Autónomo
+                        <span className="badge-branch-independent" title={`Pertenece a ${parentGroup ? (parentGroup.nombre || parentGroup.name) : 'Familia Principal'}`}>
+                          Cuenta Propia
                         </span>
                       )}
 
@@ -775,16 +774,16 @@ export const DirectoryView = () => {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {/* Control de Independencia si es sub-núcleo autónomo */}
+                      {/* Control de Independencia si tiene cuenta propia */}
                       {group.isIndependentChild && (
                         <button
                           type="button"
                           className="btn-toggle-independence is-indep"
                           onClick={() => updateFamilyGroupIndependence(group.id, false)}
-                          title="Hacer dependiente para acumular (roll-up) en el ticket de su rama principal"
+                          title="Agrupar cuenta con su familia principal"
                         >
                           <Icon name="link" size={12} />
-                          <span>Hacer Dependiente</span>
+                          <span>Agrupar Cuenta</span>
                         </button>
                       )}
 
@@ -793,7 +792,7 @@ export const DirectoryView = () => {
                         type="button"
                         className="btn-icon-glass btn-dir-action"
                         onClick={() => handleOpenEditGroup(group)}
-                        title={`Editar grupo familiar "${group.nombre}"`}
+                        title={`Editar familia "${group.nombre}"`}
                       >
                         <Icon name="edit" size={13} />
                       </button>
@@ -814,14 +813,14 @@ export const DirectoryView = () => {
                   <div className="family-members-list">
                     {group.directContacts.length === 0 && group.dependentChildren.length === 0 ? (
                       <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: '4px 0' }}>
-                        Sin integrantes asignados directamente a esta rama.
+                        Sin integrantes registrados.
                       </p>
                     ) : (
                       group.directContacts.map((d) => renderMemberCard(d))
                     )}
                   </div>
 
-                  {/* SUB-NÚCLEOS DEPENDIENTES (ANIDADOS) */}
+                  {/* SUBFAMILIAS AGRUPADAS (ANIDADAS) */}
                   {group.dependentChildren.length > 0 && (
                     <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {group.dependentChildren.map((child) => (
@@ -832,7 +831,7 @@ export const DirectoryView = () => {
                                 <Icon name="chevron-right" size={13} /> {child.nombre}
                               </span>
                               <span className="badge-branch-dependent">
-                                Dependiente
+                                Cuenta Agrupada
                               </span>
                               <span className="badge-pill badge-neutral">
                                 {child.contacts.length}
@@ -840,33 +839,33 @@ export const DirectoryView = () => {
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              {/* Botón para independizar financieramente este sub-núcleo */}
+                              {/* Botón para separar cuenta */}
                               <button
                                 type="button"
                                 className="btn-toggle-independence"
                                 onClick={() => updateFamilyGroupIndependence(child.id, true)}
-                                title="Independizar este núcleo para que genere su propio ticket de cobro y aparezca como tarjeta de primer nivel"
+                                title="Separar para que tenga su propio estado de cuenta"
                               >
                                 <Icon name="check" size={12} />
-                                <span>Autónomo</span>
+                                <span>Cuenta Propia</span>
                               </button>
 
-                              {/* BOTÓN DE EDITAR SUB-NÚCLEO */}
+                              {/* BOTÓN DE EDITAR SUBFAMILIA */}
                               <button
                                 type="button"
                                 className="btn-icon-glass btn-dir-action"
                                 onClick={() => handleOpenEditGroup(child)}
-                                title={`Editar sub-núcleo "${child.nombre}"`}
+                                title={`Editar "${child.nombre}"`}
                               >
                                 <Icon name="edit" size={13} />
                               </button>
 
-                              {/* BOTÓN DE ELIMINAR SUB-NÚCLEO */}
+                              {/* BOTÓN DE ELIMINAR SUBFAMILIA */}
                               <button
                                 type="button"
                                 className="btn-icon-danger btn-dir-action"
                                 onClick={() => setFamilyToDelete({ id: child.id, name: child.nombre })}
-                                title={`Eliminar sub-núcleo "${child.nombre}"`}
+                                title={`Eliminar "${child.nombre}"`}
                               >
                                 <Icon name="trash" size={13} />
                               </button>
@@ -876,7 +875,7 @@ export const DirectoryView = () => {
                           <div className="family-members-list" style={{ marginTop: '8px' }}>
                             {child.contacts.length === 0 ? (
                               <p style={{ fontSize: '0.80rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: '2px 0' }}>
-                                Sin integrantes registrados en este sub-núcleo.
+                                Sin integrantes registrados.
                               </p>
                             ) : (
                               child.contacts.map((d) => renderMemberCard(d))
@@ -890,13 +889,13 @@ export const DirectoryView = () => {
               );
             })}
 
-            {/* INTEGRANTES SIN RAMA ASIGNADA */}
+            {/* INTEGRANTES SIN FAMILIA ASIGNADA */}
             {unassignedContacts.length > 0 && (
               <div className="family-branch-card directory-unassigned-card" style={{ borderColor: 'var(--border-subtle)' }}>
                 <div className="family-branch-header">
                   <div className="family-branch-title-group">
                     <span className="family-branch-name">
-                      <Icon name="users" size={17} /> Otros Integrantes / Sin Rama Asignada
+                      <Icon name="users" size={17} /> Otros Integrantes
                     </span>
                     <span className="badge-pill badge-neutral">
                       {unassignedContacts.length} integrante{unassignedContacts.length === 1 ? '' : 's'}
@@ -913,7 +912,7 @@ export const DirectoryView = () => {
         )}
       </div>
 
-      {/* MODAL 1: EDITAR INTEGRANTE (CRUD) */}
+      {/* MODAL 1: EDITAR INTEGRANTE */}
       {editingContact && (
         <div 
           className="modal-backdrop animate-fade-in"
@@ -937,7 +936,6 @@ export const DirectoryView = () => {
             <div className="dialog-content">
               <div className="dialog-header">
                 <div className="dialog-title-group">
-                  <span className="dialog-badge">ACTUALIZACIÓN CRUD</span>
                   <h3 className="dialog-title">Editar Integrante</h3>
                 </div>
                 <button 
@@ -1000,7 +998,7 @@ export const DirectoryView = () => {
                   </div>
 
                   <div className="form-group">
-                    <label>Núcleo Familiar Asignado</label>
+                    <label>Familia Asignada</label>
                     <select 
                       className="glass-select"
                       value={editGroupId}
@@ -1010,8 +1008,8 @@ export const DirectoryView = () => {
                       {rawGroups.map((g) => {
                         const isSub = Boolean(g.nodo_padre_id);
                         const label = isSub 
-                          ? `↳ ${g.nombre || g.name} (${g.es_independiente ? 'Autónomo' : 'Dependiente'})` 
-                          : `★ ${g.nombre || g.name} (Rama Principal)`;
+                          ? `↳ ${g.nombre || g.name} (${g.es_independiente ? 'Cuenta Propia' : 'Cuenta Agrupada'})` 
+                          : `★ ${g.nombre || g.name} (Familia Principal)`;
                         return (
                           <option key={g.id} value={g.id}>
                             {label}
@@ -1022,12 +1020,7 @@ export const DirectoryView = () => {
                   </div>
 
                   <div className="form-group">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label style={{ margin: 0 }}>Categoría y Unidad de Ponderación *</label>
-                      <span style={{ fontSize: '0.74rem', color: 'var(--color-primary)' }}>
-                        Ajusta el peso conforme los niños crecen
-                      </span>
-                    </div>
+                    <label style={{ marginBottom: '6px', display: 'block' }}>Categoría y Ponderación *</label>
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '10px' }}>
                       <select 
                         className="glass-select"
@@ -1079,7 +1072,7 @@ export const DirectoryView = () => {
         </div>
       )}
 
-      {/* MODAL 2: EDITAR GRUPO FAMILIAR (CRUD) */}
+      {/* MODAL 2: EDITAR GRUPO FAMILIAR */}
       {editingGroup && (
         <div 
           className="modal-backdrop animate-fade-in"
@@ -1103,8 +1096,7 @@ export const DirectoryView = () => {
             <div className="dialog-content">
               <div className="dialog-header">
                 <div className="dialog-title-group">
-                  <span className="dialog-badge">ACTUALIZACIÓN CRUD</span>
-                  <h3 className="dialog-title">Editar Grupo Familiar</h3>
+                  <h3 className="dialog-title">Editar Familia</h3>
                 </div>
                 <button 
                   type="button" 
@@ -1119,34 +1111,31 @@ export const DirectoryView = () => {
               <form onSubmit={handleSaveEditGroup}>
                 <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div className="form-group">
-                    <label>Nombre del Núcleo Familiar *</label>
+                    <label>Nombre de la Familia *</label>
                     <input 
                       type="text" 
                       className="glass-input" 
                       value={editGroupName}
                       onChange={(e) => setEditGroupName(e.target.value)}
-                      placeholder="ej. Familia García Santiago (Casa Grande)"
+                      placeholder="ej. Familia Hernández López"
                       required 
                       autoComplete="off"
                     />
-                    <small style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-                      Asigna un nombre distintivo para evitar confusiones de apellidos repetidos.
-                    </small>
                   </div>
 
                   <div className="form-group">
-                    <label>Nodo Padre (Jerarquía Relacional)</label>
+                    <label>Familia Principal (Opcional)</label>
                     <select 
                       className="glass-select"
                       value={editGroupParentId}
                       onChange={(e) => setEditGroupParentId(e.target.value)}
                     >
-                      <option value="">(Ninguno) - Es una Rama Principal</option>
+                      <option value="">(Ninguna) - Es Familia Principal</option>
                       {rawGroups
                         .filter((g) => g.id !== editingGroup.id && !g.nodo_padre_id)
                         .map((root) => (
                           <option key={root.id} value={root.id}>
-                            Cuelga de: {root.nombre || root.name}
+                            Pertenece a: {root.nombre || root.name}
                           </option>
                         ))}
                     </select>
@@ -1155,11 +1144,11 @@ export const DirectoryView = () => {
                   {editGroupParentId && (
                     <div className="glass-panel" style={{ padding: '14px 16px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px' }}>
                       <div>
-                        <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>¿Asume deuda propia (Independiente)?</strong>
+                        <strong style={{ fontSize: '0.88rem', color: 'var(--text-primary)' }}>¿Maneja cuenta propia?</strong>
                         <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
                           {editGroupIsIndependent 
-                            ? 'Generará su propio ticket de cobro individual en los cortes y aparecerá como tarjeta de primer nivel.' 
-                            : 'Se acumula (roll-up) en el ticket de cobro de su Rama Principal.'}
+                            ? 'Tendrá su propio estado de cuenta por separado.' 
+                            : 'Su cuenta se suma a la de su familia principal.'}
                         </p>
                       </div>
                       <label className="switch-toggle" style={{ flexShrink: 0 }}>

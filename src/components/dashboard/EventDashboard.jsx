@@ -102,11 +102,6 @@ export const EventDashboard = () => {
             </div>
 
             {/* Cuentas y Tickets de Cobro POS */}
-            <div className="section-title-box">
-              <h3 className="section-heading">Cuentas y Tickets de Cobro POS</h3>
-              <p className="section-subheading">Panel interactivo de subfamilias y emisión de tickets de cobro individuales.</p>
-            </div>
-
             <PosTicketView />
           </div>
         )}

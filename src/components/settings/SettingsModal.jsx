@@ -317,8 +317,8 @@ export const SettingsModal = () => {
 
               {/* Formulario de Cambio de Contraseña Propia */}
               <div className="glass-panel" style={{ padding: '20px', borderRadius: '16px' }}>
-                <strong style={{ display: 'block', fontSize: '1.0rem', color: 'var(--text-primary)', marginBottom: '14px' }}>
-                  🔒 Actualizar mi Contraseña
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.0rem', color: 'var(--text-primary)', marginBottom: '14px' }}>
+                  <Icon name="lock" size={16} /> Actualizar Contraseña
                 </strong>
 
                 <form onSubmit={handleChangeOwnPassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -373,7 +373,7 @@ export const SettingsModal = () => {
                 <div>
                   <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>Tema de la Interfaz</strong>
                   <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    Actualmente en modo {theme === 'dark' ? 'Oscuro (Glassmorphism Neón)' : 'Claro (Vidrio Esmerilado)'}.
+                    Modo actual: {theme === 'dark' ? 'Oscuro' : 'Claro'}
                   </p>
                 </div>
                 <button type="button" className="btn-pill-glass" onClick={toggleTheme}>
@@ -412,7 +412,7 @@ export const SettingsModal = () => {
               {showCreateUserForm && (
                 <form onSubmit={handleCreateUser} className="glass-panel animate-scale-in" style={{ padding: '18px', borderRadius: '16px' }}>
                   <strong style={{ display: 'block', fontSize: '0.95rem', marginBottom: '12px', color: 'var(--color-primary)' }}>
-                    ✨ Registrar Nuevo Usuario Autorizado
+                    Registrar Nuevo Usuario Autorizado
                   </strong>
                   <div className="form-row-2">
                     <div className="form-group">
@@ -420,7 +420,7 @@ export const SettingsModal = () => {
                       <input 
                         type="text" 
                         className="glass-input" 
-                        placeholder="ej. Tía Rosalía Santiago" 
+                        placeholder="ej. María López" 
                         value={newUserName}
                         onChange={(e) => setNewUserName(e.target.value)}
                         required 
@@ -431,7 +431,7 @@ export const SettingsModal = () => {
                       <input 
                         type="text" 
                         className="glass-input" 
-                        placeholder="ej. rosalia" 
+                        placeholder="ej. maria" 
                         value={newUserUsername}
                         onChange={(e) => setNewUserUsername(e.target.value)}
                         required 
@@ -559,39 +559,37 @@ export const SettingsModal = () => {
           {/* ============================================================== */}
           {isAdmin && activeTab === 'system' && (
             <div className="settings-tab-system animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Estado de Supabase Cloud */}
+              {/* Estado de Sincronización */}
               <div className="glass-panel" style={{ padding: '18px', borderRadius: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Icon name="database" size={16} /> Estado de Supabase Cloud
+                    <Icon name="database" size={16} /> Sincronización en la Nube
                   </strong>
-                  <span className="badge-pill badge-emerald">En línea & Realtime Activo</span>
+                  <span className="badge-pill badge-emerald">Conectado</span>
                 </div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div><strong>Endpoint:</strong> <code>{CONFIG.SUPABASE.URL}</code></div>
-                  <div><strong>Eventos cargados:</strong> {events.length} eventos históricos</div>
-                  <div><strong>Sincronización en vivo:</strong> Canales postgres_changes activos en events, participants y expenses</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  {events.length} eventos registrados en la cuenta.
                 </div>
               </div>
 
-              {/* Herramientas de Mantenimiento y Backup */}
+              {/* Herramientas de Mantenimiento y Respaldo */}
               <div className="glass-panel" style={{ padding: '18px', borderRadius: '16px' }}>
-                <strong style={{ display: 'block', fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '12px' }}>
-                  📦 Copias de Seguridad y Resguardo
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '12px' }}>
+                  <Icon name="download" size={16} /> Copias de Seguridad y Resguardo
                 </strong>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-                  Descarga una copia completa de toda la contabilidad, participantes y compras en formato JSON para resguardo seguro fuera de línea.
+                  Descarga un respaldo completo de los eventos, integrantes y gastos registrados.
                 </p>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                   <button type="button" className="btn-pill-primary" onClick={handleDownloadBackup}>
                     <Icon name="download" size={15} />
-                    <span>Descargar Backup JSON Completo</span>
+                    <span>Descargar Respaldo</span>
                   </button>
 
                   <button type="button" className="btn-pill-glass" onClick={handleClearCache}>
                     <Icon name="refresh" size={15} />
-                    <span>Depurar Caché Local</span>
+                    <span>Limpiar Datos Locales</span>
                   </button>
                 </div>
               </div>
