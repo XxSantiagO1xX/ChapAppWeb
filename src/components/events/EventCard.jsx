@@ -64,7 +64,7 @@ export const EventCard = ({ event }) => {
 
   return (
     <article 
-      className="event-card glass-panel animate-scale-in" 
+      className={`event-card glass-panel animate-scale-in ${event.isArchived ? 'event-card-inactive' : 'event-card-active'}`} 
       onClick={() => selectEvent(event.id)}
       style={{ cursor: 'pointer' }}
     >
@@ -74,9 +74,6 @@ export const EventCard = ({ event }) => {
             <span className="event-year-tag">Año {event.year}</span>
             <span className="event-days-tag">
               <Icon name="calendar" size={12} /> {daysCount} {daysCount === 1 ? 'día' : 'días'}
-            </span>
-            <span className={`badge-status ${event.isArchived ? 'status-archived' : 'status-active'}`}>
-              {event.isArchived ? 'Archivado' : 'Activo'}
             </span>
           </div>
           <div className="event-card-menu-group" onClick={(e) => e.stopPropagation()}>
