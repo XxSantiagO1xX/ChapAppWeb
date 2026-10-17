@@ -212,3 +212,20 @@
 .animate-scale-in {
   animation: scaleIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+@media (max-width: 639px) {
+  .glass-dialog,
+  .glass-dialog.modal-lg,
+  .glass-dialog.modal-md,
+  .glass-dialog.modal-sm {
+    max-width: 95vw;
+    width: 95vw;
+  }
+
+  .glass-dialog .dialog-content {
+    padding: 18px 16px;
+    max-height: 90vh;
+    border-radius: var(--radius-xl);
+  }
+}
+

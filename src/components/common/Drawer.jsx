@@ -5,6 +5,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext.jsx';
 import { Icon } from '../../utils/icons.jsx';
+import ChapAppWordmark from './ChapAppWordmark.jsx';
 
 export const Drawer = ({ filterTab, setFilterTab }) => {
   const { 
@@ -46,7 +47,9 @@ export const Drawer = ({ filterTab, setFilterTab }) => {
               />
             </div>
             <div>
-              <h2 className="drawer-title">ChapApp</h2>
+              <h2 className="drawer-title" aria-label="ChapApp">
+                <ChapAppWordmark idPrefix="drawer" className="chapapp-wordmark-drawer" />
+              </h2>
               <p className="drawer-subtitle">Menú Principal</p>
             </div>
           </div>

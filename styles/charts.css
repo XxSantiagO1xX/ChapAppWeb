@@ -1070,9 +1070,75 @@
 
 @media (max-width: 767px) {
   .floating-fab-btn {
-    bottom: 76px;
-    right: 16px;
-    padding: 10px 18px;
-    font-size: 0.85rem;
+    bottom: 84px;
+    right: 14px;
+    padding: 10px 16px;
+    font-size: 0.84rem;
   }
 }
+
+@media (max-width: 639px) {
+  .charts-row-grid {
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .chart-liquid-card {
+    padding: 18px 14px;
+  }
+
+  /* Cilindros 3D adaptados al ancho de celulares sin traslape de textos */
+  .liquid-cylinders-grid {
+    gap: 4px;
+    height: 196px;
+    padding: 0;
+  }
+
+  .liquid-cylinder-chamber {
+    width: 34px;
+    height: 124px;
+  }
+
+  .cylinder-percent-text {
+    font-size: 0.74rem;
+  }
+
+  .cylinder-amount-text {
+    font-size: 0.60rem;
+  }
+
+  .cylinder-bottom-pedestal {
+    padding: 2px 4px;
+    gap: 3px;
+  }
+
+  .pedestal-label {
+    font-size: 0.63rem;
+    max-width: 54px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pos-master-col {
+    padding: 14px 12px;
+  }
+
+  .pos-ticket-card {
+    padding: 18px 14px;
+    gap: 16px;
+  }
+
+  .ticket-family-name {
+    font-size: 1.20rem;
+  }
+
+  .ticket-metrics-row {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .metric-mini-val {
+    font-size: 1.10rem;
+  }
+}
+

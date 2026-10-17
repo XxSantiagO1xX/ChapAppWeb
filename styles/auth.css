@@ -758,3 +758,62 @@
 .user-badge-avatar {
   font-size: 0.95rem;
 }
+
+/* ==========================================================================
+   6. OPTIMIZACIÓN RESPONSIVA EXCLUSIVA PARA CELULARES (MAX-WIDTH: 639PX)
+   ========================================================================== */
+@media (max-width: 639px) {
+  .login-viewport-container {
+    padding: 16px 14px 28px;
+    align-items: center;
+  }
+
+  .login-theme-toggle-btn {
+    top: 12px;
+    right: 12px;
+    height: 34px;
+    padding: 0 12px;
+    font-size: 0.74rem;
+    gap: 6px;
+  }
+
+  .login-split-layout {
+    gap: 14px;
+  }
+
+  .login-visual-stage {
+    padding: 4px 0;
+  }
+
+  .login-emblem-showcase {
+    width: 154px;
+    height: 154px;
+  }
+
+  .login-emblem-capsule {
+    width: 136px;
+    height: 136px;
+  }
+
+  .login-emblem-tree-img {
+    width: 98px;
+    height: 98px;
+  }
+
+  .liquid-glass-card {
+    padding: 24px 20px;
+    border-radius: 24px;
+    gap: 18px;
+  }
+
+  .chapapp-bubble-svg.chapapp-wordmark-login {
+    max-width: 220px;
+  }
+
+  /* Evitar auto-zoom de Safari iOS / Chrome Android al enfocar inputs */
+  .login-input {
+    font-size: 16px !important;
+    height: 44px;
+  }
+}
+

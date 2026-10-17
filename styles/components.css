@@ -3845,3 +3845,167 @@ button:active {
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.70) !important;
 }
 
+/* ==========================================================================
+   OPTIMIZACIÓN RESPONSIVA EXCLUSIVA PARA CELULARES (MAX-WIDTH: 639PX)
+   Mantiene intactos tablets y computadoras (>= 640px / >= 768px)
+   ========================================================================== */
+@media (max-width: 599px) {
+  /* Cuadrícula compacta 2x2 para las 4 tarjetas KPI en celulares */
+  .hud-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .hud-metric-card {
+    padding: 14px 12px;
+    gap: 6px;
+    border-radius: var(--radius-lg);
+  }
+
+  .hud-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+  }
+
+  .hud-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .hud-value {
+    font-size: 1.16rem;
+  }
+
+  .hud-sub {
+    font-size: 0.70rem;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Evitar auto-zoom de iOS Safari / Chrome Android al tocar inputs */
+  .glass-input,
+  .glass-select,
+  .glass-input-search {
+    font-size: 16px !important;
+  }
+
+  .event-card {
+    padding: 18px 18px;
+    gap: 16px;
+  }
+
+  .event-card-title {
+    font-size: 1.14rem;
+  }
+
+  .section-heading {
+    font-size: 1.20rem;
+  }
+
+  .subfamily-group-card {
+    padding: 16px 14px;
+  }
+
+  .sf-members-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Banner IA en Modal Gasto Rápido adaptable en celular */
+  .ai-scanner-banner {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .ai-scanner-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .ai-upload-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Selector de categorías en 2 columnas compactas en celular */
+  .category-vertical-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  /* Tarjetas del Directorio adaptadas para pantallas estrechas */
+  .directory-contact-card {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .btn-toggle-dir-category {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 0.72rem;
+    gap: 4px;
+  }
+
+  .btn-delete-dir-contact {
+    width: 32px;
+    height: 32px;
+  }
+
+  .family-branch-card {
+    padding: 14px 12px;
+  }
+
+  .family-subnucleus-nested {
+    margin-left: 6px;
+    padding: 12px 12px;
+  }
+
+  /* Ticket POS y Liquidación en celular */
+  .pos-member-row,
+  .pos-guest-row {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .member-amount-col,
+  .guest-amount-col {
+    font-size: 0.94rem;
+    min-width: 68px;
+  }
+
+  .settlement-bottom-card {
+    padding: 18px 14px;
+  }
+
+  .settlement-card-amount {
+    font-size: 1.75rem;
+  }
+
+  .btn-settle-account,
+  .btn-reopen-account {
+    width: 100%;
+    padding: 12px 18px;
+    font-size: 0.88rem;
+  }
+
+  /* Toasts por encima de la barra inferior en celular */
+  .toast-container {
+    bottom: 82px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .form-row-2 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+

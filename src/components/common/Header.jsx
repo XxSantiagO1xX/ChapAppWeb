@@ -10,6 +10,7 @@ import { Icon } from '../../utils/icons.jsx';
 import { calculateEventTotals } from '../../utils/calculations.js';
 import { generateEventReportPlainText } from '../../utils/reports.js';
 import { openExecutivePrintReport } from '../../utils/pdfReport.js';
+import ChapAppWordmark from './ChapAppWordmark.jsx';
 
 export const Header = () => {
   const { 
@@ -125,8 +126,9 @@ export const Header = () => {
               onClick={() => navigateToView('events')}
               className="navbar-brand-title-btn"
               title="ChapApp - Inicio"
+              aria-label="ChapApp - Inicio"
             >
-              <span className="navbar-brand-name">ChapApp</span>
+              <ChapAppWordmark idPrefix="header" className="chapapp-wordmark-header" />
             </button>
           </div>
         )}

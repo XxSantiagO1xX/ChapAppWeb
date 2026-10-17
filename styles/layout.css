@@ -213,6 +213,21 @@ dialog {
   padding: 0;
   display: flex;
   align-items: center;
+  height: 28px;
+}
+
+.chapapp-wordmark-header {
+  width: 108px;
+  height: 28px;
+  display: block;
+  overflow: visible;
+}
+
+.chapapp-wordmark-drawer {
+  width: 102px;
+  height: 26px;
+  display: block;
+  overflow: visible;
 }
 
 .navbar-brand-name {
@@ -1411,3 +1426,165 @@ dialog {
   border-color: #FFFFFF;
   box-shadow: 0 0 18px rgba(2, 132, 199, 0.40);
 }
+
+/* ==========================================================================
+   OPTIMIZACIÓN RESPONSIVA EXCLUSIVA PARA CELULARES (MAX-WIDTH: 639PX)
+   Mantiene intactos tablets y computadoras (>= 640px / >= 768px)
+   ========================================================================== */
+@media (max-width: 639px) {
+  .app-container {
+    padding: 12px 10px 84px;
+    gap: 16px;
+  }
+
+  .main-content-flow {
+    gap: 16px;
+    padding-bottom: 78px;
+  }
+
+  /* Header Cápsula compacto en 1 sola fila sin desbordamiento en celulares */
+  .app-header.floating-navbar-capsule {
+    margin: 4px auto 14px auto;
+    height: 54px;
+    padding: 0 8px;
+    gap: 4px;
+  }
+
+  .navbar-zone-left {
+    gap: 6px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .navbar-brand-group,
+  .navbar-context-group {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .navbar-menu-btn,
+  .navbar-back-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .chapapp-wordmark-header {
+    width: 78px;
+    height: 20px;
+  }
+
+  .navbar-context-title {
+    font-size: 0.82rem;
+    max-width: 86px;
+  }
+
+  .navbar-event-title {
+    font-size: 0.82rem;
+    max-width: 84px;
+  }
+
+  .navbar-zone-center {
+    margin: 0 2px;
+  }
+
+  .navbar-center-emblem {
+    width: 48px;
+    height: 48px;
+    margin: -3px 0;
+  }
+
+  .navbar-emblem-img {
+    width: 35px;
+    height: 35px;
+  }
+
+  .navbar-zone-right {
+    gap: 4px;
+    flex: 0 0 auto;
+  }
+
+  .navbar-utility-dock {
+    padding: 2px 3px;
+    gap: 1px;
+  }
+
+  .navbar-dock-btn {
+    width: 27px;
+    height: 27px;
+  }
+
+  .navbar-dock-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .navbar-event-actions-group {
+    gap: 4px;
+  }
+
+  .navbar-quick-action-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .navbar-quick-action-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .navbar-cta-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  /* Barra de navegación inferior móvil uniforme */
+  .floating-capsule-sidebar {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    padding: 6px 8px;
+  }
+
+  .capsule-tab-item {
+    min-height: 50px;
+    padding: 6px 8px !important;
+    justify-content: center;
+  }
+
+  .capsule-icon-box {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+  }
+
+  .capsule-count-badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 0.62rem;
+    padding: 1px 5px;
+  }
+}
+
+@media (max-width: 380px) {
+  .chapapp-wordmark-header {
+    width: 66px;
+    height: 18px;
+  }
+
+  .navbar-event-title,
+  .navbar-context-title {
+    max-width: 68px;
+    font-size: 0.76rem;
+  }
+
+  .navbar-dock-btn {
+    width: 25px;
+    height: 25px;
+  }
+}
+
