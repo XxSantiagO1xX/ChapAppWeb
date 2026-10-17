@@ -1386,8 +1386,13 @@ export const fetchGlobalDirectoryFromSupabase = async () => {
       if (!error && Array.isArray(data)) {
         const contactsMap = new Map();
         data.forEach((row) => {
-          // Ignorar grupos familiares guardados en participants como fallback
-          if (row.name?.startsWith('__FG__') || row.active_days?.isFamilyGroup) {
+          // Ignorar grupos familiares o usuarios de autenticación guardados en participants
+          if (
+            row.name?.startsWith('__FG__') ||
+            row.active_days?.isFamilyGroup ||
+            row.name?.startsWith('__AUTH_USER__') ||
+            row.active_days?.isAuthUser
+          ) {
             return;
           }
           const p = parseParticipantRow(row);

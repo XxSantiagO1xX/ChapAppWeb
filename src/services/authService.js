@@ -1,32 +1,154 @@
 /**
  * ChapApp - Servicio de Autenticación y Control de Acceso por Roles (RBAC)
- * Gestión hermética de credenciales, sesiones y usuarios con hashing criptográfico SHA-256
+ * Sincronización bidireccional con Supabase Cloud + Respaldo en LocalStorage
  */
+
+import { initSupabaseClient } from './supabase.js';
 
 const STORAGE_KEY_USERS = 'chapapp_auth_users';
 const STORAGE_KEY_SESSION = 'chapapp_session_user';
+const AUTH_USER_PREFIX = '__AUTH_USER__:';
 
 /**
- * Función auxiliar para hashear contraseñas usando la Web Crypto API (SHA-256)
+ * Implementación pura en JS de SHA-256 para garantizar que el hash sea idéntico
+ * incluso en contextos HTTP locales (ej. pruebas en celular por IP local) donde crypto.subtle no está activo.
+ */
+const sha256PureJS = (ascii) => {
+  const rightRotate = (value, amount) => (value >>> amount) | (value << (32 - amount));
+  const mathPow = Math.pow;
+  const maxWord = mathPow(2, 32);
+  let result = '';
+
+  const words = [];
+  const asciiBitLength = ascii.length * 8;
+
+  let hash = [];
+  const k = [];
+  let primeCounter = 0;
+
+  const isComposite = {};
+  for (let candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (let i = 0; i < 313; i += candidate) {
+        isComposite[i] = candidate;
+      }
+      hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+      k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+    }
+  }
+
+  ascii += '\x80';
+  while ((ascii.length % 64) - 56) ascii += '\x00';
+  for (let i = 0; i < ascii.length; i++) {
+    const j = ascii.charCodeAt(i);
+    words[i >> 2] |= j << (((3 - i) % 4) * 8);
+  }
+  words[words.length] = (asciiBitLength / maxWord) | 0;
+  words[words.length] = asciiBitLength;
+
+  for (let j = 0; j < words.length; ) {
+    const w = words.slice(j, (j += 16));
+    const oldHash = hash;
+    hash = hash.slice(0, 8);
+
+    for (let i = 0; i < 64; i++) {
+      const i2 = i + j;
+      const w15 = w[i - 15];
+      const w2 = w[i - 2];
+
+      const a = hash[0];
+      const e = hash[4];
+      const temp1 =
+        hash[7] +
+        (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+        ((e & hash[5]) ^ (~e & hash[6])) +
+        k[i] +
+        (w[i] =
+          i < 16
+            ? w[i]
+            : (w[i - 16] +
+                (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+                w[i - 7] +
+                (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) |
+              0);
+
+      const temp2 =
+        (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+        ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+    }
+
+    for (let i = 0; i < 8; i++) {
+      hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+  }
+
+  for (let i = 0; i < 8; i++) {
+    for (let j = 3; j + 1; j--) {
+      const b = (hash[i] >> (j * 8)) & 255;
+      result += (b < 16 ? 0 : '') + b.toString(16);
+    }
+  }
+  return result;
+};
+
+/**
+ * Convierte texto UTF-8 a bytes ASCII para sha256PureJS
+ */
+const utf8ToBinaryString = (str) => {
+  if (typeof TextEncoder !== 'undefined') {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) {
+      bin += String.fromCharCode(bytes[i]);
+    }
+    return bin;
+  }
+  return unescape(encodeURIComponent(str));
+};
+
+/**
+ * Función para hashear contraseñas con SHA-256 consistente en cualquier dispositivo/protocolo
  * @param {string} text - Contraseña en texto plano
  * @returns {Promise<string>} Hash hexadecimal de 64 caracteres
  */
 export const hashPassword = async (text) => {
+  const cleanText = String(text ?? '');
   if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(cleanText);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) {
+      // Fallback a implementación pura JS si falla Web Crypto
+    }
   }
-  // Fallback simple si Web Crypto no estuviera disponible (ej. entorno de pruebas)
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    const char = text.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return 'fallback_' + Math.abs(hash).toString(16);
+  return sha256PureJS(utf8ToBinaryString(cleanText));
+};
+
+/**
+ * Normaliza un nombre de usuario quitando acentos y espacios laterales, siempre en minúsculas
+ */
+export const normalizeUsername = (raw = '') => {
+  return String(raw || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_.-]/g, '');
+};
+
+/**
+ * Genera un UUID v4 determinístico a partir del username para sincronizar sin duplicados en Supabase
+ */
+const getDeterministicUserUUID = (username) => {
+  const hex = sha256PureJS(utf8ToBinaryString(`chapapp_auth_user_v1:${normalizeUsername(username)}`));
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 };
 
 /**
@@ -36,81 +158,199 @@ export const hashPassword = async (text) => {
  */
 const getInitialSeedUsers = async () => [
   {
-    id: 'usr_admin',
+    id: getDeterministicUserUUID('admin'),
     username: 'admin',
     name: 'Administrador General',
     role: 'admin',
     avatar: null,
-    createdAt: new Date().toISOString(),
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
     passwordHash: await hashPassword('1234'),
   },
   {
-    id: 'usr_segundo',
+    id: getDeterministicUserUUID('segundo'),
     username: 'segundo',
     name: 'Segundo al Mando',
     role: 'operator',
     avatar: null,
-    createdAt: new Date().toISOString(),
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
     passwordHash: await hashPassword('2345'),
   },
 ];
 
-/**
- * Inicializa y retorna la lista de usuarios asegurando que existan las cuentas semilla
- */
-export const initAuthUsers = async () => {
+const loadLocalUsers = () => {
   if (typeof window === 'undefined') return [];
-
-  const stored = localStorage.getItem(STORAGE_KEY_USERS);
-  if (!stored) {
-    const seeds = await getInitialSeedUsers();
-    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(seeds));
-    return seeds;
-  }
-
   try {
-    const users = JSON.parse(stored);
-    // Asegurar que al menos el admin y el segundo existan
-    let updated = false;
-    if (!users.some((u) => u.username === 'admin')) {
-      users.push({
-        id: 'usr_admin',
-        username: 'admin',
-        name: 'Administrador General',
-        role: 'admin',
-        avatar: null,
-        createdAt: new Date().toISOString(),
-        passwordHash: await hashPassword('1234'),
-      });
-      updated = true;
-    }
-    if (!users.some((u) => u.username === 'segundo')) {
-      users.push({
-        id: 'usr_segundo',
-        username: 'segundo',
-        name: 'Segundo al Mando',
-        role: 'operator',
-        avatar: null,
-        createdAt: new Date().toISOString(),
-        passwordHash: await hashPassword('2345'),
-      });
-      updated = true;
-    }
-
-    if (updated) {
-      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
-    }
-    return users;
+    const raw = localStorage.getItem(STORAGE_KEY_USERS);
+    return raw ? JSON.parse(raw) : [];
   } catch (e) {
-    console.error('[AuthService] Error parseando usuarios, reinicializando semillas:', e);
-    const seeds = await getInitialSeedUsers();
-    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(seeds));
-    return seeds;
+    return [];
+  }
+};
+
+const saveLocalUsers = (users) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+  } catch (e) {
+    console.warn('[AuthService] No se pudo guardar en LocalStorage:', e);
   }
 };
 
 /**
- * Obtiene la lista actual de todos los usuarios registrados (solo metadatos seguros)
+ * Guarda o actualiza un usuario en Supabase Cloud (usando registro global en participants con event_id = null)
+ */
+const upsertUserInSupabase = async (userObj) => {
+  const supabase = await initSupabaseClient();
+  if (!supabase || !userObj || !userObj.username) return;
+
+  const cleanUsername = normalizeUsername(userObj.username);
+  const rowId = getDeterministicUserUUID(cleanUsername);
+  const normalizedUser = {
+    ...userObj,
+    id: rowId,
+    username: cleanUsername,
+    updatedAt: userObj.updatedAt || new Date().toISOString(),
+  };
+
+  const payload = {
+    id: rowId,
+    event_id: null,
+    name: `${AUTH_USER_PREFIX}${cleanUsername}`,
+    category: 'adulto',
+    weight: 1.0,
+    active_days: {
+      isAuthUser: true,
+      user: normalizedUser,
+    },
+  };
+
+  try {
+    const { error } = await supabase.from('participants').upsert(payload, { onConflict: 'id' });
+    if (error) {
+      console.warn('[AuthService] Advertencia sincronizando usuario en Supabase:', error.message);
+    }
+  } catch (err) {
+    console.warn('[AuthService] Error de red al sincronizar usuario en Supabase:', err);
+  }
+};
+
+/**
+ * Elimina un usuario de Supabase Cloud
+ */
+const deleteUserFromSupabase = async (username) => {
+  const supabase = await initSupabaseClient();
+  if (!supabase || !username) return;
+
+  const cleanUsername = normalizeUsername(username);
+  const rowId = getDeterministicUserUUID(cleanUsername);
+  try {
+    await supabase.from('participants').delete().eq('id', rowId).is('event_id', null);
+    await supabase.from('participants').delete().eq('name', `${AUTH_USER_PREFIX}${cleanUsername}`).is('event_id', null);
+  } catch (err) {
+    console.warn('[AuthService] Error eliminando usuario de Supabase:', err);
+  }
+};
+
+/**
+ * Descarga todos los usuarios registrados en Supabase Cloud
+ */
+const fetchUsersFromSupabase = async () => {
+  const supabase = await initSupabaseClient();
+  if (!supabase) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('participants')
+      .select('*')
+      .is('event_id', null)
+      .like('name', `${AUTH_USER_PREFIX}%`);
+
+    if (error || !Array.isArray(data)) return null;
+
+    const remoteUsers = [];
+    data.forEach((row) => {
+      const u = row.active_days?.user;
+      if (u && u.username && u.passwordHash) {
+        remoteUsers.push({
+          ...u,
+          id: getDeterministicUserUUID(u.username),
+          username: normalizeUsername(u.username),
+        });
+      }
+    });
+    return remoteUsers;
+  } catch (err) {
+    console.warn('[AuthService] Error consultando usuarios en Supabase:', err);
+    return null;
+  }
+};
+
+/**
+ * Inicializa, sincroniza con Supabase Cloud y retorna la lista actualizada de usuarios
+ */
+export const initAuthUsers = async () => {
+  const seeds = await getInitialSeedUsers();
+  const localUsers = loadLocalUsers();
+  const remoteUsers = await fetchUsersFromSupabase();
+
+  const mergedMap = new Map();
+
+  // 1. Poner semillas base
+  seeds.forEach((s) => {
+    mergedMap.set(normalizeUsername(s.username), s);
+  });
+
+  // 2. Incorporar usuarios locales
+  localUsers.forEach((u) => {
+    if (!u || !u.username) return;
+    const key = normalizeUsername(u.username);
+    const normalized = {
+      ...u,
+      id: getDeterministicUserUUID(key),
+      username: key,
+    };
+    mergedMap.set(key, normalized);
+  });
+
+  // 3. Incorporar usuarios de Supabase Cloud (priorizando el más reciente si existe en ambos)
+  const remoteKeys = new Set();
+  if (Array.isArray(remoteUsers)) {
+    remoteUsers.forEach((ru) => {
+      if (!ru || !ru.username) return;
+      const key = normalizeUsername(ru.username);
+      remoteKeys.add(key);
+      const existing = mergedMap.get(key);
+      if (!existing) {
+        mergedMap.set(key, ru);
+      } else {
+        const remoteTime = new Date(ru.updatedAt || ru.createdAt || 0).getTime();
+        const localTime = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+        if (remoteTime >= localTime) {
+          mergedMap.set(key, ru);
+        }
+      }
+    });
+  }
+
+  const finalUsers = Array.from(mergedMap.values());
+  saveLocalUsers(finalUsers);
+
+  // 4. Si hay usuarios locales o semillas que aún no están en Supabase, subirlos en segundo plano
+  if (Array.isArray(remoteUsers)) {
+    for (const u of finalUsers) {
+      if (!remoteKeys.has(u.username)) {
+        upsertUserInSupabase(u);
+      }
+    }
+  }
+
+  return finalUsers;
+};
+
+/**
+ * Obtiene la lista actual de todos los usuarios registrados (sincronizada con Supabase)
  */
 export const getUsersList = async () => {
   const users = await initAuthUsers();
@@ -132,7 +372,29 @@ export const getCurrentUser = () => {
 };
 
 /**
- * Autentica un usuario con username y password
+ * Verifica si una contraseña coincide con el hash guardado, tolerando que el teclado móvil
+ * haya forzado la primera letra a mayúscula o minúscula.
+ */
+const verifyPasswordMatch = async (rawPassword, targetHash) => {
+  const trimmed = String(rawPassword ?? '').trim();
+  if (!trimmed || !targetHash) return false;
+
+  const candidates = new Set([
+    trimmed,
+    trimmed.charAt(0).toLowerCase() + trimmed.slice(1),
+    trimmed.charAt(0).toUpperCase() + trimmed.slice(1),
+    trimmed.toLowerCase(),
+  ]);
+
+  for (const candidate of candidates) {
+    const h = await hashPassword(candidate);
+    if (h === targetHash) return true;
+  }
+  return false;
+};
+
+/**
+ * Autentica un usuario con username y password consultando Supabase Cloud + caché local
  */
 export const login = async (username, password) => {
   if (!username || !password) {
@@ -140,17 +402,27 @@ export const login = async (username, password) => {
   }
 
   const users = await initAuthUsers();
-  const normalizedUsername = username.trim().toLowerCase();
-  const user = users.find(
-    (u) => u.username.toLowerCase() === normalizedUsername || (normalizedUsername === 'administrador' && u.username === 'admin')
-  );
+  const rawInput = username.trim().toLowerCase().replace(/^@/, '');
+  const normalizedInput = normalizeUsername(rawInput);
+
+  const user = users.find((u) => {
+    const uNorm = normalizeUsername(u.username);
+    const nameNorm = normalizeUsername(u.name);
+    return (
+      uNorm === normalizedInput ||
+      u.username.toLowerCase() === rawInput ||
+      (u.name && u.name.trim().toLowerCase() === rawInput) ||
+      (nameNorm && nameNorm === normalizedInput) ||
+      (normalizedInput === 'administrador' && uNorm === 'admin')
+    );
+  });
 
   if (!user) {
     throw new Error('El usuario no existe o fue dado de baja.');
   }
 
-  const inputHash = await hashPassword(password.trim());
-  if (user.passwordHash !== inputHash) {
+  const isPasswordValid = await verifyPasswordMatch(password, user.passwordHash);
+  if (!isPasswordValid) {
     throw new Error('Contraseña incorrecta. Por favor verifica tus credenciales.');
   }
 
@@ -163,7 +435,9 @@ export const login = async (username, password) => {
     loginAt: new Date().toISOString(),
   };
 
-  localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(sessionUser));
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(sessionUser));
+  }
   return sessionUser;
 };
 
@@ -180,32 +454,34 @@ export const logout = () => {
  * Permite a cualquier usuario cambiar su propia contraseña verificando la anterior
  */
 export const changePassword = async (userId, oldPassword, newPassword) => {
-  if (!newPassword || newPassword.length < 3) {
+  if (!newPassword || newPassword.trim().length < 3) {
     throw new Error('La nueva contraseña debe tener al menos 3 caracteres.');
   }
 
-  const stored = localStorage.getItem(STORAGE_KEY_USERS);
-  const users = stored ? JSON.parse(stored) : await initAuthUsers();
-  const user = users.find((u) => u.id === userId);
+  const users = await initAuthUsers();
+  const currentSession = getCurrentUser();
+  const user = users.find(
+    (u) => u.id === userId || (currentSession && normalizeUsername(u.username) === normalizeUsername(currentSession.username))
+  );
 
   if (!user) {
     throw new Error('Usuario no encontrado.');
   }
 
-  const oldHash = await hashPassword(oldPassword.trim());
-  if (user.passwordHash !== oldHash) {
+  const isOldValid = await verifyPasswordMatch(oldPassword, user.passwordHash);
+  if (!isOldValid) {
     throw new Error('La contraseña actual es incorrecta.');
   }
 
   user.passwordHash = await hashPassword(newPassword.trim());
   user.updatedAt = new Date().toISOString();
 
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+  saveLocalUsers(users);
+  await upsertUserInSupabase(user);
 
-  // Actualizar sesión si corresponde
   const session = getCurrentUser();
-  if (session && session.id === userId) {
-    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ ...session, updatedAt: user.updatedAt }));
+  if (session && (session.id === user.id || session.username === user.username)) {
+    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ ...session, id: user.id, updatedAt: user.updatedAt }));
   }
 
   return true;
@@ -220,12 +496,11 @@ export const adminResetPassword = async (targetUserId, newPassword) => {
     throw new Error('Acción no autorizada. Solo un administrador puede restablecer contraseñas.');
   }
 
-  if (!newPassword || newPassword.length < 3) {
+  if (!newPassword || newPassword.trim().length < 3) {
     throw new Error('La nueva contraseña debe tener al menos 3 caracteres.');
   }
 
-  const stored = localStorage.getItem(STORAGE_KEY_USERS);
-  const users = stored ? JSON.parse(stored) : await initAuthUsers();
+  const users = await initAuthUsers();
   const user = users.find((u) => u.id === targetUserId);
 
   if (!user) {
@@ -234,12 +509,14 @@ export const adminResetPassword = async (targetUserId, newPassword) => {
 
   user.passwordHash = await hashPassword(newPassword.trim());
   user.updatedAt = new Date().toISOString();
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+
+  saveLocalUsers(users);
+  await upsertUserInSupabase(user);
   return true;
 };
 
 /**
- * Dar de alta un nuevo usuario interno (Exclusivo Administrador)
+ * Dar de alta un nuevo usuario interno y sincronizarlo con Supabase Cloud (Exclusivo Administrador)
  */
 export const adminCreateUser = async ({ username, name, password, role = 'operator' }) => {
   const current = getCurrentUser();
@@ -251,37 +528,39 @@ export const adminCreateUser = async ({ username, name, password, role = 'operat
     throw new Error('Todos los campos son obligatorios.');
   }
 
-  const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  const cleanUsername = normalizeUsername(username);
   if (cleanUsername.length < 3) {
-    throw new Error('El nombre de usuario debe tener al menos 3 caracteres (letras, números o guion bajo).');
+    throw new Error('El nombre de usuario debe tener al menos 3 caracteres.');
   }
 
-  const stored = localStorage.getItem(STORAGE_KEY_USERS);
-  const users = stored ? JSON.parse(stored) : await initAuthUsers();
+  const users = await initAuthUsers();
 
-  if (users.some((u) => u.username.toLowerCase() === cleanUsername)) {
+  if (users.some((u) => normalizeUsername(u.username) === cleanUsername)) {
     throw new Error(`El nombre de usuario "${cleanUsername}" ya se encuentra registrado.`);
   }
 
+  const now = new Date().toISOString();
   const newUser = {
-    id: 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+    id: getDeterministicUserUUID(cleanUsername),
     username: cleanUsername,
     name: name.trim(),
     role: role === 'admin' ? 'admin' : 'operator',
     avatar: null,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
     passwordHash: await hashPassword(password.trim()),
   };
 
   users.push(newUser);
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+  saveLocalUsers(users);
+  await upsertUserInSupabase(newUser);
 
   const { passwordHash, ...safeUser } = newUser;
   return safeUser;
 };
 
 /**
- * Modificar rol o nombre de un usuario interno (Exclusivo Administrador)
+ * Modificar rol o nombre de un usuario interno y sincronizarlo con Supabase (Exclusivo Administrador)
  */
 export const adminUpdateUser = async (userId, { name, role }) => {
   const current = getCurrentUser();
@@ -289,15 +568,13 @@ export const adminUpdateUser = async (userId, { name, role }) => {
     throw new Error('Acción no autorizada. Solo un administrador puede modificar usuarios.');
   }
 
-  const stored = localStorage.getItem(STORAGE_KEY_USERS);
-  const users = stored ? JSON.parse(stored) : await initAuthUsers();
+  const users = await initAuthUsers();
   const user = users.find((u) => u.id === userId);
 
   if (!user) {
     throw new Error('Usuario no encontrado.');
   }
 
-  // Prevenir que el admin principal se quite el rol de admin a sí mismo si es el único
   if (user.username === 'admin' && role !== 'admin') {
     throw new Error('No es posible revocar el rol de Administrador al usuario principal.');
   }
@@ -309,13 +586,13 @@ export const adminUpdateUser = async (userId, { name, role }) => {
   }
   user.updatedAt = new Date().toISOString();
 
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+  saveLocalUsers(users);
+  await upsertUserInSupabase(user);
 
-  // Actualizar sesión si el modificado es el usuario actual
-  if (current.id === userId) {
+  if (current.id === userId || current.username === user.username) {
     localStorage.setItem(
       STORAGE_KEY_SESSION,
-      JSON.stringify({ ...current, name: user.name, role: user.role, avatar: user.avatar })
+      JSON.stringify({ ...current, id: user.id, name: user.name, role: user.role, avatar: user.avatar })
     );
   }
 
@@ -324,7 +601,7 @@ export const adminUpdateUser = async (userId, { name, role }) => {
 };
 
 /**
- * Dar de baja a un usuario interno (Exclusivo Administrador)
+ * Dar de baja a un usuario interno en Supabase y LocalStorage (Exclusivo Administrador)
  */
 export const adminDeleteUser = async (userId) => {
   const current = getCurrentUser();
@@ -332,19 +609,19 @@ export const adminDeleteUser = async (userId) => {
     throw new Error('Acción no autorizada. Solo un administrador puede dar de baja usuarios.');
   }
 
-  const stored = localStorage.getItem(STORAGE_KEY_USERS);
-  const users = stored ? JSON.parse(stored) : await initAuthUsers();
+  const users = await initAuthUsers();
   const user = users.find((u) => u.id === userId);
 
   if (!user) {
     throw new Error('Usuario no encontrado.');
   }
 
-  if (user.username === 'admin' || user.id === current.id) {
+  if (user.username === 'admin' || user.id === current.id || user.username === current.username) {
     throw new Error('No es posible eliminar tu propia cuenta de Administrador principal.');
   }
 
-  const filtered = users.filter((u) => u.id !== userId);
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(filtered));
+  const filtered = users.filter((u) => u.id !== userId && u.username !== user.username);
+  saveLocalUsers(filtered);
+  await deleteUserFromSupabase(user.username);
   return true;
 };

@@ -120,7 +120,7 @@ export const SettingsModal = () => {
 
     setCreatingUser(true);
     try {
-      await adminCreateUser({
+      const created = await adminCreateUser({
         name: newUserName.trim(),
         username: newUserUsername.trim(),
         password: newUserPassword.trim(),
@@ -133,7 +133,7 @@ export const SettingsModal = () => {
       setNewUserRole('operator');
       setShowCreateUserForm(false);
       await loadUsers();
-      showToast('Usuario interno creado exitosamente', 'success');
+      showToast(`Usuario @${created.username} guardado y sincronizado en la nube`, 'success');
     } catch (err) {
       console.error('Error creando usuario:', err);
       showToast(err.message || 'Error creando usuario', 'error');
@@ -330,6 +330,9 @@ export const SettingsModal = () => {
                       placeholder="••••••••" 
                       value={oldPassword}
                       onChange={(e) => setOldPassword(e.target.value)}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       required 
                     />
                   </div>
@@ -343,6 +346,9 @@ export const SettingsModal = () => {
                         placeholder="Mínimo 3 caracteres" 
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         required 
                       />
                     </div>
@@ -354,6 +360,9 @@ export const SettingsModal = () => {
                         placeholder="Repite la nueva contraseña" 
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         required 
                       />
                     </div>
@@ -433,7 +442,10 @@ export const SettingsModal = () => {
                         className="glass-input" 
                         placeholder="ej. maria" 
                         value={newUserUsername}
-                        onChange={(e) => setNewUserUsername(e.target.value)}
+                        onChange={(e) => setNewUserUsername(e.target.value.toLowerCase())}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         required 
                       />
                     </div>
@@ -448,6 +460,9 @@ export const SettingsModal = () => {
                         placeholder="••••••••" 
                         value={newUserPassword}
                         onChange={(e) => setNewUserPassword(e.target.value)}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
                         required 
                       />
                     </div>
