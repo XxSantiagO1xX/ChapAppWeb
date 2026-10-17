@@ -1,6 +1,6 @@
 /**
  * ChapApp - Pantalla de Inicio de Sesión (Login) Liquid Glass 3D
- * Escena Opción C: Esferas y Prismas de Cristal Flotantes (Depth & Bokeh 3D)
+ * Escena Opción A: Ondas de Seda y Aurora Líquida en Movimiento Suave (Estilo Apple / macOS)
  */
 
 import React, { useState } from 'react';
@@ -42,27 +42,130 @@ export const LoginScreen = () => {
   return (
     <div className="login-viewport-container">
       {/* ============================================================== */}
-      {/* ESCENA DE FONDO OPCIÓN C: PRISMAS Y ESFERAS DE CRISTAL 3D      */}
+      {/* ESCENA DE FONDO OPCIÓN A: ONDAS DE SEDA Y AURORA LÍQUIDA       */}
       {/* ============================================================== */}
-      <div className="login-prisms-backdrop" aria-hidden="true">
-        {/* Capa 1: Halos Bokeh Profundos de Luz Volumétrica */}
-        <div className="bokeh-ambient-orb bokeh-cyan-left" />
-        <div className="bokeh-ambient-orb bokeh-emerald-right" />
-        <div className="bokeh-ambient-orb bokeh-sapphire-top" />
+      <div className="login-silk-aurora-backdrop" aria-hidden="true">
+        <div className="aurora-mesh-glow aurora-glow-1" />
+        <div className="aurora-mesh-glow aurora-glow-2" />
 
-        {/* Capa 2: Esferas y Lentes de Cristal 3D con Refracción Especular */}
-        {/* Esfera Grande detrás de la esquina superior derecha de la tarjeta */}
-        <div className="crystal-sphere sphere-xl-card-top" />
-        {/* Esfera Mediana Esmeralda asomando en la base izquierda de la tarjeta */}
-        <div className="crystal-sphere sphere-lg-card-bottom" />
-        {/* Esfera Flotante Superior Izquierda cerca del Emblema */}
-        <div className="crystal-sphere sphere-md-emblem-top" />
-        {/* Esfera Pequeña Nítida Inferior Izquierda */}
-        <div className="crystal-sphere sphere-sm-emblem-bottom" />
-        {/* Esfera Pequeña Derecha Media */}
-        <div className="crystal-sphere sphere-xs-far-right" />
-        {/* Prisma / Lente Elíptico Inclinado */}
-        <div className="crystal-prism-lens lens-center-bridge" />
+        <svg
+          className="login-silk-svg"
+          viewBox="0 0 1920 1080"
+          preserveAspectRatio="xMidYMid slice"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            {/* Onda de Seda 1: Turquesa / Cyan Profundo */}
+            <linearGradient id="silkWaveCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+              {isDark ? (
+                <>
+                  <stop offset="0%" stopColor="#0369A1" stopOpacity="0.05" />
+                  <stop offset="35%" stopColor="#00F0FF" stopOpacity="0.34" />
+                  <stop offset="70%" stopColor="#0284C7" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#0F172A" stopOpacity="0.10" />
+                </>
+              ) : (
+                <>
+                  <stop offset="0%" stopColor="#BAE6FD" stopOpacity="0.20" />
+                  <stop offset="40%" stopColor="#38BDF8" stopOpacity="0.42" />
+                  <stop offset="75%" stopColor="#0284C7" stopOpacity="0.30" />
+                  <stop offset="100%" stopColor="#F0F9FF" stopOpacity="0.10" />
+                </>
+              )}
+            </linearGradient>
+
+            {/* Onda de Seda 2: Esmeralda / Menta Luminosa */}
+            <linearGradient id="silkWaveEmerald" x1="100%" y1="0%" x2="0%" y2="100%">
+              {isDark ? (
+                <>
+                  <stop offset="0%" stopColor="#064E3B" stopOpacity="0.08" />
+                  <stop offset="42%" stopColor="#10B981" stopOpacity="0.32" />
+                  <stop offset="75%" stopColor="#06B6D4" stopOpacity="0.38" />
+                  <stop offset="100%" stopColor="#040812" stopOpacity="0.05" />
+                </>
+              ) : (
+                <>
+                  <stop offset="0%" stopColor="#A7F3D0" stopOpacity="0.25" />
+                  <stop offset="45%" stopColor="#34D399" stopOpacity="0.38" />
+                  <stop offset="80%" stopColor="#38BDF8" stopOpacity="0.30" />
+                  <stop offset="100%" stopColor="#ECFDF5" stopOpacity="0.10" />
+                </>
+              )}
+            </linearGradient>
+
+            {/* Onda de Seda 3: Zafiro / Índigo Real */}
+            <linearGradient id="silkWaveSapphire" x1="0%" y1="100%" x2="100%" y2="0%">
+              {isDark ? (
+                <>
+                  <stop offset="0%" stopColor="#1E1B4B" stopOpacity="0.15" />
+                  <stop offset="45%" stopColor="#4F46E5" stopOpacity="0.32" />
+                  <stop offset="80%" stopColor="#00F0FF" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="#090D1A" stopOpacity="0.05" />
+                </>
+              ) : (
+                <>
+                  <stop offset="0%" stopColor="#E0E7FF" stopOpacity="0.30" />
+                  <stop offset="50%" stopColor="#818CF8" stopOpacity="0.32" />
+                  <stop offset="85%" stopColor="#38BDF8" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="#F8FAFC" stopOpacity="0.10" />
+                </>
+              )}
+            </linearGradient>
+
+            {/* Filo Especular de Seda (Cresta Brillante de cada Onda) */}
+            <linearGradient id="silkCrestHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
+              <stop offset="25%" stopColor={isDark ? '#67E8F9' : '#0284C7'} stopOpacity={isDark ? '0.75' : '0.55'} />
+              <stop offset="52%" stopColor="#FFFFFF" stopOpacity={isDark ? '0.92' : '0.85'} />
+              <stop offset="78%" stopColor="#34D399" stopOpacity={isDark ? '0.70' : '0.50'} />
+              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Capa 1 (Fondo): Gran Pliegue de Seda Zafiro Diagonal */}
+          <g className="silk-ribbon-layer silk-layer-back">
+            <path
+              d="M -180 280 C 340 40, 820 620, 1380 290 C 1690 110, 1920 240, 2120 160 L 2120 1180 L -180 1180 Z"
+              fill="url(#silkWaveSapphire)"
+            />
+            <path
+              d="M -180 280 C 340 40, 820 620, 1380 290 C 1690 110, 1920 240, 2120 160"
+              fill="none"
+              stroke="url(#silkCrestHighlight)"
+              strokeWidth="1.8"
+              opacity="0.7"
+            />
+          </g>
+
+          {/* Capa 2 (Media): Onda de Seda Esmeralda / Turquesa */}
+          <g className="silk-ribbon-layer silk-layer-mid">
+            <path
+              d="M -200 680 C 260 360, 740 840, 1260 510 C 1610 290, 1860 520, 2140 410 L 2140 1180 L -200 1180 Z"
+              fill="url(#silkWaveEmerald)"
+            />
+            <path
+              d="M -200 680 C 260 360, 740 840, 1260 510 C 1610 290, 1860 520, 2140 410"
+              fill="none"
+              stroke="url(#silkCrestHighlight)"
+              strokeWidth="2.2"
+              opacity="0.85"
+            />
+          </g>
+
+          {/* Capa 3 (Frente): Velo de Seda Cyan Líquido */}
+          <g className="silk-ribbon-layer silk-layer-front">
+            <path
+              d="M -160 860 C 420 980, 840 420, 1440 690 C 1740 825, 1940 680, 2120 740 L 2120 1180 L -160 1180 Z"
+              fill="url(#silkWaveCyan)"
+            />
+            <path
+              d="M -160 860 C 420 980, 840 420, 1440 690 C 1740 825, 1940 680, 2120 740"
+              fill="none"
+              stroke="url(#silkCrestHighlight)"
+              strokeWidth="2.4"
+            />
+          </g>
+        </svg>
       </div>
 
       {/* Botón flotante para cambiar tema Claro / Oscuro desde el Login */}
