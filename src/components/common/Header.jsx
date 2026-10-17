@@ -230,7 +230,7 @@ export const Header = () => {
               title="Compartir resumen del evento por WhatsApp"
               aria-label="Compartir por WhatsApp"
             >
-              <Icon name="whatsapp" size={15} />
+              <Icon name="whatsapp" size={16} />
             </button>
             <button
               type="button"
@@ -239,17 +239,7 @@ export const Header = () => {
               title="Exportar reporte PDF del evento"
               aria-label="Exportar PDF"
             >
-              <Icon name="printer" size={15} />
-            </button>
-            <button
-              type="button"
-              onClick={() => openModal('cut')}
-              className="navbar-cta-btn cut-cta"
-              title="Abrir Corte de Caja"
-              aria-label="Corte de caja"
-            >
-              <Icon name="receipt" size={15} />
-              <span className="navbar-btn-text">Corte</span>
+              <Icon name="printer" size={16} />
             </button>
           </div>
         ) : !activeEvent && currentView !== 'directory' ? (

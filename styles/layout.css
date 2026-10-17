@@ -710,12 +710,6 @@ dialog {
   color: #0284c7;
 }
 
-@media (max-width: 680px) {
-  .navbar-quick-action-btn {
-    display: none;
-  }
-}
-
 /* Botón CTA de Acción Principal */
 .navbar-cta-btn {
   height: 38px;
