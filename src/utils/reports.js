@@ -92,8 +92,8 @@ export const generateSubfamilyWhatsAppText = (subFamilyName, event, totals = nul
   }
 
   let text = `====================================\n`;
-  text += `🧾 TICKET DE COBRO POS: ${subFamilyName.toUpperCase()}\n`;
-  text += `📅 Evento: ${event.title} (${event.year})\n`;
+  text += `🧾 TICKET: ${subFamilyName.toUpperCase()}\n`;
+  text += `📅 Evento: ${event.title}\n`;
   text += `====================================\n\n`;
 
   text += `📊 ESTADO FINANCIERO FAMILIAR:\n`;
@@ -147,7 +147,7 @@ export const generateSubfamilyWhatsAppText = (subFamilyName, event, totals = nul
   }
 
   text += `====================================\n`;
-  text += `Generado por ChapApp • Finanzas Familiares\n`;
+  text += `••• Generado por ChapApp •••\n`;
 
   return text;
 };
