@@ -1,6 +1,6 @@
 /**
  * ChapApp - Pantalla de Inicio de Sesión (Login) Liquid Glass 3D
- * Escena Opción A: Ondas de Seda y Aurora Líquida en Movimiento Suave (Estilo Apple / macOS)
+ * Escena: Constelación y Raíces de Luz (Sin Pedestal) + Tarjeta Liquid Glass Translúcida + Título 3D Bubble Glass
  */
 
 import React, { useState } from 'react';
@@ -42,128 +42,189 @@ export const LoginScreen = () => {
   return (
     <div className="login-viewport-container">
       {/* ============================================================== */}
-      {/* ESCENA DE FONDO OPCIÓN A: ONDAS DE SEDA Y AURORA LÍQUIDA       */}
+      {/* ESCENA DE FONDO OPCIÓN B (SIN PEDESTAL): RAÍCES Y CONSTELACIÓN */}
       {/* ============================================================== */}
-      <div className="login-silk-aurora-backdrop" aria-hidden="true">
-        <div className="aurora-mesh-glow aurora-glow-1" />
-        <div className="aurora-mesh-glow aurora-glow-2" />
-
+      <div className="login-constellation-backdrop" aria-hidden="true">
         <svg
-          className="login-silk-svg"
+          className="login-constellation-svg"
           viewBox="0 0 1920 1080"
           preserveAspectRatio="xMidYMid slice"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Onda de Seda 1: Turquesa / Cyan Profundo */}
-            <linearGradient id="silkWaveCyan" x1="0%" y1="0%" x2="100%" y2="100%">
-              {isDark ? (
-                <>
-                  <stop offset="0%" stopColor="#0369A1" stopOpacity="0.05" />
-                  <stop offset="35%" stopColor="#00F0FF" stopOpacity="0.34" />
-                  <stop offset="70%" stopColor="#0284C7" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="#0F172A" stopOpacity="0.10" />
-                </>
-              ) : (
-                <>
-                  <stop offset="0%" stopColor="#BAE6FD" stopOpacity="0.20" />
-                  <stop offset="40%" stopColor="#38BDF8" stopOpacity="0.42" />
-                  <stop offset="75%" stopColor="#0284C7" stopOpacity="0.30" />
-                  <stop offset="100%" stopColor="#F0F9FF" stopOpacity="0.10" />
-                </>
-              )}
+            {/* Resplandor Ambiental detrás del Árbol y detrás de la Tarjeta para que el Liquid Glass refracte luz */}
+            <radialGradient id="treeCenterAmbient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={isDark ? '#00F0FF' : '#0284C7'} stopOpacity={isDark ? '0.32' : '0.22'} />
+              <stop offset="50%" stopColor="#10B981" stopOpacity={isDark ? '0.14' : '0.10'} />
+              <stop offset="100%" stopColor={isDark ? '#040812' : '#EEF2F6'} stopOpacity="0" />
+            </radialGradient>
+
+            <radialGradient id="cardBackRefractionGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={isDark ? '#00F0FF' : '#38BDF8'} stopOpacity={isDark ? '0.36' : '0.28'} />
+              <stop offset="45%" stopColor="#10B981" stopOpacity={isDark ? '0.24' : '0.18'} />
+              <stop offset="80%" stopColor="#6366F1" stopOpacity={isDark ? '0.12' : '0.08'} />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+            </radialGradient>
+
+            {/* Degradados de las Raíces y Filamentos de Luz */}
+            <linearGradient id="rootLineCyan" x1="0%" y1="50%" x2="100%" y2="50%">
+              <stop offset="0%" stopColor={isDark ? '#00F0FF' : '#0284C7'} stopOpacity="0.08" />
+              <stop offset="30%" stopColor={isDark ? '#00F0FF' : '#0284C7'} stopOpacity={isDark ? '0.85' : '0.60'} />
+              <stop offset="70%" stopColor="#10B981" stopOpacity={isDark ? '0.75' : '0.50'} />
+              <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.10" />
             </linearGradient>
 
-            {/* Onda de Seda 2: Esmeralda / Menta Luminosa */}
-            <linearGradient id="silkWaveEmerald" x1="100%" y1="0%" x2="0%" y2="100%">
-              {isDark ? (
-                <>
-                  <stop offset="0%" stopColor="#064E3B" stopOpacity="0.08" />
-                  <stop offset="42%" stopColor="#10B981" stopOpacity="0.32" />
-                  <stop offset="75%" stopColor="#06B6D4" stopOpacity="0.38" />
-                  <stop offset="100%" stopColor="#040812" stopOpacity="0.05" />
-                </>
-              ) : (
-                <>
-                  <stop offset="0%" stopColor="#A7F3D0" stopOpacity="0.25" />
-                  <stop offset="45%" stopColor="#34D399" stopOpacity="0.38" />
-                  <stop offset="80%" stopColor="#38BDF8" stopOpacity="0.30" />
-                  <stop offset="100%" stopColor="#ECFDF5" stopOpacity="0.10" />
-                </>
-              )}
+            <linearGradient id="rootLineEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#10B981" stopOpacity="0.10" />
+              <stop offset="40%" stopColor="#34D399" stopOpacity={isDark ? '0.80' : '0.55'} />
+              <stop offset="75%" stopColor={isDark ? '#00F0FF' : '#0284C7'} stopOpacity={isDark ? '0.70' : '0.45'} />
+              <stop offset="100%" stopColor="#10B981" stopOpacity="0.05" />
             </linearGradient>
 
-            {/* Onda de Seda 3: Zafiro / Índigo Real */}
-            <linearGradient id="silkWaveSapphire" x1="0%" y1="100%" x2="100%" y2="0%">
-              {isDark ? (
-                <>
-                  <stop offset="0%" stopColor="#1E1B4B" stopOpacity="0.15" />
-                  <stop offset="45%" stopColor="#4F46E5" stopOpacity="0.32" />
-                  <stop offset="80%" stopColor="#00F0FF" stopOpacity="0.28" />
-                  <stop offset="100%" stopColor="#090D1A" stopOpacity="0.05" />
-                </>
-              ) : (
-                <>
-                  <stop offset="0%" stopColor="#E0E7FF" stopOpacity="0.30" />
-                  <stop offset="50%" stopColor="#818CF8" stopOpacity="0.32" />
-                  <stop offset="85%" stopColor="#38BDF8" stopOpacity="0.28" />
-                  <stop offset="100%" stopColor="#F8FAFC" stopOpacity="0.10" />
-                </>
-              )}
-            </linearGradient>
+            {/* Halos para los Nodos de la Constelación */}
+            <radialGradient id="nodeOrbGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+              <stop offset="35%" stopColor={isDark ? '#00F0FF' : '#0284C7'} stopOpacity="0.92" />
+              <stop offset="100%" stopColor="#00F0FF" stopOpacity="0" />
+            </radialGradient>
 
-            {/* Filo Especular de Seda (Cresta Brillante de cada Onda) */}
-            <linearGradient id="silkCrestHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0" />
-              <stop offset="25%" stopColor={isDark ? '#67E8F9' : '#0284C7'} stopOpacity={isDark ? '0.75' : '0.55'} />
-              <stop offset="52%" stopColor="#FFFFFF" stopOpacity={isDark ? '0.92' : '0.85'} />
-              <stop offset="78%" stopColor="#34D399" stopOpacity={isDark ? '0.70' : '0.50'} />
-              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-            </linearGradient>
+            <radialGradient id="nodeEmeraldGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+              <stop offset="35%" stopColor="#34D399" stopOpacity="0.92" />
+              <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+            </radialGradient>
           </defs>
 
-          {/* Capa 1 (Fondo): Gran Pliegue de Seda Zafiro Diagonal */}
-          <g className="silk-ribbon-layer silk-layer-back">
+          {/* Halos de Luz Volumétrica (Uno en el Árbol y otro justo detrás de la Tarjeta de Login) */}
+          <ellipse cx="540" cy="540" rx="460" ry="420" fill="url(#treeCenterAmbient)" />
+          <ellipse cx="1310" cy="540" rx="480" ry="440" fill="url(#cardBackRefractionGlow)" />
+
+          {/* Raíces y Ramas de Luz que nacen directamente del centro del Árbol (540, 540) y cruzan detrás de la Tarjeta */}
+          <g fill="none" strokeLinecap="round">
+            {/* Ramas Principales hacia la derecha (Cruzan detrás del Liquid Glass Card) */}
             <path
-              d="M -180 280 C 340 40, 820 620, 1380 290 C 1690 110, 1920 240, 2120 160 L 2120 1180 L -180 1180 Z"
-              fill="url(#silkWaveSapphire)"
+              d="M 540 540 C 780 510, 980 350, 1260 390 C 1490 425, 1660 310, 1900 250"
+              stroke="url(#rootLineCyan)"
+              strokeWidth="2.8"
             />
             <path
-              d="M -180 280 C 340 40, 820 620, 1380 290 C 1690 110, 1920 240, 2120 160"
-              fill="none"
-              stroke="url(#silkCrestHighlight)"
+              d="M 540 540 C 790 560, 1020 640, 1310 535 C 1540 450, 1710 580, 1920 510"
+              stroke="url(#rootLineEmerald)"
+              strokeWidth="3.2"
+            />
+            <path
+              d="M 540 540 C 750 660, 990 810, 1290 710 C 1520 635, 1690 760, 1910 830"
+              stroke="url(#rootLineCyan)"
+              strokeWidth="2.6"
+            />
+            <path
+              d="M 540 540 C 690 380, 920 190, 1220 220 C 1460 245, 1650 150, 1880 120"
+              stroke="url(#rootLineEmerald)"
+              strokeWidth="2.0"
+            />
+            <path
+              d="M 540 540 C 710 740, 960 940, 1320 890 C 1560 855, 1740 940, 1920 970"
+              stroke="url(#rootLineEmerald)"
               strokeWidth="1.8"
-              opacity="0.7"
             />
-          </g>
 
-          {/* Capa 2 (Media): Onda de Seda Esmeralda / Turquesa */}
-          <g className="silk-ribbon-layer silk-layer-mid">
+            {/* Ramas hacia la izquierda del Árbol */}
             <path
-              d="M -200 680 C 260 360, 740 840, 1260 510 C 1610 290, 1860 520, 2140 410 L 2140 1180 L -200 1180 Z"
-              fill="url(#silkWaveEmerald)"
-            />
-            <path
-              d="M -200 680 C 260 360, 740 840, 1260 510 C 1610 290, 1860 520, 2140 410"
-              fill="none"
-              stroke="url(#silkCrestHighlight)"
-              strokeWidth="2.2"
-              opacity="0.85"
-            />
-          </g>
-
-          {/* Capa 3 (Frente): Velo de Seda Cyan Líquido */}
-          <g className="silk-ribbon-layer silk-layer-front">
-            <path
-              d="M -160 860 C 420 980, 840 420, 1440 690 C 1740 825, 1940 680, 2120 740 L 2120 1180 L -160 1180 Z"
-              fill="url(#silkWaveCyan)"
-            />
-            <path
-              d="M -160 860 C 420 980, 840 420, 1440 690 C 1740 825, 1940 680, 2120 740"
-              fill="none"
-              stroke="url(#silkCrestHighlight)"
+              d="M 540 540 C 380 490, 220 360, 20 260"
+              stroke="url(#rootLineCyan)"
               strokeWidth="2.4"
             />
+            <path
+              d="M 540 540 C 360 580, 190 680, -20 740"
+              stroke="url(#rootLineEmerald)"
+              strokeWidth="2.2"
+            />
+            <path
+              d="M 540 540 C 420 710, 250 860, 40 950"
+              stroke="url(#rootLineCyan)"
+              strokeWidth="1.8"
+            />
+            <path
+              d="M 540 540 C 430 350, 280 190, 70 110"
+              stroke="url(#rootLineEmerald)"
+              strokeWidth="1.7"
+            />
+
+            {/* Red de Constelación (Filamentos geométricos finos detrás de la tarjeta de Login) */}
+            <path
+              d="M 960 430 L 1140 310 L 1380 395 L 1520 290"
+              stroke="url(#rootLineCyan)"
+              strokeWidth="1.5"
+              strokeDasharray="5 5"
+              opacity="0.80"
+            />
+            <path
+              d="M 960 430 L 1160 575 L 1310 535 L 1480 650"
+              stroke="url(#rootLineEmerald)"
+              strokeWidth="1.6"
+              opacity="0.85"
+            />
+            <path
+              d="M 1160 575 L 1290 710 L 1480 650 L 1640 520"
+              stroke="url(#rootLineCyan)"
+              strokeWidth="1.5"
+              strokeDasharray="4 5"
+              opacity="0.80"
+            />
+            <path
+              d="M 1310 535 L 1380 395 L 1640 520"
+              stroke="url(#rootLineEmerald)"
+              strokeWidth="1.4"
+              opacity="0.75"
+            />
+            <path
+              d="M 290 430 L 190 590 L 350 720"
+              stroke="url(#rootLineCyan)"
+              strokeWidth="1.3"
+              strokeDasharray="4 4"
+              opacity="0.70"
+            />
+          </g>
+
+          {/* Nodos Luminosos de la Constelación (Brillan a través del cristal de la tarjeta) */}
+          <g>
+            {/* Nodos Cyan */}
+            {[
+              [960, 430, 10],
+              [1140, 310, 11],
+              [1260, 390, 13],
+              [1380, 395, 11],
+              [1310, 535, 15],
+              [1480, 650, 12],
+              [1640, 520, 10],
+              [1220, 220, 9],
+              [290, 430, 9],
+              [350, 720, 9],
+              [170, 340, 8],
+            ].map(([cx, cy, r], idx) => (
+              <g key={`cyan-node-${idx}`}>
+                <circle cx={cx} cy={cy} r={r * 2.5} fill="url(#nodeOrbGlow)" opacity="0.75" />
+                <circle cx={cx} cy={cy} r={r * 0.48} fill="#FFFFFF" />
+              </g>
+            ))}
+
+            {/* Nodos Esmeralda */}
+            {[
+              [820, 585, 10],
+              [1160, 575, 13],
+              [1290, 710, 14],
+              [1520, 290, 10],
+              [1320, 890, 10],
+              [1050, 760, 11],
+              [190, 590, 9],
+              [340, 260, 8],
+              [1740, 720, 9],
+            ].map(([cx, cy, r], idx) => (
+              <g key={`emerald-node-${idx}`}>
+                <circle cx={cx} cy={cy} r={r * 2.5} fill="url(#nodeEmeraldGlow)" opacity="0.75" />
+                <circle cx={cx} cy={cy} r={r * 0.48} fill="#FFFFFF" />
+              </g>
+            ))}
           </g>
         </svg>
       </div>
@@ -182,7 +243,7 @@ export const LoginScreen = () => {
 
       <div className="login-split-layout">
         {/* ============================================================== */}
-        {/* LADO IZQUIERDO: EMBLEMA FAMILIAR PROTAGÓNICO CON ANILLOS       */}
+        {/* LADO IZQUIERDO: EMBLEMA FAMILIAR CON ANILLOS (SIN PEDESTAL)    */}
         {/* ============================================================== */}
         <div className="login-visual-stage">
           <div className="login-emblem-showcase">
@@ -207,13 +268,18 @@ export const LoginScreen = () => {
         <div className="login-stage-divider" aria-hidden="true" />
 
         {/* ============================================================== */}
-        {/* LADO DERECHO: PANEL DE VIDRIO LÍQUIDO TRANSLÚCIDO (LOGIN CARD) */}
+        {/* LADO DERECHO: TARJETA LIQUID GLASS REALMENTE TRANSLÚCIDA       */}
         {/* ============================================================== */}
         <div className="login-card-stage">
           <div className="liquid-glass-card animate-scale-in">
-            {/* Encabezado limpio sin repetir el logo */}
+            {/* Encabezado con Título "ChapApp" Estilo Burbuja de Cristal 3D */}
             <div className="card-brand-header">
-              <h1 className="card-brand-name">ChapApp</h1>
+              <div className="chapapp-bubble-badge">
+                <span className="bubble-gloss-reflection" aria-hidden="true" />
+                <h1 className="chapapp-bubble-title" data-text="ChapApp">
+                  ChapApp
+                </h1>
+              </div>
               <p className="card-brand-motto">Inicia sesión para continuar</p>
             </div>
 

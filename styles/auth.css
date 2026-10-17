@@ -45,9 +45,9 @@
 }
 
 /* ==========================================================================
-   ESCENA DE FONDO OPCIÓN A: ONDAS DE SEDA Y AURORA LÍQUIDA (ESTILO APPLE)
+   ESCENA DE FONDO OPCIÓN B (SIN PEDESTAL): RAÍCES Y CONSTELACIÓN DE LUZ
    ========================================================================== */
-.login-silk-aurora-backdrop {
+.login-constellation-backdrop {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -57,86 +57,11 @@
   overflow: hidden;
 }
 
-.aurora-mesh-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  pointer-events: none;
-}
-
-.aurora-glow-1 {
-  width: 620px;
-  height: 420px;
-  top: -8%;
-  left: 12%;
-  background: radial-gradient(circle, rgba(0, 240, 255, 0.20) 0%, rgba(59, 130, 246, 0.08) 65%, transparent 100%);
-  animation: auroraDrift1 16s ease-in-out infinite alternate;
-}
-
-.aurora-glow-2 {
-  width: 680px;
-  height: 460px;
-  bottom: -10%;
-  right: 8%;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(2, 132, 199, 0.10) 65%, transparent 100%);
-  animation: auroraDrift2 20s ease-in-out infinite alternate;
-}
-
-[data-theme='light'] .aurora-glow-1 {
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(99, 102, 241, 0.08) 65%, transparent 100%);
-}
-
-[data-theme='light'] .aurora-glow-2 {
-  background: radial-gradient(circle, rgba(52, 211, 153, 0.22) 0%, rgba(14, 165, 233, 0.10) 65%, transparent 100%);
-}
-
-.login-silk-svg {
+.login-constellation-svg {
   width: 100%;
   height: 100%;
   display: block;
   shape-rendering: geometricPrecision;
-}
-
-.silk-ribbon-layer {
-  transform-origin: center center;
-  will-change: transform;
-}
-
-.silk-layer-back {
-  animation: silkWaveMotionBack 18s ease-in-out infinite alternate;
-}
-
-.silk-layer-mid {
-  animation: silkWaveMotionMid 14s ease-in-out infinite alternate;
-}
-
-.silk-layer-front {
-  animation: silkWaveMotionFront 16s ease-in-out infinite alternate;
-}
-
-@keyframes silkWaveMotionBack {
-  0% { transform: translate3d(0, 0, 0) scaleY(1); }
-  100% { transform: translate3d(-24px, 16px, 0) scaleY(1.04); }
-}
-
-@keyframes silkWaveMotionMid {
-  0% { transform: translate3d(0, 0, 0) scaleY(1); }
-  100% { transform: translate3d(22px, -18px, 0) scaleY(1.05); }
-}
-
-@keyframes silkWaveMotionFront {
-  0% { transform: translate3d(0, 0, 0) scaleY(1); }
-  100% { transform: translate3d(-18px, -14px, 0) scaleY(1.03); }
-}
-
-@keyframes auroraDrift1 {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(40px, 24px, 0) scale(1.08); }
-}
-
-@keyframes auroraDrift2 {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(-40px, -28px, 0) scale(1.08); }
 }
 
 /* Botón flotante de cambio de tema en la esquina superior derecha del Login */
@@ -148,17 +73,17 @@
   height: 40px;
   padding: 0 16px;
   border-radius: 9999px;
-  background: rgba(13, 22, 40, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(13, 22, 40, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   color: #F8FAFC;
   font-size: 0.82rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.40), inset 0 1px 1px rgba(255, 255, 255, 0.25);
   cursor: pointer;
   transition: all 0.25s ease;
 }
@@ -174,10 +99,10 @@
 }
 
 [data-theme='light'] .login-theme-toggle-btn {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(15, 23, 42, 0.14);
   color: #0F172A;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08), inset 0 1px 2px #FFFFFF;
 }
 
 [data-theme='light'] .login-theme-toggle-btn svg {
@@ -429,7 +354,7 @@
 }
 
 /* ==========================================================================
-   4. TARJETA DE VIDRIO LÍQUIDO (LIQUID GLASS CARD)
+   4. TARJETA DE VIDRIO LÍQUIDO (LIQUID GLASS CARD REALMENTE TRANSLÚCIDA)
    ========================================================================== */
 .login-card-stage {
   width: 100%;
@@ -440,29 +365,47 @@
 .liquid-glass-card {
   width: 100%;
   max-width: 430px;
-  background: rgba(13, 20, 36, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-top: 1px solid rgba(255, 255, 255, 0.30);
-  border-radius: 28px;
+  /* Translucidez real para dejar pasar las raíces y nodos luminosos detrás */
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(10, 18, 36, 0.26) 52%,
+    rgba(0, 240, 255, 0.06) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.52);
+  border-left: 1.5px solid rgba(0, 240, 255, 0.38);
+  border-radius: 30px;
   padding: 38px 32px;
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  /* Blur calibrado a 10px para que se distinga la luz y constelación refractada detrás */
+  backdrop-filter: blur(10px) saturate(190%) brightness(1.06);
+  -webkit-backdrop-filter: blur(10px) saturate(190%) brightness(1.06);
   box-shadow: 
-    0 25px 60px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    0 24px 56px rgba(0, 0, 0, 0.50),
+    0 0 32px rgba(0, 240, 255, 0.10),
+    inset 0 2px 12px rgba(255, 255, 255, 0.22),
+    inset 0 -3px 12px rgba(0, 240, 255, 0.12);
   display: flex;
   flex-direction: column;
   gap: 24px;
   box-sizing: border-box;
 }
 
-/* En Modo Claro se adapta con elegancia */
+/* En Modo Claro también translúcido tipo cristal esmerilado */
 [data-theme='light'] .liquid-glass-card {
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.52) 0%,
+    rgba(255, 255, 255, 0.28) 55%,
+    rgba(224, 242, 254, 0.35) 100%
+  );
+  border: 1.5px solid rgba(255, 255, 255, 0.90);
+  border-top: 2px solid #FFFFFF;
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
   box-shadow: 
     0 20px 50px rgba(15, 23, 42, 0.10),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
+    inset 0 2px 10px rgba(255, 255, 255, 0.95);
 }
 
 .card-brand-header {
@@ -470,29 +413,128 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
-.card-brand-name {
-  font-size: 1.75rem;
-  font-weight: 900;
-  letter-spacing: -0.03em;
+/* ==========================================================================
+   TÍTULO "ChapApp" ESTILO BURBUJA DE CRISTAL 3D (LIQUID BUBBLE WORDMARK)
+   ========================================================================== */
+.chapapp-bubble-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 28px 12px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    ellipse at 50% 22%,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(0, 240, 255, 0.16) 45%,
+    rgba(16, 185, 129, 0.12) 85%,
+    rgba(6, 18, 38, 0.35) 100%
+  );
+  border: 1.5px solid rgba(255, 255, 255, 0.42);
+  border-top: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.35),
+    0 0 24px rgba(0, 240, 255, 0.28),
+    inset 0 4px 10px rgba(255, 255, 255, 0.65),
+    inset 0 -5px 12px rgba(0, 240, 255, 0.32);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chapapp-bubble-badge:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.45),
+    0 0 32px rgba(0, 240, 255, 0.42),
+    inset 0 4px 12px rgba(255, 255, 255, 0.80),
+    inset 0 -5px 14px rgba(0, 240, 255, 0.45);
+}
+
+/* Reflejo superior curvo tipo burbuja de cristal */
+.bubble-gloss-reflection {
+  position: absolute;
+  top: 2px;
+  left: 12%;
+  right: 12%;
+  height: 44%;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.08) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Letras con volumen 3D inflado tipo Burbuja / Cromo Líquido */
+.chapapp-bubble-title {
+  position: relative;
+  z-index: 2;
   margin: 0;
-  color: #FFFFFF;
+  font-size: 2.15rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  background: linear-gradient(
+    180deg,
+    #FFFFFF 0%,
+    #E0F2FE 28%,
+    #67E8F9 62%,
+    #34D399 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 2px 0 rgba(3, 105, 161, 0.85))
+    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.50))
+    drop-shadow(0 0 14px rgba(0, 240, 255, 0.45));
+  user-select: none;
 }
 
-[data-theme='light'] .card-brand-name {
-  color: #0F172A;
+[data-theme='light'] .chapapp-bubble-badge {
+  background: radial-gradient(
+    ellipse at 50% 22%,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(186, 230, 253, 0.55) 55%,
+    rgba(167, 243, 208, 0.45) 100%
+  );
+  border-color: #FFFFFF;
+  box-shadow:
+    0 10px 24px rgba(2, 132, 199, 0.16),
+    0 0 18px rgba(56, 189, 248, 0.22),
+    inset 0 4px 10px #FFFFFF,
+    inset 0 -4px 10px rgba(14, 165, 233, 0.22);
+}
+
+[data-theme='light'] .chapapp-bubble-title {
+  background: linear-gradient(
+    180deg,
+    #0284C7 0%,
+    #0369A1 45%,
+    #059669 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95))
+    drop-shadow(0 3px 6px rgba(2, 132, 199, 0.25));
 }
 
 .card-brand-motto {
   font-size: 0.88rem;
-  color: #94A3B8;
+  color: #CBD5E1;
+  font-weight: 500;
   margin: 0;
 }
 
 [data-theme='light'] .card-brand-motto {
-  color: #64748B;
+  color: #475569;
 }
 
 /* Chips de acceso rápido a cuentas sembradas */
